@@ -1,0 +1,197 @@
+from __future__ import annotations
+
+import asyncio
+import os
+import re
+import shutil
+
+
+class RefineError(RuntimeError):
+    pass
+
+def _phi4_cmd() -> str:
+    # Allow override; default to $HOME/bin/phi4
+    return os.environ.get("EBIBLE_PHI4_CMD", os.path.join(os.path.expanduser("~"), "bin", "phi4"))
+
+def _build_prompt(text: str, mode: str = "rewrite") -> str:
+    # env override to switch mode at runtime
+    try:
+        import os as _os
+        env_mode = _os.environ.get('EBIBLE_PHI4_MODE')
+        if env_mode:
+            mode = env_mode.strip().lower()
+    except Exception:
+        pass
+    if mode == "literal":
+        instructions = (
+            "You are a biblical translator. Render the verse into plain, literal English. "
+            "Preserve names and theology. Keep verse structure. ONE sentence only. "
+            "No added information, no metaphor, no poetry, no embellishment, no commentary, no quotes. "
+            "Change only words needed for clarity and grammar. Output ONLY the literal rendering."
+        )
+    elif mode == "explain":
+        instructions = (
+            "You are a biblical commentator. In 1-2 sentences, explain the meaning of the verse "
+            "in clear, plain English. Preserve names and theology. Keep it concise. "
+            "Explain WITHOUT copying phrases verbatim or reusing 3 or more consecutive words from the input. Output ONLY the explanation. Do NOT quote or discuss the original. No preface, no quotes, no metadata."
+        )
+    else:
+        instructions = (
+            "You are a biblical English editor. Rewrite the following Ethiopian Orthodox verse "
+            "into clear, faithful English, preserving names, theology, and verse structure. "
+            "Rewrite WITHOUT copying phrases verbatim or reusing 3 or more consecutive words from the input. Output ONLY the rewritten verse. Do NOT quote or discuss the original. No preface, no markers, no quotes, no EOF."
+        )
+    return f"{instructions}\n\nVerse:\n{text}\n\nAnswer:"
+
+
+
+def _too_similar(a: str, b: str) -> bool:
+    # Cheap similarity: normalized Hamming-like distance on aligned length
+    a = a.strip().lower()
+    b = b.strip().lower()
+    if not a or not b:
+        return False
+    n = max(len(a), len(b))
+    # pad shorter
+    if len(a) < n:
+        a = a + " "*(n-len(a))
+
+    if len(b) < n:
+        b = b + " "*(n-len(b))
+
+    diff = sum(ch1 != ch2 for ch1, ch2 in zip(a, b, strict=False))
+    sim = 1.0 - (diff / n)
+    return sim >= 0.90
+
+
+
+
+# DEDUP: commented out duplicate definition of _too_similar
+#     a = re.sub(r"\s+", " ", a.strip().lower())
+#     b = re.sub(r"\s+", " ", b.strip().lower())
+#     if not a or not b:
+#         return False
+#     ratio = difflib.SequenceMatcher(None, a, b).ratio()
+#     return ratio >= thresh
+def _sanitize(out: str, original: str) -> str:
+    m = re.search(r'Answer:\s*(.*)', out, flags=re.S|re.I)
+    if m:
+        out = m.group(1)
+
+    # Hard cut at role/label echoes first  [ROLE_CUT]
+    role_cut = re.search(r'\b(User Message:|User:|Assistant:|System:)\b', out)
+    if role_cut:
+        out = out[:role_cut.start()]
+
+    # Hard cut at EOF-ish markers to drop trailing junk  [EOF_CUT]
+    cut = re.search(r'\bEOF(?:\s+by\s+user)?\b|>>>|<\|', out, flags=re.I)
+    if cut:
+        out = out[:cut.start()]
+    # POST_CUT_CLEAN: strip any trailing marker remnants
+    out = re.sub(r'[\s>\|]+$', '', out)
+    # Remove role/user message echoes early
+    out = re.sub(r"(User Message:.*$|User:.*$|Assistant:.*$|System:.*$)", "", out, flags=re.I|re.M)
+
+    # Remove meta/control tokens and bracketed noise
+    out = re.sub(r'<\|[^|>]*\|>', '', out)
+    out = re.sub(r'<think.*?>.*?</think>', '', out, flags=re.I|re.S)
+    out = re.sub(r'<[^>\n]{0,60}>', '', out)
+
+    # Normalize whitespace
+    out = re.sub(r'\s+', ' ', out).strip()
+
+    # Split into sentences
+    sents = re.split(r'(?<=[.!?])\s+', out) if out else []
+
+    # Drop first-person/meta chatter
+    meta_re = re.compile(r"^(the original says\b|originally\b|i\b|i'm\b|i\s+need\b|let me\b|we\b|we'll\b|first,|second,|okay\b|alright\b|let's\b|i will\b)", re.I)
+    kept = []
+    for s in sents:
+        ss = s.strip().strip('"').strip("'")
+        if not ss or meta_re.match(ss):
+            continue
+        if re.search(r"\bI should\b|\bwe should\b|\bI will\b|^In this task\b|^Task:\b", ss, re.I):
+            continue
+        kept.append(ss)
+
+    # If nothing left, fall back to original
+    if not kept:
+        return original
+
+    # Keep at most first 2 sentences
+    text = " ".join(kept[:2]).strip()
+
+    # Final guardrails
+    bad = {"answer:", "eof", "ok", "okay", "alright"}
+    if not text or text.lower() in bad or text.lower().startswith('you are '):
+        return original
+    return text
+
+async def refine_async(text: str, mode: str = "rewrite", timeout_sec: float = 60.0) -> str:
+    """
+    Run phi4 wrapper to refine or explain a translated verse.
+    Uses short generation (-n 96) and cool temperature for stability.
+    Returns sanitized output; falls back to `text` if unusable.
+    """
+    cmd = _phi4_cmd()
+    exe = cmd.split()[0]
+    if shutil.which(exe) is None:
+        raise RefineError(f"phi4 wrapper not found on PATH: {exe}")
+
+    prompt = _build_prompt(text, mode=mode)
+    args = [cmd, "-n", "64", "--temp", "0.1", "-r", "EOF", "-r", "EOF by user", "-r", ">>>", "-r", "<|", "-r", "User Message:", "-r", "User:", "-r", "Assistant:", "-r", "System:", "-p", prompt]
+
+    proc = await asyncio.create_subprocess_exec(
+        *args,
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    try:
+        stdout, stderr = await asyncio.wait_for(proc.communicate(input=b""), timeout=timeout_sec)
+    except TimeoutError:
+        try:
+            proc.kill()
+        finally:
+            pass
+        # On timeout, do not destroy the current translation; just return it unchanged
+        return text
+
+    if proc.returncode != 0:
+        # On backend error, keep the current translation
+        return text
+
+    out = stdout.decode("utf-8", errors="replace")
+    result = _sanitize(out, text)
+    if _too_similar(result, text):
+        # Try a paraphrase-focused pass first
+        prompt3 = (
+            'You are a careful biblical editor. Paraphrase the verse into clear, faithful English. '
+            'Do NOT reuse any sequence of 3+ consecutive words from the input. '
+            'Preserve names and theology. Output ONLY the paraphrase.'
+        ) + f"\n\nVerse:\n{text}\n\nAnswer:"
+        args3 = [cmd, '-n', '80', '--temp', '0.2', '-r', 'EOF', '-r', '>>>', '-r', '<|', '-p', prompt3]
+        proc3 = await asyncio.create_subprocess_exec(*args3, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        try:
+            stdout3, _ = await asyncio.wait_for(proc3.communicate(input=b''), timeout=timeout_sec)
+            if proc3.returncode == 0:
+                out3 = stdout3.decode('utf-8', errors='replace')
+                result3 = _sanitize(out3, text)
+                if result3 and not _too_similar(result3, text):
+                    return result3
+        except Exception:
+            pass
+        # Second pass as explanation if still too close
+        prompt2 = _build_prompt(text, mode="explain")
+        args2 = [cmd, "-n", "64", "--temp", "0.1", "-r", "EOF", "-r", "EOF by user", "-r", ">>>", "-r", "<|", "-p", prompt2]
+        proc2 = await asyncio.create_subprocess_exec(*args2, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
+        try:
+            stdout2, _ = await asyncio.wait_for(proc2.communicate(input=b""), timeout=timeout_sec)
+            if proc2.returncode == 0:
+                out2 = stdout2.decode("utf-8", errors="replace")
+                result2 = _sanitize(out2, text)
+                if result2 and not _too_similar(result2, text):
+                    return result2
+        except Exception:
+            pass
+    return result
