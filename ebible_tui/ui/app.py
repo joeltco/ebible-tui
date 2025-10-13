@@ -46,7 +46,7 @@ class EBibleApp(App):
                 yield Static('[b]Translation[/b]', id='trans-title-out')
                 self.trans_panel = TranslationPanel()
                 yield self.trans_panel
-        yield Static('  q Quit   p prev  n next   g/G top/bot  ', id='footer')
+        yield Static('q Quit   p prev  n next   g/G top/bot  ', id='footer')
 
     def action_down(self) -> None:
         self.verse_panel.list_view.action_cursor_down()

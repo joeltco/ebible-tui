@@ -101,16 +101,23 @@ NavPane { border: none; padding: 0; background: transparent; }
 #vv-title-out { color: #ffd27f; }
 #trans-title-out { color: #a0ffa0; }
 
+#footer {
+    background: #101010;
+    color: #00FF00;
+    padding: 0 2;
+    height: 1;
+    text-align: center;
+    border-top: solid #404040;
+}
 
 /* Footer overrides: fixed bottom, no clipping on small terminals */
-
 #footer {
     dock: bottom;
-    height: 1;
-    padding: 0 1;
-    background: #1a1a33;
-    color: #e0e0ff;
-    content-align: left middle;
-    border-top: none;
-    text-style: bold;
+    height: auto;
+    min-height: 1;
+    padding: 0 2;
+    background: #101010;
+    color: #00FF00;
+    text-align: center;
+    border-top: solid #404040;
 }
