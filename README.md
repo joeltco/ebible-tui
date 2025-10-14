@@ -1,78 +1,36 @@
-eBible TUI
-==========
+# eBible · Ethiopian Orthodox Bible (TUI)
 
-A terminal Textual UI for reading and translating the Ethiopian Orthodox Bible (81 books).
-Navigate Books and Chapters on the left, read Verses on the right, and translate a selected verse.
+Amharic Bible TUI with on-the-spot translation.
 
-Features
-- 81-book Ethiopian Orthodox canon bundled as plain text assets.
-- Books and Chapters navigation panes.
-- Verses panel with wrapping and scrolling.
-On-demand translation via Google Translate using translate-shell (`trans`).
-- Async translation to keep the UI responsive.
-- Clean layout with consistent bordered panels.
+## Quick Install (Termux)
+    mkdir -p ~/apps && cd ~/apps
+    git clone https://github.com/joeltco/ebible-tui.git
+    cd ebible-tui
+    pkg install -y python pip translate-shell
+    pip install "textual==0.62.0" "rich==13.7.1" "pyyaml"
 
-Prerequisites
-- Python 3.12 or newer available in Termux.
-- translate-shell package must be installed (`pkg install translate-shell` on Termux).
-- No model files required; translations are done online via Google services.
+## Quick Install (Debian/Ubuntu)
+    mkdir -p ~/apps && cd ~/apps
+    git clone https://github.com/joeltco/ebible-tui.git
+    cd ebible-tui
+    sudo apt update && sudo apt install -y python3 python3-pip translate-shell
+    pip3 install "textual==0.62.0" "rich==13.7.1" "pyyaml"
 
-Install (local dev)
-- From the project root:
-    $ pip install --upgrade -e .
+## Optional: one-time launcher (no venv)
+    mkdir -p ~/bin
+    cat > ~/bin/ebible <<LAUNCH
+    #!/usr/bin/env bash
+    set -e
+    cd "$HOME/apps/ebible-tui" || exit 1
+    python3 -c "import textual,rich,yaml" 2>/dev/null || pip3 install textual==0.62.0 rich==13.7.1 pyyaml >/dev/null
+    exec python3 -m ebible_tui "$@"
+    LAUNCH
+    chmod +x ~/bin/ebible
 
-Run
-- From the project root:
-    $ ebible
-- Or:
-    $ python -m ebible_tui
+## Run
+    ebible
 
-Keyboard
-- q: quit
-- p / n: move focus left/right between panes
-- g / G: jump to top / bottom
-- Enter on a verse: translate verse into the Translation box
-
-Config
-- Optional file: ~/.config/ebible/config.yaml
-  Keys:
-    bible_dir: absolute path to a Bible81 directory (overrides packaged assets)
-
-Translation Backend
-- App calls ebible_tui.core.translate.translate / translate_async.
-Default backend is Google Translate through translate-shell. Requires internet connectivity.
-  1) reads input text on stdin
-  2) maps language tags for NLLB model
-Optional: override default command with environment variable:
-    EBIBLE_GOOGLE_TRANS_CMD=/absolute/path/to/trans
-    EBIBLE_TRANSLATOR=/absolute/path/to/amtr
-Supported language tags: am, en (extendable in code).
-
-Project Layout (high level)
-- ebible_tui/core/bible: assets resolution, parsing, refs, English canon names
-- ebible_tui/core/translate: backend interface and Amtr implementation
-- ebible_tui/core/reader.py: list books/chapters, read chapter text
-- ebible_tui/ui/widgets: NavPane, VersePanel, TranslationPanel, TitleBar
-- ebible_tui/ui/styles/app.tcss: layout and theming
-- ebible_tui/assets/Bible81: bundled text files
-- ebible_tui/tests: lightweight tests for parsing, refs, reader, translate
-
-Maintenance
-- Lint:
-    $ ruff check .
-- Type check:
-    $ mypy ebible_tui
-- Tests:
-    $ pytest -q
-
-Troubleshooting
-- No books listed: verify packaged assets exist at ebible_tui/assets/Bible81 or set bible_dir in config.
-- Translation not working: ensure `trans` is installed and functional (`trans -b am:en "ሰላም ዓለም!"`).
-- TUI layout quirks: see ebible_tui/ui/styles/app.tcss overrides at the end of the file.
-
-License
-- Personal project; choose and update a license as needed.
-
-Credits
-- Built with Textual and Rich.
-- Translation powered by a local NLLB-200 distilled 600M model.
+Notes:
+- No virtualenv required.
+- Translation uses translate-shell (the "trans" command).
+- SSH keys/tokens are only needed if you plan to push to GitHub; cloning via HTTPS is public.
