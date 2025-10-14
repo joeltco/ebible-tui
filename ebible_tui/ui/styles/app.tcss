@@ -26,8 +26,6 @@ VersePanel {
 }
 #vv-title { color: #ffd27f; height: 1; }
 #verse-list { height: 1fr; }
-#verse-list ListItem > Static { width: 100%; text-wrap: wrap; content-align: left top; }
-#vv-trans { text-wrap: wrap; padding: 0 1; width: 100%; border-top: none; }
 
 
 # --- truncation override (no new widgets) ---
@@ -42,7 +40,6 @@ VersePanel { border: round #444; padding: 1 2; background: #0f0f14; }
 
 # --- translation panel sizing (verses + translation fit in 27x81) ---
 #trans-title { height: 1; color: #a0ffa0; }
-#trans-body  { height: 4; text-wrap: wrap; width: 100%; content-align: left top; }
 TranslationPanel { border: round #444; padding: 0 1; background: #0f0f14; }
 #verse-list { height: 1fr; }
 
@@ -56,15 +53,12 @@ VersePanel { height: 1fr; }       # verses pane stretches to footer
 #books, #chapters { height: 1fr; margin: 0; padding: 0 1; background: #0f0f14; }# split space in left column evenly
 
 # scrollable translation body (override)
-#trans-body { overflow: auto; text-wrap: wrap; width: 100%; content-align: left top; }
 
 # --- scrollable translation (uses existing IDs) ---
 #trans-box { height: 6; }
-#vv-trans { height: 1fr; overflow: auto; scrollbar-gutter: stable; text-wrap: wrap; }
 
 # --- scrollable translation (uses existing IDs) ---
 #trans-box { height: 6; }
-#vv-trans { height: 1fr; overflow: auto; scrollbar-gutter: stable; text-wrap: wrap; }
 
 # --- override: stretch verses fully ---
 VersePanel { padding: 0 2; }
