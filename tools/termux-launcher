@@ -1,0 +1,8 @@
+#!/data/data/com.termux/files/usr/bin/sh
+set -e
+cd "$HOME/projects/personal/ebible" || exit 1
+if ! command -v trans >/dev/null 2>&1; then
+  pkg install -y translate-shell >/dev/null 2>&1 || true
+fi
+TRANS="$PREFIX/bin/trans"
+exec proot -b "$TRANS:/usr/bin/trans" python -m ebible_tui "$@"
