@@ -55,7 +55,7 @@ class NavPane(Static):
     def on_list_view_selected(self, event: ListView.Selected) -> None:
         if event.list_view is self.books_view:
             item = event.item
-            label_obj = item.query_one(Static).renderable
+            label_obj = item.query_one(Static).render()
             label = getattr(label_obj, 'plain', str(label_obj))
             idx = self.books_view.index
             book_label = self._book_label_cache.get(idx, label) if idx is not None else label
@@ -95,7 +95,7 @@ class NavPane(Static):
             label = ''
             if item is not None:
                 try:
-                    label_obj = item.query_one(Static).renderable
+                    label_obj = item.query_one(Static).render()
                     label = getattr(label_obj, 'plain', str(label_obj))
                 except Exception:
                     label = ''
