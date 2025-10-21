@@ -35,7 +35,8 @@ async def _run_google(text: str, src: str, tgt: str, timeout_sec: float = 30.0) 
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    assert proc.stdin is not None and proc.stdout is not None
+    if proc.stdin is None or proc.stdout is None:
+        raise RuntimeError('subprocess pipes unavailable')
     try:
         proc.stdin.write(text.encode('utf-8'))
         await proc.stdin.drain()

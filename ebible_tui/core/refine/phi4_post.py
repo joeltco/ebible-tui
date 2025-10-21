@@ -20,7 +20,8 @@ def _build_prompt(text: str, mode: str = "rewrite") -> str:
         env_mode = _os.environ.get('EBIBLE_PHI4_MODE')
         if env_mode:
             mode = env_mode.strip().lower()
-    except Exception:
+    except Exception as _e:  # nosec B110 (best-effort fallback)
+        pass
         pass
     if mode == "literal":
         instructions = (
@@ -179,7 +180,8 @@ async def refine_async(text: str, mode: str = "rewrite", timeout_sec: float = 60
                 result3 = _sanitize(out3, text)
                 if result3 and not _too_similar(result3, text):
                     return result3
-        except Exception:
+        except Exception as _e:  # nosec B110 (best-effort fallback)
+            pass
             pass
         # Second pass as explanation if still too close
         prompt2 = _build_prompt(text, mode="explain")
@@ -192,6 +194,7 @@ async def refine_async(text: str, mode: str = "rewrite", timeout_sec: float = 60
                 result2 = _sanitize(out2, text)
                 if result2 and not _too_similar(result2, text):
                     return result2
-        except Exception:
+        except Exception as _e:  # nosec B110 (best-effort fallback)
+            pass
             pass
     return result

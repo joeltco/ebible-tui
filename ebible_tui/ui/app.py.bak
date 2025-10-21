@@ -11,7 +11,7 @@ from ebible_tui.ui.widgets.titlebar import TitleBar
 from ebible_tui.ui.widgets.translation_panel import TranslationPanel
 from ebible_tui.ui.widgets.verse_panel import VersePanel
 
-APP_TITLE = 'eBible'
+APP_TITLE = 'eBible · 27×81'
 APP_SUBTITLE = 'Ethiopian Orthodox Bible · Live Translation'
 
 
@@ -73,8 +73,9 @@ class EBibleApp(App):
             self.verse_panel.start_anim()
             try:
                 self.trans_panel.set_status('Translating...')
-            except Exception as _e:
-                _ = _e  # handled
+            except Exception:
+                pass
+
             async def _work() -> None:
                 try:
                     out = await translate_async(verse_text, 'am', 'en', timeout_sec=180)
@@ -85,8 +86,8 @@ class EBibleApp(App):
                     self.verse_panel.stop_anim()
                 try:
                     self.trans_panel.set_translation(out_trim)
-                except Exception as _e:
-                    _ = _e  # handled
+                except Exception:
+                    pass
 
             self.run_worker(_work(), exclusive=True, group='translate')
             event.stop()
@@ -95,18 +96,18 @@ class EBibleApp(App):
         try:
             if self.verse_panel.list_view.has_focus:
                 return self.verse_panel.list_view
-        except Exception as _e:
-            _ = _e  # handled
+        except Exception:
+            pass
         try:
             if self.nav.chapters_view.has_focus:
                 return self.nav.chapters_view
-        except Exception as _e:
-            _ = _e  # handled
+        except Exception:
+            pass
         try:
             if self.nav.books_view.has_focus:
                 return self.nav.books_view
-        except Exception as _e:
-            _ = _e  # handled
+        except Exception:
+            pass
         return getattr(self.nav, 'books_view', None)
 
     def action_focus_books(self) -> None:

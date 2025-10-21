@@ -15,7 +15,7 @@ def list_books() -> list[str]:
     def key(p: Path) -> tuple[int, str]:
         try:
             num = int(p.name.split(' ', 1)[0])
-        except Exception:
+        except (ValueError, IndexError):
             num = 9999
         return (num, p.name)
 
@@ -30,10 +30,10 @@ def list_chapters(book_name: str) -> list[ChapterRef]:
     for p in sorted(book_dir.glob('*.txt')):
         try:
             num = int(p.stem.split(' - ', 1)[1])
-        except Exception:
+        except (ValueError, IndexError):
             try:
                 num = int(p.stem.split(' - ', 1)[0])
-            except Exception:
+            except (ValueError, IndexError):
                 continue
         chapters.append(ChapterRef(book=book_name, chapter_num=num, path=p))
     chapters.sort(key=lambda c: c.chapter_num)

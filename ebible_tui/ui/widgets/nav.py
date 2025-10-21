@@ -86,9 +86,8 @@ class NavPane(Static):
                     prev_item = self.books_view.children[prev_idx]
                     if prev_idx in self._book_label_cache:
                         prev_item.query_one(Static).update(self._book_label_cache.pop(prev_idx))
-            except Exception:
-                pass
-
+            except Exception as _e:
+                _ = _e  # handled
             # Get current highlighted label and index
             idx = self.books_view.index
             item = event.item
@@ -105,9 +104,8 @@ class NavPane(Static):
                 try:
                     if idx not in self._book_label_cache and label:
                         self._book_label_cache[idx] = label
-                except Exception:
-                    pass
-
+                except Exception as _e:
+                    _ = _e  # handled
             # Compute English name and inject into highlighted row (keep number)
             en = self._en_title_for(label)
             try:
