@@ -52,34 +52,96 @@ src/ebible/
     widgets/        verse pane
 tools/
   build_db.py       assets/Bible81/*.txt  ->  src/ebible/data/bible.db
+  translate.py      pull / push chapters, with verse-alignment enforcement
+  plan_batches.py   partition remaining work by verse count
+  check_consistency.py  terminology drift between independently-translated batches
+  fix_term.py       scoped single-term normalisation
+  audit_source.py   regenerates SOURCE_ISSUES.md from the data
+  repair_artifacts.py   in-place source fixes that preserve translations
   termux-launcher
 assets/Bible81/     the Amharic source text (1,466 .txt files)
+TRANSLATION_GUIDE.md  binding conventions for translators
+SOURCE_ISSUES.md      generated defect inventory
 ```
 
-`assets/` is the source of truth; `bible.db` is a build artifact. Rebuild with:
+`assets/` holds the Amharic source of truth. `bible.db` is **tracked in git** — it
+was a pure build artifact until it began carrying the English translation, which
+cannot be regenerated from the Amharic. Rebuild the Amharic side with:
 
 ```sh
-python tools/build_db.py
+python tools/build_db.py    # WARNING: recreates the db, dropping every translation
 ```
 
-## English translation
+Use `tools/repair_artifacts.py` instead for in-place source fixes that must
+preserve translated text.
 
-**Not yet generated.** `verse.text_en` is `NULL` throughout, and the reader shows
-`· not translated ·` rather than an empty column — a pending build step is not the
-same as a translation that produced nothing, and the UI keeps those distinct.
+## English translation — in progress
 
-The plan is a one-time batch translation pass writing into `text_en`. Nothing at
-runtime will call out to a network.
+**13,217 of 39,169 verses (34%).** Untranslated verses hold `NULL`, and the
+reader shows `· not translated ·` rather than an empty column — a pending verse
+is not the same as a translation that produced nothing.
+
+| | |
+|---|---|
+| **Complete** | Genesis, Exodus, Leviticus, Numbers, Deuteronomy, Joshua, Judges, Ruth, Matthew, Mark, Luke, John |
+| **Partial** | Acts 96%, 1 Samuel 69%, Enoch 25%, Psalms 12% |
+| **Not started** | 65 books |
+
+Translation is done by agents working from **`TRANSLATION_GUIDE.md`**, which is
+binding. Its prime directive: the Amharic is the source of truth, and no
+harmonising toward the KJV or any remembered English Bible. That is why this
+text reads Adullam where English Bibles read Eglon, Asaph where they read Asa,
+and "Jonathan son of Gershom, son of **Moses**" at Judges 18:30 where the
+Masoretic softens it to Manasseh.
+
+### Pipeline
+
+```sh
+python tools/plan_batches.py --target 600     # partition remaining work
+python tools/translate.py pull genesis 1      # emit a chapter as numbered lines
+python tools/translate.py push genesis 1 < en.txt   # write English back
+python tools/translate.py status              # progress
+python tools/check_consistency.py             # terminology drift across batches
+python tools/fix_term.py --from X --to Y      # scoped single-term normalisation
+python tools/audit_source.py > SOURCE_ISSUES.md
+```
+
+`push` rejects any payload whose verse numbers do not match the source exactly.
+A shifted verse would silently attach the wrong English to the wrong Amharic and
+nothing downstream would notice, so that guard is not optional.
+
+## What has NOT been verified
+
+**No one has audited these translations for accuracy.** What has been verified is
+mechanical: divine names consistent at 99–100%, no `God God`, no translator notes
+leaked into verse text, no drift on watched terminology. That is consistency
+checking, not correctness checking.
+
+Agent self-reports flag hundreds of verses as genuinely uncertain, which is the
+system working. The risk that remains is *silent* fluent error — a confidently
+wrong rendering reports itself as confident. Establishing quality would need a
+verification pass: independent re-translation of sampled chapters, compared
+against what is stored, with divergences surfaced. That has not been done.
 
 ## Known gaps
 
-- **Psalms has 150 chapters** in this source. The Ethiopian Psalter traditionally
-  includes Psalm 151; it is absent from the source text and has not been invented.
-- **Versification may differ from Western Bibles** in places. The Amharic text is
-  authoritative here; chapter and verse numbers follow it, not KJV.
-- **15 books are outside the 66-book protestant canon** (marked `·dc` in the book
-  picker). They have no widely available English translation to check against, so
-  their translations will warrant closer review than the rest.
+- **70 verses are defective in the source** — see `SOURCE_ISSUES.md`, generated
+  from the data. Most seriously, **33 verses are absent**: the scrape dropped a
+  verse and left the following verse's number stranded inline. They are recorded,
+  not reconstructed.
+- **Leviticus 27:31 is not scripture** — a lexicographer's note on coinage that
+  occupies a verse slot and shifts the chapter. Left in place; removing it would
+  renumber the chapter the translation is aligned to.
+- **Psalms has 150 chapters** here. The Ethiopian Psalter traditionally includes
+  Psalm 151; it is absent from the source and has not been invented.
+- **Enoch 6:12** may render `የሴት ልጆች` wrongly ("children of Seth"). An agent
+  deduced the correct sense from 9:17 and was returning to fix it when it died.
+- **Versification differs from Western Bibles** throughout. The Amharic is
+  authoritative; chapter and verse numbers follow it, not the KJV.
+- **15 books sit outside the 66-book canon** (marked `·dc` in the picker). They
+  have no widely available English to check against, so they warrant the closest
+  review — which is exactly why their agents were asked for verse-level
+  confidence reports rather than clean summaries.
 
 ## Tests
 
