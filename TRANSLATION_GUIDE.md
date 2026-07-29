@@ -192,11 +192,24 @@ Also: `ጣፋጭ ሽታ` sweet smell · `መታሰቢያ` memorial · `ማስተ
 `ያስተሰርያል` make atonement · `ትክና` ordain · `ነውር የሌለበት` without blemish ·
 `መልካም ዱቄት` good flour · `ስደተኛ` sojourner · `እንግዳ` stranger · `የአገር ልጅ` native ·
 `ማኅበር` congregation · `ጉባኤ` assembly · `ሥርዐት` ordinance (`ሕግ` stays law) ·
-`በደል` trespass.
+`በደል` trespass · `ዕርም` devoted / a devoted thing.
+
+**Three words for the outsider** — the text distinguishes them; keep all three:
+
+| Amharic | English |
+|---|---|
+| `ስደተኛ` | sojourner |
+| `እንግዳ` | stranger |
+| `መጻተኛ` | foreigner |
 
 **Ritual state** — `ርኩስ` unclean · `ንጹሕ` clean · `ርኵሰት` uncleanness ·
 `ጸያፍ` abomination · `የተጠላ` a detested thing (kept distinct from abomination) ·
-`መርገም` impurity · `ደዌ` disease · `ለምጽ` leprosy.
+`ደዌ` disease · `ለምጽ` leprosy.
+
+`መርገም` is **context-dependent**, not fixed: "impurity" in the Leviticus purity
+laws (menstrual), but plainly "curse" at Numbers 5:21–27 ("make you a curse and
+an oath"). Render by sense. An earlier version of this table glossed it as
+"impurity" outright, which was wrong.
 
 Note `ማደሪያ` is **tabernacle** (see Structure above), not "dwelling place" —
 that is the one place where the Exodus rendering is the correct one.

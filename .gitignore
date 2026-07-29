@@ -7,6 +7,7 @@ dist/
 build/
 *.egg-info/
 
-# Build artifact: regenerated from assets/ by tools/build_db.py.
-# Kept out of git so each rebuild doesn't add another 12 MB blob.
-src/ebible/data/bible.db
+# bible.db WAS a pure build artifact, regenerable from assets/. It no longer is:
+# it now carries the English translation, which cannot be rebuilt from the
+# Amharic source. It is tracked deliberately, and committed at milestones rather
+# than on every change so the history doesn't fill with 15 MB blobs.
