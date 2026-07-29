@@ -1,7 +1,0 @@
-[
-  "tests/test_parsing.py::test_parse_verses_minimal",
-  "tests/test_reader.py::test_assets_present_and_readable",
-  "tests/test_refs.py::test_chapterref_basic",
-  "tests/test_translate_mock.py::test_translate_async_mock",
-  "tests/test_translate_mock.py::test_translate_sync_mock"
-]

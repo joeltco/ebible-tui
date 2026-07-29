@@ -1,0 +1,79 @@
+/* ebible — reader styling.
+ *
+ * Restrained on purpose: the Ge'ez script carries a lot of visual texture on its
+ * own, and heavy chrome competes with it. Colour is used only to separate the
+ * two languages and to mark what is missing.
+ */
+
+$am: #e8e2d4;      /* warm off-white — Amharic, the primary text */
+$en: #9db4c0;      /* cool muted blue — English, clearly secondary */
+$num: #6b6255;     /* verse numbers, present but recessive */
+$hit: #d9a441;     /* search match */
+
+Screen {
+    background: #12110f;
+}
+
+Header {
+    background: #1c1a17;
+    color: $am;
+}
+
+Footer {
+    background: #1c1a17;
+}
+
+#reader {
+    height: 1fr;
+}
+
+/* Rich styles referenced from verse_pane.py */
+.reader--am { color: $am; }
+.reader--en { color: $en; }
+.reader--num { color: $num; }
+
+/* ------------------------------------------------------------- modals */
+
+#picker, #search {
+    width: 90%;
+    max-width: 96;
+    height: 80%;
+    margin: 2 0;
+    padding: 1 2;
+    background: #1a1815;
+    border: round #3a352c;
+}
+
+#picker-title {
+    color: $am;
+    text-style: bold;
+    padding: 0 0 1 0;
+}
+
+#picker-list, #search-results {
+    height: 1fr;
+    background: transparent;
+    border: none;
+    scrollbar-size-vertical: 1;
+}
+
+OptionList > .option-list--option-highlighted {
+    background: #2e2a22;
+    color: $am;
+    text-style: bold;
+}
+
+#search-input {
+    background: #12110f;
+    border: tall #3a352c;
+    color: $am;
+}
+
+#search-input:focus {
+    border: tall #6b6255;
+}
+
+#search-status {
+    padding: 1 0;
+    color: $num;
+}

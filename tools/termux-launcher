@@ -1,8 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/sh
+# ebible on Termux.
+#
+# The reader is fully offline: no translate-shell, no proot bind, no network.
+# Everything it needs is compiled into the package.
 set -e
-cd "$HOME/projects/personal/ebible" || exit 1
-if ! command -v trans >/dev/null 2>&1; then
-  pkg install -y translate-shell >/dev/null 2>&1 || true
-fi
-TRANS="$PREFIX/bin/trans"
-exec proot -b "$TRANS:/usr/bin/trans" python -m ebible_tui "$@"
+exec python -m ebible "$@"

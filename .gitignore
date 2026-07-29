@@ -1,6 +1,12 @@
 __pycache__/
 *.pyc
-.venv/
 .mypy_cache/
 .pytest_cache/
-.ruff_cache/
+.venv/
+dist/
+build/
+*.egg-info/
+
+# Build artifact: regenerated from assets/ by tools/build_db.py.
+# Kept out of git so each rebuild doesn't add another 12 MB blob.
+src/ebible/data/bible.db
