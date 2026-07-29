@@ -106,7 +106,25 @@ from this file. Left untouched.
 | Rest of Jeremiah 1:31 | `ሐሰተኞች ናቸው አምላኮች አይደሉም hነሱስ መዝጊያ ይሻላል። በቤት ውስጥ ያለውን ያድናል። አይራ…` |
 | Daniel 13:2 | `ስሟ ሶስና የምትባል ሚስት አግብቶ ነበር። ይቺውም የኬልቅዩስ ልጅ ናት እጅግ መልከ መልካም ነበ…` |
 
-## 4. Stray trailing letters — cosmetic
+## 4. Absorbed editorial apparatus
+
+1 verse(s) are not scripture but a lexicographer's note that was
+absorbed into the verse numbering, adding a verse and shifting the rest of
+the chapter.
+
+Unbalanced parentheses are what distinguish these from the many *legitimate*
+in-text glosses ("Rabbi, which means Teacher" at John 1:39; "Tabitha, which
+means Dorcas" at Acts 9:36) — those are scripture and must not be stripped.
+
+| Reference | Text |
+|---|---|
+| Leviticus 27:31 | `ጽር አቦሎስ (የገንዘብ ስም የዲድርክም ሃያኛ በዕብራይስጥ ጌራ ፩ ሰቅል እንዲሆን ሃያው አቦሊ ፩ ዲድክርም ነው…` |
+
+Left in place: removing it would renumber the chapter, and the numbering is
+what the translation is aligned to.
+
+
+## 5. Stray trailing letters — cosmetic
 
 13 verses end with a lone letter after the full stop `።`,
 most often `ፕ` or `ች`. Harmless to reading; left as-is.

@@ -97,7 +97,26 @@ def main() -> int:
     for ref, txt in latin:
         print(f'| {ref} | `{txt}…` |')
 
-    print('\n## 4. Stray trailing letters — cosmetic\n')
+    print('\n## 4. Absorbed editorial apparatus\n')
+    gloss = [
+        (f'{r["name_en"]} {r["chapter"]}:{r["verse"]}', r['text_am'][:90])
+        for r in rows
+        if r['text_am'].count('(') != r['text_am'].count(')')
+    ]
+    print(f'{len(gloss)} verse(s) are not scripture but a lexicographer\'s note that was')
+    print('absorbed into the verse numbering, adding a verse and shifting the rest of')
+    print('the chapter.\n')
+    print('Unbalanced parentheses are what distinguish these from the many *legitimate*')
+    print('in-text glosses ("Rabbi, which means Teacher" at John 1:39; "Tabitha, which')
+    print('means Dorcas" at Acts 9:36) — those are scripture and must not be stripped.\n')
+    print('| Reference | Text |')
+    print('|---|---|')
+    for ref, txt in gloss:
+        print(f'| {ref} | `{txt}…` |')
+    print('\nLeft in place: removing it would renumber the chapter, and the numbering is')
+    print('what the translation is aligned to.\n')
+
+    print('\n## 5. Stray trailing letters — cosmetic\n')
     print(f'{len(trailing)} verses end with a lone letter after the full stop `።`,')
     print('most often `ፕ` or `ች`. Harmless to reading; left as-is.\n')
     print('| Reference | Ends |')

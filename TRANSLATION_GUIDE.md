@@ -194,6 +194,14 @@ Also: `ጣፋጭ ሽታ` sweet smell · `መታሰቢያ` memorial · `ማስተ
 `ማኅበር` congregation · `ጉባኤ` assembly · `ሥርዐት` ordinance (`ሕግ` stays law) ·
 `በደል` trespass · `ዕርም` devoted / a devoted thing.
 
+**Kinship and redemption** — the text distinguishes two words English tends to
+merge. Keep them distinct:
+
+| Amharic | English |
+|---|---|
+| `ዘመድ` | kinsman / near kinsman |
+| `ዋርሳ` | the levirate-duty word — **context-dependent**: "brother-in-law" where the man actually is a brother (Deuteronomy 25:7, 9), "next of kin" where he is not (Ruth 3:9, 3:13, 4:14 — Boaz is no brother of Naomi's sons) |
+
 **Three words for the outsider** — the text distinguishes them; keep all three:
 
 | Amharic | English |
@@ -212,7 +220,16 @@ an oath"). Render by sense. An earlier version of this table glossed it as
 "impurity" outright, which was wrong.
 
 Note `ማደሪያ` is **tabernacle** (see Structure above), not "dwelling place" —
-that is the one place where the Exodus rendering is the correct one.
+that is the one place where the Exodus rendering is the correct one. But the
+word is ordinary Amharic for a dwelling, so where it is plainly domestic rather
+than cultic — Leviticus 23:17 `ከየማደሪያችሁ`, "out of your dwellings" — render it
+that way. **Tabernacle only where the referent is the LORD's structure**;
+"dwelling" everywhere else — a person's house (Leviticus 23:17), a town
+(Numbers 21:15, Ar), Israel's tents (Numbers 24:5, parallel to `ድንኳኖችህ`), or
+Korah's dwelling (Numbers 16:24, 27).
+
+`ልዩ ሰው` is a **fourth** outsider word, distinct from the three below —
+render it "outsider" so the triple stays intact.
 
 ---
 
