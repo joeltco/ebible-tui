@@ -21,7 +21,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 
-from ebible import canon  # noqa: E402
 from ebible.data.store import DB_PATH, Store, open_writable  # noqa: E402
 
 LINE_RE = re.compile(r'^(\d+)[.:]\s*(.*)$')

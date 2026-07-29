@@ -10,7 +10,9 @@ from __future__ import annotations
 import pytest
 from rich.console import Console
 
+from ebible.canon import Section
 from ebible.config import Layout, Settings, config_path
+from ebible.data.models import Book, Verse
 from ebible.data.store import Store
 from ebible.ui.app import EbibleApp
 from ebible.ui.widgets.verse_pane import UNTRANSLATED, VersePane
@@ -20,6 +22,11 @@ from ebible.ui.widgets.verse_pane import UNTRANSLATED, VersePane
 def isolated_config(tmp_path, monkeypatch) -> None:
     """Never touch the real ~/.config during tests."""
     monkeypatch.setenv('XDG_CONFIG_HOME', str(tmp_path / 'cfg'))
+
+
+def _fake_book() -> Book:
+    return Book(id=1, slug='test', name_am='ሙከራ', name_en='Test',
+                section=Section.LAW, chapter_count=1, deuterocanonical=False)
 
 
 def render(table, width: int) -> str:
@@ -64,16 +71,39 @@ def test_layout_cycles_through_all_three() -> None:
 
 
 def test_verse_table_renders_both_languages() -> None:
+    """Both columns render. Uses synthetic verses, not the shipped database.
+
+    An earlier version of this test read Genesis 1 and asserted the untranslated
+    marker appeared. That passed only while Genesis was untranslated, and broke
+    the moment it was translated — the test was really asserting a fact about
+    translation progress, not about rendering. Construct the rows instead.
+    """
+    pane = VersePane()
+    pane._book = _fake_book()
+    pane._chapter = 1
+    pane._verses = [
+        Verse(book_id=1, chapter=1, verse=1, text_am='በመጀመሪያ', text_en='In the beginning'),
+        Verse(book_id=1, chapter=1, verse=2, text_am='ምድርም ባዶ', text_en=None),
+    ]
+    pane._show_numbers = True
+    out = render(pane._build_table(Layout.PARALLEL), 92)
+    assert 'በመጀመሪያ' in out            # Amharic column
+    assert 'In the beginning' in out   # English column
+    assert UNTRANSLATED in out         # a NULL verse is marked, not left blank
+    assert '1' in out                  # verse number
+
+
+def test_shipped_database_renders() -> None:
+    """Smoke: a real chapter from the shipped db renders without raising."""
     store = Store()
     book = store.book_by_slug('genesis')
     pane = VersePane()
     pane._book, pane._chapter = book, 1
-    pane._verses = store.chapter(book.id, 1)[:2]
+    pane._verses = store.chapter(book.id, 1)[:3]
     pane._show_numbers = True
     out = render(pane._build_table(Layout.PARALLEL), 92)
-    assert 'በመጀመሪያ' in out          # Amharic present
-    assert UNTRANSLATED in out       # untranslated English marked, not blank
-    assert '1' in out                # verse number present
+    assert 'በመጀመሪያ' in out
+    assert out.strip()
     store.close()
 
 
