@@ -30,6 +30,18 @@ DIR_RE = re.compile(r'^(\d+)\s*-\s*(.+)$')
 CHAPTER_RE = re.compile(r'^\d+\s*-\s*(\d+)$')
 VERSE_RE = re.compile(r'^(\d+)[.:]\s*(.*)$')
 
+# The source was scraped from a page with superscript footnote markers, and those
+# marker digits were inlined into the words they annotated -- 'አቤል2ን' (Abel),
+# 'አብርሃም26' (Abraham). The values ascend monotonically through the canon, which
+# is what identifies them as markers rather than content: Amharic writes numbers
+# either as Ge'ez numerals or spelled out, never as ASCII digits welded mid-word.
+FOOTNOTE_DIGITS_RE = re.compile(r'(?<=[ሀ-፿])\d+')
+
+
+def clean_verse(text: str) -> str:
+    """Strip scrape artifacts. Assets stay pristine; this runs at build time."""
+    return FOOTNOTE_DIGITS_RE.sub('', text)
+
 
 class BuildError(RuntimeError):
     pass
@@ -68,7 +80,7 @@ def parse_verses(path: Path) -> list[tuple[int, str]]:
         m = VERSE_RE.match(line)
         if not m:
             raise BuildError(f'{path}:{lineno}: not a verse line: {line[:60]!r}')
-        verses.append((int(m.group(1)), m.group(2).strip()))
+        verses.append((int(m.group(1)), clean_verse(m.group(2).strip())))
     return verses
 
 
