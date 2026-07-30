@@ -289,6 +289,56 @@ text. If a later book disambiguates them, record it here.
 
 ---
 
+## 3d. The epistles
+
+Settled across Romans, whose two translators matched. **Binding for 1–2
+Corinthians, Galatians, Ephesians, Philippians, Colossians, Thessalonians,
+Timothy, Titus, Philemon, Hebrews and the catholic epistles.**
+
+`ጽድቅ` righteousness · `ጻድቅ` righteous · `ጸደቀ` be justified · `አጸደቀ` justify ·
+`እምነት` faith (`አለማመን` unbelief) · `ሥጋ` flesh · `መንፈስ` Spirit/spirit ·
+`ሕግ` law · `ትእዛዝ` commandment · `ሥርዐት` ordinance · `ኀጢአት` sin ·
+`ጸጋ` grace (`ስጦታ` gift) · `ትምክሕት` boasting · `በደል` trespass ·
+`መተላለፍ` transgression · `ኵነኔ` condemnation · `ቍጣ` wrath ·
+`መቅሠፍት` scourge (distinct from wrath) · `ባሪያ` slave · `ሎሌ` manservant ·
+`ወንጌል` gospel · `ምሥራች` good news (kept distinct) · `ቤዛ` redemption ·
+`ማስተስረያ` atonement · `ኅሊና` conscience · `መከራ` tribulation · `ጭንቀት` anguish ·
+`ምሳሌ` likeness · `አምሳል` figure.
+
+Three that are easy to get wrong:
+
+- **`ሥራ` is "work", singular** — "the work of the law", never "works".
+- **`አሕዛብ` is "nations", never "Gentiles."** Gentiles is an English-tradition
+  word the Amharic does not use.
+- **`ዐመፃ` is "unrighteousness" in the epistles**, against §3c's "iniquity" for
+  the wisdom books. This is a deliberate register split, recorded so that a
+  later translator does not "correct" one to the other. If it ever needs
+  collapsing, collapse it everywhere at once, not book by book.
+
+**The emphatic negation is two words, not one.** Do not flatten them:
+`አይደለም` → **"No."** · `እንዲህ አይሁን` → **"Let it not be so."** ·
+`ከቶ አይደለም` → "Not at all". Rhetorical questions stay questions:
+`እንግዲህ ምን እንላለን` → "What then shall we say?"
+
+Settled in Romans and carried forward: `ሐራነት` liberty, kept distinct from
+`ነጻነት` freedom · `ልጅነት` sonship while `ልጆች` stays children ·
+`ዐሳብ` purpose where God's, thought where general · `ልባም` sensible (as §3c) ·
+`እልከኛ ያደርገዋል` "makes stubborn", not "hardens".
+
+**`አእምሮ` is unresolved.** §3c fixes it as "sense" for the wisdom books, and
+Romans uses "sense" where it is a standard one is measured against (12:1, 12:3)
+but **"mind"** where it is a faculty a person possesses (14:5). That split is
+defensible and was flagged rather than hidden. Follow it, and report any verse
+where neither reading fits.
+
+**Quotations must match the book they come from.** When an epistle quotes the
+Old Testament, look up the stored English of the source book and reuse its
+wording — `python tools/lookup.py` or a direct query. A quotation that disagrees
+with the book it cites is a defect the reader will see, since both are one
+search away from each other.
+
+---
+
 ## 4. Register
 
 **Stay close to the Amharic.** Keep its clause order and its repeated "and";
