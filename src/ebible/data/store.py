@@ -40,8 +40,15 @@ def _connect_readonly(path: Path) -> sqlite3.Connection:
 
 @contextmanager
 def open_writable(path: Path = DB_PATH) -> Iterator[sqlite3.Connection]:
-    """Open for writing. Used by the translation pipeline, never by the UI."""
-    conn = sqlite3.connect(path)
+    """Open for writing. Used by the translation pipeline, never by the UI.
+
+    The long busy timeout is load-bearing when translators run in parallel. Every
+    `push` is an exclusive write, and the FTS5 sync triggers make it slow enough
+    that a dozen concurrent pushes will collide. On the 5-second default, a loser
+    raises `database is locked` and a translated chapter is lost -- so wait
+    instead. Writes serialise; nobody fails.
+    """
+    conn = sqlite3.connect(path, timeout=120.0)
     conn.row_factory = sqlite3.Row
     try:
         yield conn
