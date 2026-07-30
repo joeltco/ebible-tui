@@ -137,6 +137,8 @@ name appropriate to the person**, decided per figure, not per testament:
 | `አቢሜሌክ` | king of Gerar; Gideon's son | Abimelech |
 | `አቢሜሌክ` | the priest of Nob, son of Ahitub | Ahimelech |
 | `አቢሜሌክ` | Naomi's husband in Ruth | Elimelech |
+| `ዓሞጽ` | the herdsman prophet of Tekoa | Amos |
+| `ዓሞጽ` | Josiah's father (Zephaniah 1:1) | Amon |
 
 Decide by referent. "The God of Abraham, Isaac and **Jacob**" stays Jacob even in
 the New Testament, because that is the patriarch. **James** the son of Zebedee is
@@ -270,6 +272,12 @@ sense") · `ብልኀት` shrewdness · `ጥንቃቄ` caution (kept literal, no
 (verb `ገሠጸ` correct) · `ዘለፋ` rebuke · `ቅጣት` punishment. The Psalms English
 already fixed `ተግሣጽ` and `ዘለፋ` this way; follow it.
 
+> **`ገሠጸ` splits by register, like `ዐመፃ`.** It is "correct" in the wisdom books
+> (Proverbs, Psalms) where it belongs to this discipline triad, and **"rebuke"**
+> in narrative and prophecy — Genesis, the gospels and Nahum 1:4 all had it that
+> way before this table was written. Neither is wrong. Do not sweep one into the
+> other; a rebuke in Mark is not a pedagogical correction.
+
 **Four fool words, kept apart** — `ሰነፍ` fool (`ስንፍና` folly) · `ደንቈሮ` dolt ·
 `አላዋቂ` **the ignorant** (literally one who does not know — deliberately *not*
 "the simple") · `የዋህ` the guileless.
@@ -315,7 +323,20 @@ say Watchers; this one follows the Amharic. Also `ቅዱሳን` holy ones ·
 `ገሃነም` Gehenna · `ሲኦል` Sheol · `ጉድጓድ` pit · `ጥልቅ` the deep ·
 `ብርሃናት` the lights · `ወራት` months · `ዘመን` days.
 
-**Astronomical book** (chapters 21–26 and onward) — `ሱባዔ` week · `ሕፀፅ` waning ·
+**Enoch's structure, verified against the source rather than assumed.** 1–15
+the Watchers; **16–18 are Noah speaking**, not Enoch ("my grandfather Enoch"
+throughout, Noah named at 18:1); 19–20 the angel lists; **21–26 the astronomical
+book, which ends there**; 30–34 the Animal Apocalypse; 35 the Apocalypse of
+Weeks; 36–40 the Epistle of Enoch; 41 the birth of Noah; 42 the closing book to
+Methuselah. A translator briefed from the structure of *English* Enoch will
+expect calendrical material in the thirties and not find it.
+
+**Animal Apocalypse (30–34)** — `ላም` cow · `በሬ` ox · `ጥጃ` calf · `ጊደር` heifer ·
+`የሜዳ አህያ` wild ass · `በግ` sheep · `አውራ` ram · `እረኛ` shepherd · `ግንብ` tower ·
+`ልዩ` distinct (against `ሌላ` other) · `መስኮት` window · `ኢሎፍላውያን` Philistines.
+`መርከብ` is **"ship"**, per Genesis 6:14 — not "ark", even in the flood chapters.
+
+**Astronomical book** (chapters 21–26) — `ሱባዔ` week · `ሕፀፅ` waning ·
 `ምላት` fullness · `መጋቢ` steward · `ሻለቃ` captain · `ሺ አለቃ` chief of a thousand ·
 `መቋሚያ`/`ምቅዋም` station · `ሰሌዳ` tablet · `ጳጉሜ` **Pagumen** (the Ethiopian
 epagomenal days) · `ከንትሮስ` kentros · `ኩብኩባ` sleet, distinct from `በረዶ` hail ·
@@ -397,8 +418,11 @@ workers of violence · `ሾተል` → **curved sword**, distinct from `ሰይ�
 cultic sense; inside a town, "her courts" would falsely suggest the temple
 (54:11).
 
-**There are no psalm superscriptions in this text.** Every psalm begins at its
-first poetic line. Nothing was omitted and nothing should be added. For divine
+**Psalms has one superscription, and only one.** Every psalm begins at its first
+poetic line except 150:7, which opens `((ከቍጥር የወጣ መዝሙር ስለ ራሱ))` — "a psalm
+outside the number, concerning himself". That is **Psalm 151, filed inside
+chapter 150**, which therefore has 14 verses rather than 6. It is present in the
+source; do not treat it as missing and do not add superscriptions anywhere else. For divine
 speech spanning verses, leave the opening quotation mark unclosed across the
 boundary, per the stored convention at 67:22.
 

@@ -132,8 +132,12 @@ against what is stored, with divergences surfaced. That has not been done.
 - **Leviticus 27:31 is not scripture** — a lexicographer's note on coinage that
   occupies a verse slot and shifts the chapter. Left in place; removing it would
   renumber the chapter the translation is aligned to.
-- **Psalms has 150 chapters** here. The Ethiopian Psalter traditionally includes
-  Psalm 151; it is absent from the source and has not been invented.
+- **Psalm 151 is present, filed as Psalms 150:7–14.** This README previously
+  claimed it was absent. It is not: the source carries it inside chapter 150
+  under the heading `((ከቍጥር የወጣ መዝሙር ስለ ራሱ))`, "a psalm outside the number,
+  concerning himself" — the David and Goliath psalm. Chapter 150 has **14
+  verses**, not 6. Nothing was added; the claim was simply wrong, and a
+  translator was briefed on it before the error was caught.
 - **Enoch's astronomical chapters contradict their own arithmetic** in at least
   four places (21:21, 21:41, 26:4, 26:15) — a doorway its own day-ratios forbid,
   a day that both doubles and halves, two broken sequences. Translated as
