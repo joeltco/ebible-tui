@@ -289,6 +289,40 @@ text. If a later book disambiguates them, record it here.
 
 ---
 
+## 3e. The Psalter
+
+Settled across Psalms 78–110, against the stored English of 1–77. Binding for
+the rest of the Psalter and for the psalms embedded in other books (Habakkuk 3,
+Jonah 2, the songs in Samuel and Chronicles).
+
+`ሃሌ ሉያ` → **Hallelujah** · `አሜን` → **Amen** (per Numbers 5:22) ·
+`ተጓደዱ` → **boast** (fixed by 104:3, "boast in his holy name") ·
+`ማኅበር` → **assembly** · `ጉባኤ` → assembly · `ሸንጎ` → council ·
+`መቅደስ` → **sanctuary**, except `የቅድስናህ መቅደስ` → "the temple of your holiness"
+(per stored 5:7) · `ሥርዐት` → **ordinance**, held even where "order" reads more
+naturally ("after the ordinance of Melchizedek", 109:4).
+
+**`ማኅበር` is "assembly" here, not §3b's "congregation."** The Psalter fixed it
+before the tabernacle books did, and the stored English at 1:5 and 73:2 governs.
+This bites at 105:18, an exodus retelling where §3b would say congregation —
+the Psalter wins inside the Psalter.
+
+`ግርማ` is **context-dependent**: "majesty" of God, "terror" where majesty is
+nonsense (90:5, `ከሌሊት ግርማ`, the terror of the night).
+
+**Two collisions left standing, deliberately.** `ምስኪን` and `ድሃ` both come out
+"poor" (`ችግረኛ` is "needy"), and `አበሳ` and `ዐመፅ` both come out "iniquity". Both
+pairs occur together in single verses. No third English word was invented to
+force them apart, and none should be — see §6. Record any verse where the
+collision actually obscures the sense.
+
+**Untranslatable bird and animal names transliterate.** `እርኩም` → "erkum"
+(101:6), following the Leviticus 11:17 / Deuteronomy 14:18 precedent, and the
+same policy that produced "aqosta skins". Do not substitute a plausible English
+species.
+
+---
+
 ## 3d. The epistles
 
 Settled across Romans, whose two translators matched. **Binding for 1–2
