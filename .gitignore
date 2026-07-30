@@ -11,3 +11,12 @@ build/
 # it now carries the English translation, which cannot be rebuilt from the
 # Amharic source. It is tracked deliberately, and committed at milestones rather
 # than on every change so the history doesn't fill with 15 MB blobs.
+
+# SQLite sidecars, never committed. The db is in WAL mode while translators run
+# in parallel, and a committed non-empty -wal would be silently INVISIBLE to the
+# reader: store.py opens with immutable=1, which tells SQLite that locking is
+# unnecessary and makes it ignore the WAL. Verses would exist in the file and not
+# appear in the app. tools/seal_db.py checkpoints and clears WAL mode before a
+# milestone commit.
+src/ebible/data/bible.db-wal
+src/ebible/data/bible.db-shm

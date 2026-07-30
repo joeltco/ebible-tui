@@ -24,7 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 
-from ebible.data.store import DB_PATH  # noqa: E402
+from ebible.data.store import DB_PATH, WRITE_TIMEOUT  # noqa: E402
 
 
 def main() -> int:
@@ -36,7 +36,7 @@ def main() -> int:
     ap.add_argument('--dry-run', action='store_true')
     args = ap.parse_args()
 
-    db = sqlite3.connect(DB_PATH)
+    db = sqlite3.connect(DB_PATH, timeout=WRITE_TIMEOUT)
     db.row_factory = sqlite3.Row
 
     sql = ["SELECT v.id, b.name_en, v.chapter, v.verse, v.text_am, v.text_en"

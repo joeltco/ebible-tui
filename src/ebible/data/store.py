@@ -20,6 +20,12 @@ from ebible.data.models import Book, SearchHit, Stats, Verse
 
 DB_PATH = Path(__file__).resolve().parent / 'bible.db'
 
+# Every writer must use this, not sqlite3's 5-second default. Translators run in
+# parallel, each `push` is an exclusive write, and the FTS5 sync triggers make it
+# slow enough that concurrent pushes collide. On the default, a loser raises
+# `database is locked` and a translated chapter is silently lost.
+WRITE_TIMEOUT = 120.0
+
 
 class StoreError(RuntimeError):
     pass
@@ -42,13 +48,9 @@ def _connect_readonly(path: Path) -> sqlite3.Connection:
 def open_writable(path: Path = DB_PATH) -> Iterator[sqlite3.Connection]:
     """Open for writing. Used by the translation pipeline, never by the UI.
 
-    The long busy timeout is load-bearing when translators run in parallel. Every
-    `push` is an exclusive write, and the FTS5 sync triggers make it slow enough
-    that a dozen concurrent pushes will collide. On the 5-second default, a loser
-    raises `database is locked` and a translated chapter is lost -- so wait
-    instead. Writes serialise; nobody fails.
+    See WRITE_TIMEOUT: the long busy timeout is load-bearing under parallelism.
     """
-    conn = sqlite3.connect(path, timeout=120.0)
+    conn = sqlite3.connect(path, timeout=WRITE_TIMEOUT)
     conn.row_factory = sqlite3.Row
     try:
         yield conn

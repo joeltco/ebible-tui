@@ -134,10 +134,27 @@ name appropriate to the person**, decided per figure, not per testament:
 | `ያዕቆብ` | the apostle(s); the epistle's author | James |
 | `ይሁዳ` | the patriarch; the tribe; the kingdom | Judah |
 | `ይሁዳ` | Iscariot; the epistle's author | Judas / Jude |
+| `አቢሜሌክ` | king of Gerar; Gideon's son | Abimelech |
+| `አቢሜሌክ` | the priest of Nob, son of Ahitub | Ahimelech |
+| `አቢሜሌክ` | Naomi's husband in Ruth | Elimelech |
 
 Decide by referent. "The God of Abraham, Isaac and **Jacob**" stays Jacob even in
 the New Testament, because that is the patriarch. **James** the son of Zebedee is
 James even though the Amharic spells him identically.
+
+`አቢሜሌክ` is a three-way collapse and the reasoning is worth keeping, because the
+first translator to hit it reasonably concluded the opposite. The source *does*
+distinguish the `አኪ-` prefix elsewhere — it writes the priest's father `አኪጦብ`
+Ahitub — so `አቢሜሌክ` looks like a deliberate form rather than Ethiopic spelling,
+which argues for leaving it as Abimelech. But `አኪሜሌክ` appears **nowhere** in the
+corpus, and the same spelling also covers Naomi's husband, who is Elimelech in
+English and cannot be Abimelech under any reading. One spelling serving three
+distinct people is a collapse, not a variant, so the by-referent rule applies.
+
+Still to decide when those books come up: `አቢሜሌክ` also appears in 2 Samuel (2×),
+1 Chronicles (4×) and Jeremiah (6×). The Samuel and Chronicles instances are the
+priestly line and take **Ahimelech**; check Jeremiah's by referent rather than
+assuming.
 
 ---
 
@@ -230,6 +247,45 @@ Korah's dwelling (Numbers 16:24, 27).
 
 `ልዩ ሰው` is a **fourth** outsider word, distinct from the three below —
 render it "outsider" so the triple stays intact.
+
+---
+
+## 3c. Wisdom literature
+
+Settled while translating Proverbs 1–21, against the register already stored for
+Psalms. **Binding for Proverbs 22–24, Sirach, Wisdom, Reproof and Ecclesiastes**,
+which otherwise re-derive it and diverge.
+
+The hard part is that the Amharic keeps distinctions English blurs. It has four
+words for a fool and three for discipline; collapsing any of them into one
+English word destroys information the source went to the trouble of carrying.
+
+**Wisdom and its faculties** — `ጥበብ` wisdom · `ጠቢብ` the wise / a wise man ·
+`ማስተዋል` understanding (`አስተዋይ` the understanding man) · `ዕውቀት` knowledge
+(`ዐዋቂ` the knowing) · `አእምሮ` sense (the fixed formula `አእምሮ የጐደለው` = "lacks
+sense") · `ብልኀት` shrewdness · `ጥንቃቄ` caution (kept literal, not "discretion") ·
+`ምክር` counsel · `ልባም` sensible.
+
+**Three discipline words, kept apart** — `ትምህርት` teaching · `ተግሣጽ` correction
+(verb `ገሠጸ` correct) · `ዘለፋ` rebuke · `ቅጣት` punishment. The Psalms English
+already fixed `ተግሣጽ` and `ዘለፋ` this way; follow it.
+
+**Four fool words, kept apart** — `ሰነፍ` fool (`ስንፍና` folly) · `ደንቈሮ` dolt ·
+`አላዋቂ` **the ignorant** (literally one who does not know — deliberately *not*
+"the simple") · `የዋህ` the guileless. `ፌዘኛ` is the scoffer; `ዋዘኛ` stays reserved
+for "mocker" per Psalms 1:1. `ታካች` sluggard, distinct from `ሀኬተኛ` the idle;
+`ትጉህ` the diligent.
+
+**Moral vocabulary** — `ጽድቅ`/`ጻድቅ` righteousness/righteous · `ቅንነት`/`ቅን`
+uprightness/upright · `ፍርድ` judgment (`ብይን` verdict) · `ተንኰል` guile ·
+`ወስላታ` the treacherous · `ግፍ` violence · `ዐመፃ` iniquity (`ዐመፀኛ` transgressor) ·
+`ትግሥት` patience · `ምሳሌ` proverb (`ትርጓሜ` interpretation) · `ትእዛዝ` commandment ·
+`እግዚአብሔርን መፍራት` the fear of the LORD. `አክሊል` wreath and `ዘውድ` crown both
+occur and stay distinct.
+
+Two known collisions, left unresolved rather than papered over: `ጕቦ` and
+`መማለጃ` both come out "bribe", and no distinction could be justified from the
+text. If a later book disambiguates them, record it here.
 
 ---
 
