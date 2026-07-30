@@ -134,8 +134,12 @@ against what is stored, with divergences surfaced. That has not been done.
   renumber the chapter the translation is aligned to.
 - **Psalms has 150 chapters** here. The Ethiopian Psalter traditionally includes
   Psalm 151; it is absent from the source and has not been invented.
-- **Enoch 6:12** may render `የሴት ልጆች` wrongly ("children of Seth"). An agent
-  deduced the correct sense from 9:17 and was returning to fix it when it died.
+- **Enoch's astronomical chapters contradict their own arithmetic** in at least
+  four places (21:21, 21:41, 26:4, 26:15) — a doorway its own day-ratios forbid,
+  a day that both doubles and halves, two broken sequences. Translated as
+  written. Emending a number would be indistinguishable from translating one.
+- **Enoch 16–18 are Noah speaking, not Enoch** — the text says "my grandfather
+  Enoch" throughout and names Noah at 18:1. Not an error.
 - **Versification differs from Western Bibles** throughout. The Amharic is
   authoritative; chapter and verse numbers follow it, not the KJV.
 - **15 books sit outside the 66-book canon** (marked `·dc` in the picker). They

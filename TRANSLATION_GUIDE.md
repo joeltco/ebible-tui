@@ -297,6 +297,63 @@ text. If a later book disambiguates them, record it here.
 
 ---
 
+## 3f. Enoch
+
+Settled across Enoch 16–29 against the stored English of 1–15. Enoch has no
+reliable English control anywhere, so its conventions live or die by this file.
+
+**Divine titles** — `የመላእክት ጌታ` Lord of the angels · `የነፍሳት ጌታ` Lord of souls ·
+`የነፋሳት ጌታ` Lord of the winds · `የመናፍስት ጌታ` Lord of the spirits ·
+`የክብር ባለቤት ጌታ` the Lord, the owner of glory · `የሰው ልጅ` son of man ·
+`አስታራቂ` the reconciler · `ብሉየ መዋዕል` **Ancient of Days**, with the full formula
+`ብሉየ መዋዕልነት ገንዘቡ የሚሆን ጌታ` "the Lord whose possession is the ancientness of
+days".
+
+**`ትጉሃን` is "the vigilant ones", not "Watchers."** English Enoch translations
+say Watchers; this one follows the Amharic. Also `ቅዱሳን` holy ones ·
+`ረቂቃን` spiritual ones · `አፍኒን` ofanim (with cherubim and seraphim) ·
+`ገሃነም` Gehenna · `ሲኦል` Sheol · `ጉድጓድ` pit · `ጥልቅ` the deep ·
+`ብርሃናት` the lights · `ወራት` months · `ዘመን` days.
+
+**Astronomical book** (chapters 21–26 and onward) — `ሱባዔ` week · `ሕፀፅ` waning ·
+`ምላት` fullness · `መጋቢ` steward · `ሻለቃ` captain · `ሺ አለቃ` chief of a thousand ·
+`መቋሚያ`/`ምቅዋም` station · `ሰሌዳ` tablet · `ጳጉሜ` **Pagumen** (the Ethiopian
+epagomenal days) · `ከንትሮስ` kentros · `ኩብኩባ` sleet, distinct from `በረዶ` hail ·
+`ሸለቆ` ravine, distinct from `ቈላ` valley.
+
+**`መዓት` and `ቁጣ` both come out "wrath"** and stay that way — the stored 1–15
+English already does it. Do not invent a third word.
+
+### The 6:12 question is CLOSED
+
+`ደቂቀ ሴት` / `ደቂተ ሴት` is **"children of Seth"**, and 6:12 was right all along. An
+earlier translator suspected it should be "of woman" and died before resolving
+it. The evidence: the phrase is a frozen Ge'ez construct, not the ordinary
+Amharic `የሴት ልጆች`; it is the standard Ethiopic term for the Sethite line; it
+recurs at 18:40, 20:20 and 29:24; and 29:24 — "the children of Seth **who are
+in the rank of the Most High**" — parallels 4:23 exactly. The book already runs
+the Sethite/Cainite descent legend at 2:36, 4:7 and 9:17. **Do not reopen this.**
+
+### The source contradicts its own arithmetic
+
+The astronomical chapters are formulaic enough that the numbers can be checked,
+and they do not always hold: 21:21 gives a doorway that its own day-ratios
+forbid, 21:41 says the day doubles and then gives numbers where it halves, and
+26:15 and 26:4 each break the sequence they are in the middle of. **Translate
+what it says. Report the contradiction. Never fix the arithmetic** — an emended
+number is indistinguishable from a translated one once it is in the database.
+
+### Malformed words
+
+Enoch's text carries genuine typos — `የመላእነት` for "of the angels", `ዐሐይ` for
+"sun". Construing one to the nearest well-formed word is translation, not
+invention, **but every instance must be listed in the report**. The distinction
+that matters: repairing a misspelling is allowed, supplying missing content is
+not. Where the word cannot be identified at all, transliterate and flag it —
+`መምራን`, `ደደክ`, `ቅንየታት` are on record as unidentified rather than guessed.
+
+---
+
 ## 3e. The Psalter
 
 Settled across Psalms 78–110, against the stored English of 1–77. Binding for
