@@ -77,15 +77,15 @@ preserve translated text.
 
 ## English translation — in progress
 
-**13,217 of 39,169 verses (34%).** Untranslated verses hold `NULL`, and the
-reader shows `· not translated ·` rather than an empty column — a pending verse
-is not the same as a translation that produced nothing.
+**20,443 of 39,169 verses (52.2%), 35 of 81 books.** Untranslated verses hold
+`NULL`, and the reader shows `· not translated ·` rather than an empty column —
+a pending verse is not the same as a translation that produced nothing. No book
+is currently part-finished.
 
 | | |
 |---|---|
-| **Complete** | Genesis, Exodus, Leviticus, Numbers, Deuteronomy, Joshua, Judges, Ruth, Matthew, Mark, Luke, John |
-| **Partial** | Acts 96%, 1 Samuel 69%, Enoch 25%, Psalms 12% |
-| **Not started** | 65 books |
+| **Complete** | Genesis, Exodus, Leviticus, Numbers, Deuteronomy, Joshua, Judges, Ruth, 1 Samuel, Ezra, Nehemiah, Esther, Psalms, Proverbs, and the whole Book of the Twelve (Hosea, Joel, Amos, Obadiah, Jonah, Micah, Nahum, Habakkuk, Zephaniah, Haggai, Zechariah, Malachi); Enoch, Tobit, Judith; Matthew, Mark, Luke, John, Acts, Romans |
+| **Not started** | 46 books — Samuel–Chronicles, Job, Ecclesiastes, Song of Songs, the major prophets, Daniel, Jubilees, Sirach, Wisdom, the Meqabyan books, and the epistles from 1 Corinthians on |
 
 Translation is done by agents working from **`TRANSLATION_GUIDE.md`**, which is
 binding. Its prime directive: the Amharic is the source of truth, and no
@@ -126,7 +126,7 @@ against what is stored, with divergences surfaced. That has not been done.
 ## Known gaps
 
 - **70 verses are defective in the source** — see `SOURCE_ISSUES.md`, generated
-  from the data. Most seriously, **33 verses are absent**: the scrape dropped a
+  from the data. Most seriously, **35 verses are absent**: the scrape dropped a
   verse and left the following verse's number stranded inline. They are recorded,
   not reconstructed.
 - **Leviticus 27:31 is not scripture** — a lexicographer's note on coinage that

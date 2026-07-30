@@ -38,9 +38,31 @@ VERSE_RE = re.compile(r'^(\d+)[.:]\s*(.*)$')
 FOOTNOTE_DIGITS_RE = re.compile(r'(?<=[ሀ-፿])\d+')
 
 
-def clean_verse(text: str) -> str:
-    """Strip scrape artifacts. Assets stay pristine; this runs at build time."""
-    return FOOTNOTE_DIGITS_RE.sub('', text)
+def clean_verse(text: str, verse: int | None = None) -> str:
+    """Strip scrape artifacts. Assets stay pristine; this runs at build time.
+
+    `verse` guards the one case where stripping would destroy evidence. Two
+    different defects produce a bare digit inside Ge'ez text:
+
+    - a **footnote marker** welded into a word (`አቤል2ን`, `አብርሃም26`). Noise.
+      The values ascend through the canon, which is what identifies them.
+    - a **stranded verse number**, left behind when the scrape dropped the verse
+      it belonged to (`…የላቸውምና።11 አቤቱ…` at Judith 7:10). That digit is the only
+      surviving trace that a verse is missing.
+
+    They are told apart by value: a stranded number is always exactly
+    `verse + 1`. Strip it and the verse looks intact, the chapter silently runs
+    one short, and nothing downstream can tell. So when the digit equals
+    `verse + 1`, leave it alone -- SOURCE_ISSUES.md reports it instead.
+
+    Called without `verse` this strips everything, which is only safe where the
+    caller has already established there is no lost-verse marker.
+    """
+    if verse is None:
+        return FOOTNOTE_DIGITS_RE.sub('', text)
+    return FOOTNOTE_DIGITS_RE.sub(
+        lambda m: m.group(0) if int(m.group(0)) == verse + 1 else '', text
+    )
 
 
 class BuildError(RuntimeError):
@@ -80,7 +102,8 @@ def parse_verses(path: Path) -> list[tuple[int, str]]:
         m = VERSE_RE.match(line)
         if not m:
             raise BuildError(f'{path}:{lineno}: not a verse line: {line[:60]!r}')
-        verses.append((int(m.group(1)), clean_verse(m.group(2).strip())))
+        num = int(m.group(1))
+        verses.append((num, clean_verse(m.group(2).strip(), num)))
     return verses
 
 

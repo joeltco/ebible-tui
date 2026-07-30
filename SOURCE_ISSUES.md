@@ -12,7 +12,7 @@ the hole.
 
 ## 1. Lost verses — SERIOUS, unrepairable here
 
-**33 verses are absent from the source.**
+**35 verses are absent from the source.**
 
 The scrape dropped a verse and left the *following* verse's number stranded
 inline, shifting the rest of the chapter up by one. Exodus 4 is the clearest
@@ -47,6 +47,7 @@ be reconstructed from what is here.
 | Nehemiah 1:8 | `9 አሁንም ብትተላለፉ በአሕዛብ መካከል እበትናችኋለሁ ወደ እኔ ብትመለሱ ግን ትእዛዜንም ብትጠብ…` |
 | Nehemiah 10:7 | `8 ሜሱላም አብያ ሚያሚን መዓዝያ ቤልጋል ሸማያ እነዚህ ካህናት ነበሩ።…` |
 | Nehemiah 12:4 | `5 አዶ ጌንቶን አብያ ሚያሚን…` |
+| Judith 7:10 | `እነዚህ የእስራኤል ልጆች ወገኖች የሚታመኑ በጦራቸጠ አይደለምና በሠራዊትህ ጥፋት እንዳይደረግ አ…` |
 | Job 10:5 | `6 ወይስ ክፋቴን ትፈላለግ ዘንድ ኀጢአቴንም ትመረምር ዘንድ ዘመንህ እንደ ሰው ዘመን ነውን ወይ…` |
 | Job 11:13 | `14 በእጅህ በደል ቢኖር አርቀው በድንኳንህም ኀጢአት አይኑር አንተ ልብህን ቅን ብታደርግ እጅህ…` |
 | Job 31:5 | `6 በእውነተኛ ሚዛን ልመዘን እግዚአብሔርም ቅንነቴን ይወቅ።በሐሰት ሄጄ እንደ ሆነ እግሬም ለሽን…` |
@@ -55,6 +56,7 @@ be reconstructed from what is here.
 | Isaiah 14:5 | `6 አሕዛብንም በመዓትና በማያቋርጥ መምታት የመታውን አሕዛብንም ባልተከለከለ መከራ በቍጣው የገዛ…` |
 | Isaiah 43:6 | `7 ሰሜንን፦መልሰህ አምጣ ደቡብንም፦አትከልክል ወንዶች ልጆቼን ከሩቅ ሴቶች ልጆቼንም ከምድር ዳር…` |
 | Isaiah 62:6 | `7 ኢየሩሳሌም ሆይ ጕበኛዎችን በቅጥርሽ ላይ አቁሜያለሁ ቀንና ሌሊት ከቶ ዝም አይሉም እናንተ እ…` |
+| Jeremiah 22:27 | `ይመለሱባትም ዘንድ ነፍሳቸው ወደምትመኛት ወደዚያች ምድር አይመለሱም።28 በእውኑ ይህ ሰው ኢኮን…` |
 | Lamentations 3:49 | `50 ፌ።እግዚአብሔር ከሰማይ እስኪጐበኝና እስኪመለከት ድረስ ዐይኔ ሳታቋርጥ ዝም ሳትል እንባ ታ…` |
 | Ezekiel 14:4 | `5 ስለዚህ፦ጌታ እግዚአብሔር እንዲህ ይላል፦ሁሉም በጣዖቶቻቸው ከእኔ ተለይተዋልና የእስራኤልን ቤ…` |
 | Daniel 1:3 | `4 ንጉሡም ነውር የሌለባቸውንና መልከ መልካሞቹን በጥበብ ሁሉ የሚያስተውሉትን ዕውቀትም የሞላባቸ…` |
@@ -62,7 +64,7 @@ be reconstructed from what is here.
 
 ## 2. Footnote digits — repaired at build time
 
-16 verses carry superscript footnote markers welded into words
+14 verses carry superscript footnote markers welded into words
 (`አቤል2ን` = Abel, `አብርሃም26` = Abraham). The values ascend through the canon,
 which is what identifies them as markers: Amharic writes numbers as Ge'ez
 numerals or spells them out, never as ASCII digits mid-word.
@@ -83,9 +85,7 @@ numerals or spells them out, never as ASCII digits mid-word.
 | 1 Kings 22:50 | `168` | `ኢዮሳፍጥም ከአባቶቹ ጋራ አንቀላፋ በአባቱም በዳዊት ከተማ ከአባቶቹ ጋራ ተቀበረ…` |
 | 2 Kings 17:31 | `178` | `ዐዋውያንም ኤልባዝር178ንና ተርታቅን ሠሩ የሴፈርዋይም ሰዎችም ለሴፈርዋይም አማ…` |
 | 2 Kings 18:2 | `179` | `መንገሥ በዠመረ ጊዜ የሃያ ዐምስት ዓመት ጕልማሳ ነበረ በኢየሩሳሌምም ሃያ ዘጠኝ…` |
-| Judith 7:10 | `11` | `እነዚህ የእስራኤል ልጆች ወገኖች የሚታመኑ በጦራቸጠ አይደለምና በሠራዊትህ ጥፋት…` |
 | Judith 7:23 | `3` | `ባለቆቻቸውም ሁሉ ፊት በኛ ታላቅ ግፍ ከ3ታደርጉ ዘንድ ከናቡክደነፆር አሽከሮች …` |
-| Jeremiah 22:27 | `28` | `ይመለሱባትም ዘንድ ነፍሳቸው ወደምትመኛት ወደዚያች ምድር አይመለሱም።28 በእውኑ…` |
 | Acts 21:7 | `290` | `እኛም የባሕሩን መንገድ ጨርሰን ከጢሮስ ወደ አካ290 ደረስን ለወንድሞችም ሰላም…` |
 
 ## 3. Latin letters spliced into Ge'ez — unrepairable here

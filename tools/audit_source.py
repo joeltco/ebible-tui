@@ -22,6 +22,14 @@ from ebible.data.store import DB_PATH  # noqa: E402
 # survived inline while the verse itself did not.
 LOST_VERSE_RE = re.compile(r'^(\d+)')
 FOOTNOTE_RE = re.compile(r'(?<=[ሀ-፿])\d+')
+
+# The same defect can land mid-verse rather than at the start, when the dropped
+# verse followed a sentence that ended cleanly: '…የላቸውምና።11 አቤቱ…'. Those look
+# exactly like footnote markers to FOOTNOTE_RE, and were miscounted as such until
+# Judith 7:10 and Jeremiah 22:27 turned up. The tell is the value: a stranded
+# verse number equals verse+1, while footnote markers ascend through the canon
+# independently of any verse number.
+INLINE_DIGIT_RE = re.compile(r'(?<=[ሀ-፿])(\d+)')
 LATIN_RE = re.compile(r'[ሀ-፿][A-Za-z]|[A-Za-z][ሀ-፿]')
 
 
@@ -39,10 +47,12 @@ def main() -> int:
         txt = r['text_am']
         ref = f'{r["name_en"]} {r["chapter"]}:{r["verse"]}'
         m = LOST_VERSE_RE.match(txt)
-        if m and int(m.group(1)) == r['verse'] + 1:
+        inline = INLINE_DIGIT_RE.search(txt)
+        stranded = inline and int(inline.group(1)) == r['verse'] + 1
+        if (m and int(m.group(1)) == r['verse'] + 1) or stranded:
             lost.append((ref, txt[:60]))
-        if FOOTNOTE_RE.search(txt):
-            footnotes.append((ref, FOOTNOTE_RE.search(txt).group(0), txt[:50]))
+        elif inline:
+            footnotes.append((ref, inline.group(0), txt[:50]))
         if LATIN_RE.search(txt):
             latin.append((ref, txt[:60]))
         if re.search(r'።[ሀ-፿]$', txt):

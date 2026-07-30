@@ -50,7 +50,7 @@ def main() -> int:
     fixes = []
     unrepairable = []
     for r in rows:
-        cleaned = clean_verse(r['text_am'])
+        cleaned = clean_verse(r['text_am'], r['verse'])
         if cleaned != r['text_am']:
             fixes.append((r['id'], cleaned, r['name_en'], r['chapter'], r['verse'], r['text_am']))
         if LATIN_IN_GEEZ_RE.search(r['text_am']):
