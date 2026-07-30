@@ -272,7 +272,15 @@ already fixed `ተግሣጽ` and `ዘለፋ` this way; follow it.
 
 **Four fool words, kept apart** — `ሰነፍ` fool (`ስንፍና` folly) · `ደንቈሮ` dolt ·
 `አላዋቂ` **the ignorant** (literally one who does not know — deliberately *not*
-"the simple") · `የዋህ` the guileless. `ፌዘኛ` is the scoffer; `ዋዘኛ` stays reserved
+"the simple") · `የዋህ` the guileless.
+
+> **`ደንቈሮ` is two words, and this table only covers one of them.** It is a
+> fool-word ("dolt") at Proverbs and at Psalms 48:10, `ሰነፎችና ደንቈሮዎች` = "fools
+> and dolts". It also means **deaf** — Psalms 37:13, `እንደማይሰማ ደንቈሮ`, "a
+> ደንቈሮ that does not hear", parallel to `ዲዳ` dumb. The deaf sense was already
+> settled in the corpus before this table was written: Exodus 4:10 and
+> Leviticus 19:14 both render it "deaf". Decide by context. Applied
+> mechanically, this table produces "a dolt that does not hear". `ፌዘኛ` is the scoffer; `ዋዘኛ` stays reserved
 for "mocker" per Psalms 1:1. `ታካች` sluggard, distinct from `ሀኬተኛ` the idle;
 `ትጉህ` the diligent.
 
@@ -319,7 +327,26 @@ collision actually obscures the sense.
 **Untranslatable bird and animal names transliterate.** `እርኩም` → "erkum"
 (101:6), following the Leviticus 11:17 / Deuteronomy 14:18 precedent, and the
 same policy that produced "aqosta skins". Do not substitute a plausible English
-species.
+species. `ዝባድ` → "civet" (44:8) is an exception only because the Amharic word
+is unambiguous, in a list with `ከርቤ` myrrh and `ሽቱ` spices.
+
+From Psalms 35–62: `ትካዜ` → **grief** (verb `ተከዘ` grieve), kept distinct from
+`ሐዘን` → sorrow (settled at 30:9) · `ግፈኛ` → **violent man**, `ግፍ አድራጊዎች` →
+workers of violence · `ሾተል` → **curved sword**, distinct from `ሰይፍ` sword
+(following Enoch 2:17) · `አይሁድ` → **the Jews**, distinct from `ይሁዳ` → Judah
+(47:11 has "the daughters of the Jews" where familiar English reads Judah).
+
+**`አደባባይ` is "square" in a city and "court" in the tabernacle.** §3b fixes the
+cultic sense; inside a town, "her courts" would falsely suggest the temple
+(54:11).
+
+**There are no psalm superscriptions in this text.** Every psalm begins at its
+first poetic line. Nothing was omitted and nothing should be added. For divine
+speech spanning verses, leave the opening quotation mark unclosed across the
+boundary, per the stored convention at 67:22.
+
+`አርሞንኤም` and `አርሞንዔም` are **one name, Hermon**, with two Ethiopic spellings
+(41:6 against 88:12 and 132:3). Do not split it into two places.
 
 ---
 
