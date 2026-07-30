@@ -67,6 +67,23 @@ def main() -> int:
     if len(edits) > 20:
         print(f'  …and {len(edits) - 20} more')
 
+    # Matching is case-sensitive on purpose -- "Judah"/"judah" are not
+    # interchangeable in a name fix. But that silently skips a sentence-initial
+    # occurrence, which looks like a completed normalisation with one verse left
+    # wrong. Normalising `judgment` across the corpus missed exactly one verse
+    # this way. Report the near-misses rather than let them pass unseen.
+    ci = re.compile(rf'\b{re.escape(args.old)}\b', re.IGNORECASE)
+    skipped = [
+        f'{r["name_en"]} {r["chapter"]}:{r["verse"]}'
+        for r in rows
+        if ci.search(r['text_en']) and not pat.search(r['text_en'])
+    ]
+    if skipped:
+        print(f'\n{len(skipped)} verse(s) match only case-insensitively and were NOT changed:')
+        for ref in skipped[:20]:
+            print(f'  {ref}')
+        print('  Re-run with the exact casing if these should change too.')
+
     if args.dry_run:
         print('\ndry run — nothing written')
         return 0
