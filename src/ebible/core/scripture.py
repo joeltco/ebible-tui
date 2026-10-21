@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Literal
 
 from ebible.canon import BOOKS, BY_ID, BY_SLUG, Book
+from ebible.core.labels import count_label
 from ebible.core.models import Chapter, EnglishSource, ScriptureStats, SearchResult, Verse, VerseRef
 from ebible.core.refs import ReferenceError
 
@@ -108,7 +109,7 @@ class ScriptureStore:
             }
         if not numbers:
             raise ReferenceError(
-                f'{BY_ID[ref.book_id].name_en} has {count} chapters; chapter {ref.chapter} does not exist.'
+                f'{BY_ID[ref.book_id].name_en} has {count_label(count, "chapter")}; chapter {ref.chapter} does not exist.'
             )
         if ref.verse not in numbers or (ref.end_verse is not None and ref.end_verse not in numbers):
             raise ReferenceError(

@@ -6,6 +6,7 @@ from textual.widgets import Button, Input, OptionList, Static
 from textual.widgets.option_list import Option
 
 from ebible.canon import BOOKS, BY_ID, Section
+from ebible.core.labels import count_label
 from ebible.core.models import VerseRef
 from ebible.ui.screens.base import Page
 from ebible.ui.widgets.chapter_grid import ChapterGrid
@@ -37,7 +38,7 @@ class BooksScreen(Page):
                 previous_section = book.section
             text = Text(book.name_am + '\n')
             text.append(
-                f'{book.name_en}  ·  {self.eb.chapter_counts[book.id]} chapters'
+                f'{book.name_en}  ·  {count_label(self.eb.chapter_counts[book.id], "chapter")}'
                 + ('  ◇' if book.deuterocanonical else ''),
                 style='dim',
             )

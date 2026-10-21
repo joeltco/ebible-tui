@@ -11,6 +11,7 @@ from textual.app import App
 from textual.binding import BindingType
 from textual.screen import Screen
 
+from ebible.core.labels import count_label
 from ebible.core.models import HighlightColour, VerseRef
 from ebible.core.refs import ReferenceError, format_reference, parse_reference
 from ebible.core.scripture import ScriptureStore
@@ -218,7 +219,7 @@ class EBibleApp(App[None], inherit_bindings=False):
             )
             filled = await service.translate_chapter(ref.book_id, ref.chapter)
             self.message(
-                f'{len(filled)} verses translated · machine text'
+                f'{count_label(len(filled), "verse")} translated · machine text'
                 if filled
                 else 'No new translation: already available or backend is off'
             )

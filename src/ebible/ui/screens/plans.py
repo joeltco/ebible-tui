@@ -7,6 +7,7 @@ from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import Horizontal
 from textual.widgets import Button, OptionList, ProgressBar, Select, Static
+from textual.widgets._progress_bar import Bar, PercentageStatus
 from textual.widgets.option_list import Option
 
 from ebible.core.models import PlanProgress, VerseRef
@@ -14,6 +15,22 @@ from ebible.core.plans import ReadingPlan, current_streak, generate_plans
 from ebible.core.refs import format_reference
 from ebible.ui.screens.base import Confirm, Page
 from ebible.ui.widgets.controls import Choice, PassageList, PhoneScroll
+
+
+class PlanPercentage(PercentageStatus):
+    def render(self) -> str:
+        progress = self.parent
+        if isinstance(progress, ProgressBar):
+            fraction = progress.percentage
+            if fraction is not None and 0 < fraction < 0.01:
+                return '<1%'
+        return str(super().render())
+
+
+class PlanProgressBar(ProgressBar):
+    def compose(self) -> ComposeResult:
+        yield Bar(id='bar').data_bind(ProgressBar.percentage)
+        yield PlanPercentage(id='percentage').data_bind(ProgressBar.percentage)
 
 
 class PlansScreen(Page):
@@ -42,7 +59,7 @@ class PlansScreen(Page):
         )
         with PhoneScroll(classes='page-scroll', id='plan-scroll'):
             yield Static('', id='plan-summary', classes='page-subtitle', markup=False)
-            yield ProgressBar(total=self.plan.days, show_eta=False, id='plan-progress')
+            yield PlanProgressBar(total=self.plan.days, show_eta=False, id='plan-progress')
             with Horizontal(classes='button-row'):
                 yield Button('‹ Day', id='previous-day')
                 yield Button('Today', id='today-day')

@@ -77,7 +77,7 @@ async def test_translation_worker_refreshes_marked_live_english(running_app, mon
     await pilot.pause()
     await pilot.click('#translate-verse')
     await app.workers.wait_for_complete()
-    assert '1 verses translated' in app.last_message
+    assert '1 verse translated' in app.last_message
     assert not app.translation_running
     view = app.reader.query_one(VerseView)
     assert '◇ Machine' in view.verse_text(app.reader.chapter_data.verses[0], 'en').plain

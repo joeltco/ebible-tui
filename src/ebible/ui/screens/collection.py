@@ -10,6 +10,7 @@ from textual.containers import Horizontal
 from textual.widgets import Button, OptionList, Static
 from textual.widgets.option_list import Option
 
+from ebible.core.labels import count_label
 from ebible.core.models import Bookmark, Highlight, HistoryEntry, Note
 from ebible.core.refs import format_reference
 from ebible.ui.screens.base import Confirm, Page
@@ -17,6 +18,14 @@ from ebible.ui.widgets.controls import PassageList
 
 CollectionKind = Literal['bookmarks', 'highlights', 'notes', 'history']
 Entry = Bookmark | Highlight | Note | HistoryEntry
+
+
+COLLECTION_LABELS = {
+    'bookmarks': ('bookmark', 'bookmarks'),
+    'highlights': ('highlight', 'highlights'),
+    'notes': ('note', 'notes'),
+    'history': ('history entry', 'history entries'),
+}
 
 
 class CollectionScreen(Page):
@@ -76,7 +85,7 @@ class CollectionScreen(Page):
             options.append(Option(text, id=f'entry-{index}'))
         self.query_one(OptionList).clear_options().add_options(options)
         self.query_one('#collection-message', Static).update(
-            f'{len(options)} {self.kind}'
+            count_label(len(options), *COLLECTION_LABELS[self.kind])
             if options
             else f'No {self.kind} yet. Keep a passage from its verse menu.'
             if self.kind != 'history'
@@ -119,7 +128,8 @@ class CollectionScreen(Page):
 
         await self.app.push_screen(
             Confirm(
-                f'Delete this {self.kind.rstrip("s")} at {format_reference(entry.ref)}?', remove
+                f'Delete this {COLLECTION_LABELS[self.kind][0]} at {format_reference(entry.ref)}?',
+                remove,
             )
         )
 

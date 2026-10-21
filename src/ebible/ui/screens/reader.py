@@ -8,6 +8,7 @@ from textual.containers import Horizontal
 from textual.widgets import Button, Static
 
 from ebible.canon import BY_ID
+from ebible.core.labels import count_label
 from ebible.core.models import Chapter, HighlightColour, VerseRef
 from ebible.ui.screens.base import Page
 from ebible.ui.widgets.controls import PhoneScroll
@@ -102,7 +103,7 @@ class ReaderScreen(Page):
         ref = self.eb.reference
         status = (
             message
-            or f'{BY_ID[ref.book_id].name_en} {ref.chapter}:{ref.verse}  ·  {len(self.chapter_data)} verses  ·  ? Help'
+            or f'{BY_ID[ref.book_id].name_en} {ref.chapter}:{ref.verse}  ·  {count_label(len(self.chapter_data), "verse")}  ·  ? Help'
         )
         self.query_one(StatusBar).update(status)
 

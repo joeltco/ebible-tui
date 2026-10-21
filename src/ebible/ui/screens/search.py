@@ -10,11 +10,28 @@ from textual.containers import Horizontal
 from textual.widgets import Button, Input, OptionList, Select, Static
 from textual.widgets.option_list import Option
 
+from ebible.core.labels import count_label
 from ebible.core.models import SearchResult
 from ebible.core.refs import format_reference
 from ebible.core.scripture import SearchError
 from ebible.ui.screens.base import Page
 from ebible.ui.widgets.controls import Choice, PassageList, TextInput
+
+
+def snippet_text(marked: str) -> Text:
+    """Remove only FTS markers; preserve whitespace, including at SVG style boundaries."""
+    text = Text()
+    for part in marked.split('\x01'):
+        if '\x02' in part:
+            match, rest = part.split('\x02', 1)
+            text.append(match, style='bold underline')
+            boundary = len(rest) - len(rest.lstrip())
+            # A separate non-underlined span advances the next word's SVG position.
+            text.append(rest[:boundary], style='bold')
+            text.append(rest[boundary:])
+        else:
+            text.append(part)
+    return text
 
 
 class SearchScreen(Page):
@@ -70,6 +87,8 @@ class SearchScreen(Page):
     @work(exclusive=True, group='search')
     async def search(self, request: int) -> None:
         await asyncio.sleep(0.12)
+        if not self.is_current:
+            return
         query = self.query_one(TextInput).value
         scope = cast(
             Literal['all', 'ot', 'nt', 'book'], self.query_one('#search-scope', Select).value
@@ -87,34 +106,27 @@ class SearchScreen(Page):
                 limit=self.limit,
             )
         except SearchError as exc:
-            if request == self.request_id:
+            if request == self.request_id and self.is_current:
                 self.results = ()
                 self.query_one('#search-results', OptionList).clear_options()
                 self.query_one('#search-message', Static).update(str(exc))
                 self.query_one('#search-more', Button).disabled = True
             return
-        if request != self.request_id or not self.is_mounted:
+        if request != self.request_id or not self.is_current:
             return
         self.results = results
         options = []
         for i, result in enumerate(results):
-            text = Text(format_reference(result.ref) + '\n', style='bold')
+            text = Text()
+            text.append(format_reference(result.ref) + '\n', style='bold')
             # Plain Text spans keep scripture brackets literal; only FTS markers style a match.
-            snippet = Text()
-            for part in result.snippet.split('\x01'):
-                if '\x02' in part:
-                    match, rest = part.split('\x02', 1)
-                    snippet.append(match, style='bold underline')
-                    snippet.append(rest)
-                else:
-                    snippet.append(part)
-            text.append_text(snippet)
+            text.append_text(snippet_text(result.snippet))
             text.append('\n')
             options.append(Option(text, id=f'result-{i}'))
         self.query_one('#search-results', OptionList).clear_options().add_options(options)
         self.query_one('#search-results', OptionList).highlighted = 0 if options else None
         self.query_one('#search-message', Static).update(
-            f'{len(results)} passages'
+            count_label(len(results), 'passage')
             if results
             else 'No passages found'
             if query.strip()
