@@ -9,6 +9,12 @@ from ebible.canon import Book
 from ebible.core.translate.base import TranslationError, parse_numbered_lines
 
 MODEL = 'claude-sonnet-5-5'
+APP_ADDENDUM = (
+    '\n\nIn-app output contract (overrides requests for a summary): '
+    'Return numbered verse lines only, one line per original verse. '
+    'No summary, no commentary, no headings, and no uncertainty report in this response. '
+    'Preserve every original verse number and follow the guide for faithful rendering.'
+)
 
 
 class ContentBlock(Protocol):
@@ -64,7 +70,8 @@ class ClaudeBackend:
                 max_tokens=16384,
                 system=files('ebible.core.translate')
                 .joinpath('TRANSLATION_GUIDE.md')
-                .read_text(encoding='utf-8'),
+                .read_text(encoding='utf-8')
+                + APP_ADDENDUM,
                 messages=[
                     {
                         'role': 'user',

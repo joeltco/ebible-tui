@@ -97,7 +97,7 @@ def test_search_languages_scopes_and_pagination(scripture):
     assert scripture.search('"LORD God"', lang='en')
     assert scripture.search('zzzzzzzzzzzzzzzzzz') == ()
     with pytest.raises(SearchError):
-        scripture.search('"')
+        scripture.search('="')
 
 
 @pytest.mark.parametrize(
@@ -120,3 +120,19 @@ def test_worker_safe_connections(scripture):
     with ThreadPoolExecutor(max_workers=4) as workers:
         results = list(workers.map(lambda _: scripture.chapter(1, 1), range(8)))
     assert all(r == results[0] for r in results)
+
+
+@pytest.mark.parametrize(
+    'query', ["john's", 'God AND', '(', '"', ':', '[God]', 'ሰላም OR', '***', '—']
+)
+def test_plain_typing_never_uses_fts_syntax(scripture, query):
+    assert isinstance(scripture.search(query), tuple)
+
+
+def test_plain_tokens_and_explicit_advanced_search(scripture):
+    assert scripture.search('God AND') == scripture.search('="God" AND "AND"*')
+    assert scripture.search("john's") == scripture.search('="john" AND "s"*')
+    assert scripture.search('beginni', lang='en')
+    assert scripture.search('="LORD God"', lang='en')
+    with pytest.raises(SearchError, match='remove ='):
+        scripture.search('=God AND')

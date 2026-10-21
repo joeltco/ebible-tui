@@ -1,5 +1,6 @@
 """Read-only scripture queries. Each operation owns its connection for workers."""
 
+import re
 import sqlite3
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -92,9 +93,27 @@ class ScriptureStore:
         raise ReferenceError(f'Verse {ref.verse} is absent from the source')
 
     def validate_reference(self, ref: VerseRef) -> None:
-        numbers = {v.verse for v in self.chapter(ref.book_id, ref.chapter)}
+        if ref.book_id == 28 and ref.chapter == 151:
+            raise ReferenceError('Psalm 151 is filed as Psalms 150:7-14 in this source.')
+        with open_readonly(self.path) as db:
+            count = db.execute(
+                'SELECT max(chapter) FROM verse WHERE book_id=?', (ref.book_id,)
+            ).fetchone()[0]
+            numbers = {
+                r[0]
+                for r in db.execute(
+                    'SELECT verse FROM verse WHERE book_id=? AND chapter=?',
+                    (ref.book_id, ref.chapter),
+                )
+            }
+        if not numbers:
+            raise ReferenceError(
+                f'{BY_ID[ref.book_id].name_en} has {count} chapters; chapter {ref.chapter} does not exist.'
+            )
         if ref.verse not in numbers or (ref.end_verse is not None and ref.end_verse not in numbers):
-            raise ReferenceError('Reference endpoint is absent from the source')
+            raise ReferenceError(
+                f'Reference endpoint is absent from the source. {BY_ID[ref.book_id].name_en} {ref.chapter} has verses {min(numbers)}–{max(numbers)}.'
+            )
 
     def search(
         self,
@@ -106,7 +125,7 @@ class ScriptureStore:
         limit: int = 100,
         offset: int = 0,
     ) -> tuple[SearchResult, ...]:
-        """FTS5 syntax, ranked snippets; searches the bundled index only.
+        """Plain words by default; prefix with = to opt into raw FTS5 syntax.
 
         Run this synchronous method in a UI worker. Snippet markers are control
         characters, not Rich markup, so literal square brackets stay literal.
@@ -118,6 +137,16 @@ class ScriptureStore:
         if scope == 'book' and book_id not in BY_ID:
             raise SearchError('Current-book search requires a valid book_id')
         if not query.strip():
+            return ()
+        query = query.strip()
+        if query.startswith('='):
+            query = query[1:].strip()
+        else:
+            tokens = re.findall(r'[^\W_]+', query, flags=re.UNICODE)
+            query = ' AND '.join(f'"{token}"' for token in tokens)
+            if tokens:
+                query += '*'
+        if not query:
             return ()
         expression = f'text_{lang} : ({query})' if lang != 'both' else query
         filters = {
@@ -142,7 +171,9 @@ class ScriptureStore:
                     params,
                 ).fetchall()
         except sqlite3.OperationalError as exc:
-            raise SearchError(f'Search failed: {exc}') from exc
+            raise SearchError(
+                'That advanced search is not valid. Check quotes/operators, or remove = to search ordinary words.'
+            ) from exc
         return tuple(
             SearchResult(
                 VerseRef(r['book_id'], r['chapter'], r['verse']),

@@ -36,6 +36,10 @@ def validate_alignment(verses_am: Mapping[int, str], translated: Mapping[int, st
 
 
 def parse_numbered_lines(text: str, verses_am: Mapping[int, str]) -> dict[int, str]:
+    text = text.strip()
+    wrapper = re.fullmatch(r'```(?:[\w-]+)?[ \t]*\r?\n(.*?)\r?\n```', text, flags=re.DOTALL)
+    if wrapper:
+        text = wrapper[1]
     translated: dict[int, str] = {}
     for line in text.splitlines():
         if not line.strip():

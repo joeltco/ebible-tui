@@ -95,3 +95,12 @@ def test_model_immutable_and_validated():
         with pytest.raises(ValueError):
             VerseRef(*args)
     assert '·' in format_reference(VerseRef(1), 'both')
+
+
+@pytest.mark.parametrize(
+    ('query', 'message'),
+    [('john 99', '21 chapters'), ('ps 151', '150:7-14'), ('john 3:999', 'endpoint')],
+)
+def test_default_parser_validates_real_source(query, message):
+    with pytest.raises(ReferenceError, match=message):
+        parse_reference(query)

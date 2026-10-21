@@ -101,11 +101,7 @@ def resolve_book(value: str) -> Book:
 
 
 def parse_reference(text: str, *, validate: Callable[[VerseRef], None] | None = None) -> VerseRef:
-    """Bare books/chapters select verse 1; optional store validation checks bounds.
-
-    Parsing alone is independent of database IO. Source gaps are checked by the
-    store validator rather than assuming every number up to MAX(verse) exists.
-    """
+    """Resolve and validate against real scripture; callers may supply their store."""
     match = re.fullmatch(r'\s*(.*?)\s+([0-9]+)(?:\s*:\s*([0-9]+)(?:\s*[-–]\s*([0-9]+))?)?\s*', text)
     try:
         if match:
@@ -117,8 +113,11 @@ def parse_reference(text: str, *, validate: Callable[[VerseRef], None] | None = 
             ref = VerseRef(resolve_book(text.strip()).id)
     except ValueError as exc:
         raise ReferenceError(str(exc)) from exc
-    if validate is not None:
-        validate(ref)
+    if validate is None:
+        from ebible.core.scripture import ScriptureStore
+
+        validate = ScriptureStore().validate_reference
+    validate(ref)
     return ref
 
 

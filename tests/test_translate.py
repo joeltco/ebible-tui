@@ -20,7 +20,7 @@ from ebible.core.translate.base import (
     parse_numbered_lines,
     validate_alignment,
 )
-from ebible.core.translate.claude import MODEL, ClaudeBackend
+from ebible.core.translate.claude import APP_ADDENDUM, MODEL, ClaudeBackend
 from ebible.core.translate.google import GoogleBackend
 from ebible.core.translate.service import TranslationService, select_backend
 
@@ -63,8 +63,9 @@ def test_claude_whole_chapter_guide_model_and_fake_client(source, english):
     assert len(client.calls) == 1
     request = client.calls[0]
     assert request['model'] == MODEL == 'claude-sonnet-5-5'
-    assert request['system'] == Path('docs/translation/TRANSLATION_GUIDE.md').read_text(
-        encoding='utf-8'
+    assert (
+        request['system']
+        == Path('docs/translation/TRANSLATION_GUIDE.md').read_text(encoding='utf-8') + APP_ADDENDUM
     )
     assert request['max_tokens'] == 16384
     assert request['messages'] == [
@@ -82,7 +83,7 @@ def test_claude_whole_chapter_guide_model_and_fake_client(source, english):
         'empty',
         'commentary',
         'wrapped',
-        'fenced',
+        'fenced-commentary',
         'shifted',
         'invalid',
     ],
@@ -101,8 +102,8 @@ def test_claude_rejects_bad_alignment(source, english, kind):
         text += '\nfixture: extra commentary'
     elif kind == 'wrapped':
         text = text.replace(' ', '\n', 1)
-    elif kind == 'fenced':
-        text = f'```\n{text}\n```'
+    elif kind == 'fenced-commentary':
+        text = f'```\n{text}\n```\nfixture: commentary'
     elif kind == 'shifted':
         text = lines({n + 1: t for n, t in english.items()})
     else:
@@ -322,3 +323,31 @@ async def test_worker_does_not_block_event_loop(partial_store, userdata, english
     finally:
         release.set()
     assert await task == {2: english[2], 3: english[3]}
+
+
+@pytest.mark.parametrize('label', ['', 'text', 'plaintext'])
+def test_single_fenced_translation_wrapper(source, english, label):
+    assert parse_numbered_lines(f'```{label}\n{lines(english)}\n```', source) == english
+
+
+@pytest.mark.parametrize(
+    'wrap',
+    [
+        '```\n{body}\n```\nsummary',
+        'summary\n```\n{body}\n```',
+        '```\n```\n{body}\n```\n```',
+        '```\n{body}\n```\n```\n```',
+    ],
+)
+def test_wrapper_does_not_allow_commentary_or_multiple_blocks(source, english, wrap):
+    with pytest.raises(AlignmentError):
+        parse_numbered_lines(wrap.format(body=lines(english)), source)
+
+
+def test_guide_unchanged_and_addendum_explicit():
+    assert (
+        Path('src/ebible/core/translate/TRANSLATION_GUIDE.md').read_bytes()
+        == Path('docs/translation/TRANSLATION_GUIDE.md').read_bytes()
+    )
+    assert 'No summary, no commentary' in APP_ADDENDUM
+    assert 'numbered verse lines only' in APP_ADDENDUM
