@@ -139,5 +139,29 @@ Highlight colours are theme-aware (readable on every theme).
 
 ## Status
 
-- 2026-10-21: repo reset to fresh clone; data imported onto `rebuild/v2`. Batch 1 (core + data
-  layer) and batch 2 (UI) not yet started.
+- 2026-10-21: **Batch 1 complete** on `rebuild/v2`: package `ebible` 2.0.0.dev0,
+  typed core, references, read-only scripture/FTS/English overlay, versioned personal
+  data, atomic settings, generated plans, validated live translation workers,
+  relocated offline-tool imports/paths, and a minimal bootable CLI/placeholder.
+- Required gates passed in `.venv` (Python 3.14.7, Textual 8.2.8):
+  `ruff check src tests tools` — all checks passed;
+  `ruff format --check src tests` — 25 files already formatted;
+  `mypy src` — no issues in 17 source files;
+  `pytest -q` — **200 passed in 2.88s**;
+  `python tools/smoke.py --out /tmp/ebible-smoke` — **50×30 and 120×40 passed**,
+  SVGs saved as `ebible-50x30.svg` and `ebible-120x40.svg` in that directory.
+- Additional validation: **100% core statement coverage (580 statements)**;
+  built wheel contains byte-identical DB/schema/stylesheet/translation guide;
+  packaged headless boot including imports/data checks took **0.319s** on this host.
+  `ebible --version` reports `ebible 2.0.0.dev0`; offline `translate.py status`
+  reports **20,443 / 39,169 (52.2%), 35 / 81 books complete**.
+- Protected database unchanged: SHA-256
+  `167e4b3d97977e74ea77eebeb9609e8b0ef2fdd68798a6aa2a05cc1cf7d7e6cb`.
+  Canon rows, raw source, schema, and binding translation documentation unchanged.
+  All translation tests use fake clients/subprocesses; no translation network calls.
+- **Batch 2 not started.** Reader screens, custom themes, persisted UI preferences/resume,
+  live-text styling, and device integration remain for that batch. Physical Termux
+  and real translation services were not exercised. See
+  [foundation decisions](docs/FOUNDATION.md) for every implementation judgement,
+  API convention, and the inherited offline writers' restrictions. Three implementation
+  commits: `ac4b501`, `1b51833`, `4662c99`; nothing pushed or published.
