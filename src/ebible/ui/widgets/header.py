@@ -2,7 +2,7 @@
 
 from rich.text import Text
 from textual.app import ComposeResult
-from textual.containers import Horizontal
+from textual.containers import Horizontal, Vertical
 from textual.widgets import Button, Static
 
 
@@ -40,3 +40,28 @@ class HeaderBar(Horizontal):
 
 class StatusBar(Static):
     pass
+
+
+class PageHeader(Vertical):
+    """Secondary-page chrome that occupies exactly one row on a phone."""
+
+    def __init__(self, title: str, subtitle: str) -> None:
+        super().__init__()
+        self.title, self.subtitle = title, subtitle
+
+    def compose(self) -> ComposeResult:
+        self.set_class(self.app.size.width < 80, 'compact-header')
+        with Horizontal(classes='page-header'):
+            yield Button(
+                '‹' if self.app.size.width < 80 else '‹ Back',
+                id='back',
+                classes='back-button',
+                tooltip='Back · Escape',
+            )
+            yield Static(Text(self.title, overflow='ellipsis', no_wrap=True), classes='page-title')
+        yield Static(self.subtitle, classes='page-subtitle heading-subtitle', markup=False)
+
+    def on_resize(self) -> None:
+        compact = self.app.size.width < 80
+        self.set_class(compact, 'compact-header')
+        self.query_one(Button).label = '‹' if compact else '‹ Back'

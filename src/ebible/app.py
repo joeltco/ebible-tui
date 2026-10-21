@@ -10,6 +10,7 @@ from textual import work
 from textual.app import App
 from textual.binding import BindingType
 from textual.screen import Screen
+from textual.theme import Theme
 
 from ebible.core.labels import count_label
 from ebible.core.models import HighlightColour, VerseRef
@@ -19,7 +20,7 @@ from ebible.core.settings import Settings, load_settings, save_settings
 from ebible.core.translate.base import TranslationError
 from ebible.core.translate.service import TranslationService
 from ebible.core.userdata import UserDataStore
-from ebible.ui.themes import THEMES
+from ebible.ui.themes import THEMES, ordered_theme_names
 
 if TYPE_CHECKING:
     from ebible.ui.screens.reader import ReaderScreen
@@ -34,6 +35,11 @@ class EBibleApp(App[None], inherit_bindings=False):
     CSS_PATH = 'ui/styles/app.tcss'
     ENABLE_COMMAND_PALETTE = False
     BINDINGS: ClassVar[list[BindingType]] = []
+
+    @property
+    def available_themes(self) -> dict[str, Theme]:
+        themes = super().available_themes
+        return {name: themes[name] for name in ordered_theme_names(themes)}
 
     def __init__(self, reference: VerseRef | None = None, theme_name: str | None = None) -> None:
         super().__init__()

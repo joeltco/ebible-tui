@@ -27,7 +27,8 @@ class NoteEditor(Page):
     def compose(self) -> ComposeResult:
         yield from self.heading('A note in the margin', format_reference(self.ref, 'both'))
         yield Static(
-            'Markdown welcome · your words stay on this device',
+            'Markdown supported · saved only on this device',
+            id='note-hint',
             classes='page-subtitle',
             markup=False,
         )

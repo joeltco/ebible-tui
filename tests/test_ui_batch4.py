@@ -1,4 +1,4 @@
-"""Focused regressions for the Batch 4 search, count, and progress fixes."""
+"""Focused regressions for the eight Batch 4 review items."""
 
 from xml.etree import ElementTree as ET
 
@@ -98,3 +98,173 @@ async def test_plan_fractional_percent_is_never_zero_once_started(running_app):
         progress.update(progress=completed)
         await pilot.pause()
         assert label.render() == expected
+
+
+async def test_bilingual_paragraphs_are_separate_and_both_resolve_taps(running_app):
+    from rich.style import Style
+    from rich.table import Table
+
+    from ebible.ui.widgets.verse_view import Paragraph, VerseView
+
+    app, pilot = running_app
+    await app.update_setting('verse_flow', 'paragraph')
+    await pilot.pause()
+    view = app.reader.query_one(VerseView)
+    am = view.query_one('#paragraph', Paragraph)
+    en = view.query_one('#paragraph-english', Paragraph)
+    chapter = app.reader.chapter_data
+    assert am.region.bottom < en.region.y
+    for verse in chapter:
+        assert verse.text_am in am.content.plain
+        assert verse.english in en.content.plain
+        assert verse.english not in am.content.plain
+        assert verse.text_am not in en.content.plain
+    assert ' / ' not in am.content.plain + en.content.plain
+    assert am.content.plain.startswith('¹ ') and en.content.plain.startswith('¹ ')
+    assert any(isinstance(s.style, Style) and s.style.dim for s in am.content.spans)
+    for paragraph in (am, en):
+        paragraph.scroll_visible(animate=False, top=True)
+        await pilot.pause()
+        assert await pilot.click(paragraph, offset=(4, 0))
+        assert app.reference == VerseRef(1)
+        assert app.screen.__class__.__name__ == 'VerseActions'
+        await pilot.press('escape')
+    await pilot.press('j')
+    assert app.reference.verse == 2
+    assert view.active_paragraph == 'paragraph-english'
+    assert any(
+        isinstance(s.style, Style)
+        and s.style.underline
+        and chapter.verses[1].english in en.content.plain[s.start : s.end]
+        for s in en.content.spans
+    )
+    await pilot.resize_terminal(120, 40)
+    await app.update_setting('layout', 'parallel')
+    await pilot.pause()
+    content = view.query_one(Paragraph).content
+    assert isinstance(content, Table)
+    left, right = (col._cells[0] for col in content.columns)
+    assert chapter.verses[0].text_am in left.plain and chapter.verses[0].english not in left.plain
+    assert chapter.verses[0].english in right.plain and chapter.verses[0].text_am not in right.plain
+    for layout, first in [
+        ('amharic', chapter.verses[0].text_am),
+        ('english', chapter.verses[0].english),
+    ]:
+        await app.update_setting('layout', layout)
+        await pilot.pause()
+        assert len(view.query(Paragraph)) == 1
+        assert view.query_one(Paragraph).content.plain.startswith(' 1 ' + first)
+
+
+async def test_custom_themes_first_with_disabled_group_headings(running_app):
+    from ebible.ui.themes import THEMES
+
+    app, pilot = running_app
+    custom = [t.name for t in THEMES]
+    assert list(app.available_themes)[:6] == custom
+    await pilot.press('s')
+    choice = app.screen.query_one('#setting-theme')
+    assert await pilot.click('#setting-theme SelectCurrent')
+    await pilot.pause()
+    listing = choice.query_one(OptionList)
+    assert listing.get_option_at_index(0).prompt.plain == 'eBible themes'
+    assert listing.get_option_at_index(0).disabled
+    assert [value for _, value in choice._options[1:7]] == custom
+    assert listing.get_option_at_index(7).prompt.plain == 'More themes'
+    assert listing.get_option_at_index(7).disabled
+    assert [value for _, value in choice._options[8:]] == list(app.available_themes)[6:]
+    await pilot.press('up')  # Group title cannot be selected.
+    assert not listing.get_option_at_index(listing.highlighted).disabled
+    listing.highlighted = 1
+    await pilot.press('down', 'enter')
+    assert app.theme == 'tewahedo'
+
+
+async def test_secondary_page_headers_one_row_and_resize(running_app):
+    from textual.widgets import Button
+
+    from ebible.ui.screens.books import ChaptersScreen
+    from ebible.ui.screens.notes import NoteEditor
+
+    app, pilot = running_app
+    await pilot.resize_terminal(50, 30)
+    for name in (
+        'bookmarks',
+        'books',
+        'search',
+        'settings',
+        'plans',
+        'notes',
+        'help',
+        'chapters',
+        'editor',
+    ):
+        if name == 'chapters':
+            await app.push_screen(ChaptersScreen(14))
+        elif name == 'editor':
+            await app.push_screen(NoteEditor(VerseRef(1)))
+        else:
+            await app.open_page(name)
+        await pilot.pause()
+        header = app.screen.query_one('.page-header')
+        assert header.region.y == 0 and header.region.height == 1
+        assert not app.screen.query_one('.heading-subtitle').display
+        back = header.query_one(Button)
+        assert back.region.height == 1 and back.region.width >= 3
+        assert str(back.label) == '‹'
+        assert await pilot.click(back)
+        assert app.screen is app.reader
+    await app.open_page('books')
+    await pilot.resize_terminal(80, 40)
+    await pilot.pause()
+    header = app.screen.query_one('.page-header')
+    assert header.region.height == 3 and header.region.y == 1
+    assert app.screen.query_one('.heading-subtitle').display
+    assert str(header.query_one(Button).label) == '‹ Back'
+
+
+async def test_note_editor_copy_fits_one_line(running_app):
+    from ebible.ui.screens.notes import NoteEditor
+
+    app, pilot = running_app
+    await app.push_screen(NoteEditor(VerseRef(1)))
+    await pilot.pause()
+    hint = next(w for w in app.screen.query(Static) if str(w.content).startswith('Markdown'))
+    assert str(hint.content) == 'Markdown supported · saved only on this device'
+    assert hint.region.height == 1
+
+
+async def test_help_key_chips_have_fixed_accent_column_and_all_groups(running_app):
+    from textual.color import Color
+
+    app, pilot = running_app
+    await pilot.press('?')
+    await pilot.pause()
+    help_card = app.screen.query_one('#help-text')
+    headings = [str(w.content) for w in help_card.query('.eyebrow')]
+    assert headings == [
+        'READING',
+        'FIND YOUR PLACE',
+        'EVERYWHERE',
+        'YOUR TEXT',
+        'SEARCH',
+        'THE ETHIOPIAN PSALTER',
+    ]
+    rows = list(help_card.query('.key-row'))
+    assert len(rows) == 22
+    for row in rows:
+        chip = row.query_one('.key-chip')
+        description = row.query_one('.key-description')
+        assert chip.region.width == 16 and chip.region.height == 1
+        assert chip.styles.color == Color.parse(app.get_css_variables()['accent'])
+        assert description.region.x == chip.region.right + 1
+        assert description.region.right < app.size.width
+    assert {str(w.content) for w in help_card.query('.key-chip')} >= {
+        'q',
+        'Esc',
+        'Tab',
+        'Enter',
+        'Enter / Space',
+        'Backspace',
+        'Delete',
+    }

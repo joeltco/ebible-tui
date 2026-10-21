@@ -12,6 +12,7 @@ from textual.widgets import Button, Static
 if TYPE_CHECKING:
     from ebible.app import EBibleApp
 from ebible.ui.widgets.controls import PhoneScroll
+from ebible.ui.widgets.header import PageHeader
 
 
 class Page(Screen[None], inherit_bindings=False):
@@ -28,14 +29,12 @@ class Page(Screen[None], inherit_bindings=False):
         self.app.pop_screen()
 
     def heading(self, title: str, subtitle: str) -> ComposeResult:
-        with Horizontal(classes='page-header'):
-            yield Button('‹ Back', id='back', classes='back-button')
-            yield Static(title, classes='page-title', markup=False)
-        yield Static(subtitle, classes='page-subtitle', markup=False)
+        yield PageHeader(title, subtitle)
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == 'back':
             event.stop()
+            event.prevent_default()
             await self.action_back()
 
 

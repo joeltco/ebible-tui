@@ -1,5 +1,7 @@
 """Ethiopian-inspired palettes; colour literals live here, never in the stylesheet."""
 
+from collections.abc import Mapping
+
 from textual.theme import Theme
 
 from ebible.core.models import HighlightColour
@@ -109,3 +111,8 @@ _LIGHT_HIGHLIGHTS: dict[HighlightColour, str] = {
 
 def highlight_colour(colour: HighlightColour, dark: bool) -> str:
     return (_DARK_HIGHLIGHTS if dark else _LIGHT_HIGHLIGHTS)[colour]
+
+
+def ordered_theme_names(available: Mapping[str, Theme]) -> tuple[str, ...]:
+    custom = tuple(theme.name for theme in THEMES if theme.name in available)
+    return custom + tuple(name for name in available if name not in custom)

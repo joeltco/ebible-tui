@@ -50,6 +50,8 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
             check_layout(app)
             if name == 'reader' and size[0] < 80:
                 assert app.screen.query_one('#reading-scroll').content_size.height >= 24
+            if size[0] < 80 and app.screen.query('.page-header'):
+                assert app.screen.query_one('.page-header').region.height == 1
             if name == 'theme-picker':
                 assert app.screen.query_one('#setting-theme SelectOverlay').content_size.height >= 4
             filename = f'{theme}-{size[0]}x{size[1]}-{name}.svg'

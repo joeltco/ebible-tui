@@ -153,6 +153,8 @@ class ReaderScreen(Page):
 
     async def on_verse_picked(self, event: VersePicked) -> None:
         event.stop()
+        if event.paragraph_id:
+            self.query_one(VerseView).active_paragraph = event.paragraph_id
         await self.select_verse(event.number)
         await self.action_verse_actions()
 

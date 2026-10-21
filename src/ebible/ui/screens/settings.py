@@ -4,7 +4,7 @@ from textual.app import ComposeResult
 from textual.widgets import Input, Select, Static, Switch
 
 from ebible.ui.screens.base import Page
-from ebible.ui.widgets.controls import Choice, PhoneScroll, TextInput
+from ebible.ui.widgets.controls import Choice, PhoneScroll, TextInput, ThemeChoice
 
 
 class SettingsScreen(Page):
@@ -18,10 +18,9 @@ class SettingsScreen(Page):
         with PhoneScroll(id='settings-scroll', classes='page-scroll'):
             yield Static('APPEARANCE', classes='eyebrow', markup=False)
             yield Static('Theme', markup=False)
-            yield Choice(
-                [(name.replace('-', ' ').title(), name) for name in self.app.available_themes],
+            yield ThemeChoice(
+                self.app.available_themes,
                 value=self.app.theme,
-                allow_blank=False,
                 id='setting-theme',
             )
             yield Static('Languages', markup=False)

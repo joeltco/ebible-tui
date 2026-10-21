@@ -76,7 +76,7 @@ async def test_untranslated_chapter_has_one_notice_and_amharic_only(running_app,
         if flow == 'lines':
             rendered = '\n'.join(line.content.plain for line in view.query(VerseLine))
         else:
-            rendered = view.query_one(Paragraph).content.plain
+            rendered = '\n'.join(p.content.plain for p in view.query(Paragraph))
         assert 'translated' not in rendered and '◇' not in rendered
         assert app.reader.chapter_data.verses[0].text_am in rendered
         assert app.reader.chapter_data.verses[-1].text_am in rendered
@@ -102,7 +102,7 @@ async def test_partial_translation_uses_short_placeholder_and_exclusive_machine_
     if flow == 'lines':
         rendered = '\n'.join(line.content.plain for line in view.query(VerseLine))
     else:
-        rendered = view.query_one(Paragraph).content.plain
+        rendered = '\n'.join(p.content.plain for p in view.query(Paragraph))
     assert rendered.count('◇') == 1
     assert '◇ Machine' in rendered and real in rendered
     assert 'Not yet translated' in rendered
@@ -173,7 +173,7 @@ async def test_theme_dropdown_shows_multiple_choices_and_accepts_taps(running_ap
     assert overlay.vertical_scrollbar.region.width == 1
     overlay.scroll_home(animate=False)
     await pilot.pause()
-    assert await pilot.click(overlay, offset=(3, 2))
+    assert await pilot.click(overlay, offset=(3, 3))
     await pilot.pause()
     assert app.theme == list(app.available_themes)[1]
     assert not choice.expanded

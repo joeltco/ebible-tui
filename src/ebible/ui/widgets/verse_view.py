@@ -19,9 +19,10 @@ if TYPE_CHECKING:
 
 
 class VersePicked(Message):
-    def __init__(self, number: int) -> None:
+    def __init__(self, number: int, paragraph_id: str | None = None) -> None:
         super().__init__()
         self.number = number
+        self.paragraph_id = paragraph_id
 
 
 class VerseLine(Static):
@@ -39,7 +40,7 @@ class Paragraph(Static):
         number = event.style.meta.get('verse')
         if isinstance(number, int):
             event.stop()
-            self.post_message(VersePicked(number))
+            self.post_message(VersePicked(number, self.id))
 
 
 class VerseView(Vertical):
@@ -52,12 +53,16 @@ class VerseView(Vertical):
         self.selected = 1
         self.effective_layout = 'interleaved'
         self.paragraph_text = Text()
+        self.paragraph_texts: dict[str, Text] = {}
+        self.active_paragraph = 'paragraph'
 
     @property
     def eb(self) -> 'EBibleApp':
         return cast('EBibleApp', self.app)
 
-    def verse_text(self, verse: Verse, language: str, *, gutter: bool = True) -> Text:
+    def verse_text(
+        self, verse: Verse, language: str, *, gutter: bool = True, paragraph: bool = False
+    ) -> Text:
         settings = self.eb.settings
         colours = self.app.get_css_variables()
         colours['text-muted'] = (
@@ -70,7 +75,12 @@ class VerseView(Vertical):
                 '✎' if verse.verse in self.notes else ''
             )
             if settings.verse_numbers:
-                text.append(f'{verse.verse:>2} ', style=Style(color=colours['text-muted']))
+                number = (
+                    str(verse.verse).translate(str.maketrans('0123456789', '⁰¹²³⁴⁵⁶⁷⁸⁹')) + ' '
+                    if paragraph
+                    else f'{verse.verse:>2} '
+                )
+                text.append(number, style=Style(color=colours['text-muted'], dim=paragraph))
             if markers:
                 text.append(markers + ' ', style=Style(color=colours['accent']))
         if language == 'am':
@@ -150,6 +160,10 @@ class VerseView(Vertical):
             )
         if settings.verse_flow == 'paragraph':
             await self.mount(Paragraph(id='paragraph', markup=False))
+            if self.effective_layout == 'interleaved':
+                await self.mount(Paragraph(id='paragraph-english', markup=False))
+            if not self.query(f'#{self.active_paragraph}'):
+                self.active_paragraph = 'paragraph'
             self.update_paragraph()
         else:
             await self.mount(*(VerseLine(verse) for verse in self.chapter))
@@ -167,22 +181,25 @@ class VerseView(Vertical):
                 (left, 'am' if self.effective_layout != 'english' else 'en'),
                 (right, 'en'),
             ):
-                part = self.verse_text(verse, language)
-                if self.effective_layout == 'interleaved' and text is left:
-                    part += Text(' / ') + self.verse_text(verse, 'en', gutter=False)
+                part = self.verse_text(
+                    verse, language, paragraph=self.effective_layout in {'interleaved', 'parallel'}
+                )
                 if verse.verse == self.selected:
                     part.stylize(selected_style)
                 text.append_text(part)
                 text.append('  ')
         self.paragraph_text = left
+        self.paragraph_texts = {'paragraph': left, 'paragraph-english': right}
         if self.effective_layout == 'parallel':
             table = Table.grid(expand=True, padding=(0, 1))
             table.add_column(ratio=1)
             table.add_column(ratio=1)
             table.add_row(left, right)
-            self.query_one(Paragraph).update(table)
+            self.query_one('#paragraph', Paragraph).update(table)
         else:
-            self.query_one(Paragraph).update(left)
+            self.query_one('#paragraph', Paragraph).update(left)
+            if self.effective_layout == 'interleaved':
+                self.query_one('#paragraph-english', Paragraph).update(right)
 
     def select(self, number: int) -> None:
         self.selected = number
@@ -199,14 +216,16 @@ class VerseView(Vertical):
                 self.parent.scroll_home(animate=False)
             return
         if self.eb.settings.verse_flow == 'paragraph':
+            paragraph = self.query_one(f'#{self.active_paragraph}', Paragraph)
             width = max(
                 1,
-                self.query_one(Paragraph).content_size.width
-                - (2 if self.effective_layout == 'parallel' else 0),
+                paragraph.content_size.width - (2 if self.effective_layout == 'parallel' else 0),
             )
             if self.effective_layout == 'parallel':
                 width //= 2
-            lines = self.paragraph_text.wrap(self.app.console, max(1, width))
+            lines = self.paragraph_texts[self.active_paragraph].wrap(
+                self.app.console, max(1, width)
+            )
             for y, wrapped_line in enumerate(lines):
                 if any(
                     span.style
@@ -218,7 +237,7 @@ class VerseView(Vertical):
 
                     if isinstance(self.parent, VerticalScroll):
                         self.parent.scroll_to(
-                            y=self.query_one(Paragraph).virtual_region.y + y,
+                            y=paragraph.virtual_region.y + y,
                             animate=animate,
                             duration=0.12,
                         )

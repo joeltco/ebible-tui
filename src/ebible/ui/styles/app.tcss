@@ -41,6 +41,12 @@ OptionList > .option-list--option-highlighted { background: $primary 16%; color:
 OptionList > .option-list--option-disabled { color: $accent; text-style: bold; }
 OptionList:focus > .option-list--option-highlighted { background: $primary 22%; color: $foreground; }
 .page-header { height: 3; margin: 1 2 0 2; }
+PageHeader { height: auto; }
+PageHeader.compact-header { height: 1; }
+.compact-header .page-header { height: 1; margin: 0 2; }
+.compact-header .back-button { height: 1; width: 3; margin-right: 1; }
+.compact-header .page-title { height: 1; padding-top: 0; }
+.compact-header .heading-subtitle { display: none; }
 .back-button { width: 8; margin-right: 2; }
 .page-title { width: 1fr; height: auto; padding-top: 1; text-style: bold; color: $accent; }
 .page-subtitle { height: auto; margin: 0 2 1 2; color: $text-muted; }
@@ -72,7 +78,8 @@ HeaderBar Button { width: 5; height: 3; background: $background; color: $accent;
 .verse-line { width: 1fr; height: auto; padding: 0 1; margin-bottom: 1; border-left: tall $background; }
 .verse-line.selected { border-left: tall $primary; background: $primary 9%; }
 .compact .verse-line { margin-bottom: 0; }
-#paragraph { width: 1fr; height: auto; padding: 0 1; }
+Paragraph { width: 1fr; height: auto; padding: 0 1; }
+#paragraph-english { margin-top: 2; }
 #reading-status { height: 1; text-align: center; color: $text-muted; margin: 0 1; }
 .compact-chrome #brand { display: none; }
 .compact-chrome HeaderBar { height: 1; }
@@ -116,3 +123,7 @@ Toast { max-width: 90%; }
 #verse-menu .muted { margin-bottom: 1; }
 /* Percentage width prevents sibling margins shrinking the full-width viewport. */
 #reading-scroll, #brand, .page-scroll { width: 100%; }
+.key-row { height: auto; margin-bottom: 1; }
+.key-chip { width: 16; height: 1; text-align: center; color: $accent; background: $primary 12%; text-style: bold; margin-right: 1; }
+.key-description { width: 1fr; height: auto; }
+.help-note { height: auto; color: $text-muted; margin: 0 0 1 0; }
