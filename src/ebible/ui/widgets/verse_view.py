@@ -1,5 +1,6 @@
 """Scripture as literal Rich Text, with an interactive line or paragraph cursor."""
 
+import asyncio
 from typing import TYPE_CHECKING, cast
 
 from rich.style import Style
@@ -55,6 +56,7 @@ class VerseView(Vertical):
         self.paragraph_text = Text()
         self.paragraph_texts: dict[str, Text] = {}
         self.active_paragraph = 'paragraph'
+        self._rebuild_lock = asyncio.Lock()
 
     @property
     def eb(self) -> 'EBibleApp':
@@ -132,6 +134,12 @@ class VerseView(Vertical):
         await self.rebuild()
 
     async def rebuild(self) -> None:
+        # Resize events and reading/settings refreshes have separate message pumps.
+        async with self._rebuild_lock:
+            if self.app.is_running:
+                await self._rebuild_passage()
+
+    async def _rebuild_passage(self) -> None:
         if self.chapter is None:
             return
         settings = self.eb.settings
@@ -159,9 +167,12 @@ class VerseView(Vertical):
                 )
             )
         if settings.verse_flow == 'paragraph':
-            await self.mount(Paragraph(id='paragraph', markup=False))
+            paragraphs = [Paragraph(id='paragraph', markup=False)]
             if self.effective_layout == 'interleaved':
-                await self.mount(Paragraph(id='paragraph-english', markup=False))
+                paragraphs.append(Paragraph(id='paragraph-english', markup=False))
+            await self.mount(*paragraphs)
+            if not self.app.is_running:
+                return
             if not self.query(f'#{self.active_paragraph}'):
                 self.active_paragraph = 'paragraph'
             self.update_paragraph()

@@ -180,6 +180,23 @@ async def test_custom_themes_first_with_disabled_group_headings(running_app):
     assert app.theme == 'tewahedo'
 
 
+async def test_paragraph_resize_and_refresh_cannot_remove_each_others_blocks(running_app):
+    import asyncio
+
+    from ebible.ui.widgets.verse_view import Paragraph, VerseView
+
+    app, pilot = running_app
+    await app.update_setting('verse_flow', 'paragraph')
+    view = app.reader.query_one(VerseView)
+    await asyncio.gather(view.rebuild(), view.rebuild())
+    await pilot.pause()
+    assert len(view.query(Paragraph)) == 2
+    assert (
+        app.reader.chapter_data.verses[0].english
+        in view.query_one('#paragraph-english').content.plain
+    )
+
+
 async def test_secondary_page_headers_one_row_and_resize(running_app):
     from textual.widgets import Button
 
