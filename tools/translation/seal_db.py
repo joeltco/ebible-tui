@@ -18,7 +18,7 @@ sidecars at all.
 
 Run this before any commit that includes bible.db:
 
-    python tools/seal_db.py
+    python tools/translation/seal_db.py
 
 It fails loudly if a translator still holds the database, because checkpointing
 needs the write lock.
@@ -30,9 +30,9 @@ import sqlite3
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 
-from ebible.data.store import DB_PATH, WRITE_TIMEOUT  # noqa: E402
+from ebible.core.scripture import DB_PATH, WRITE_TIMEOUT  # noqa: E402
 
 
 def main() -> int:

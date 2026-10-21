@@ -4,9 +4,9 @@
 How a translator checks what earlier books already settled for a word, so the
 same Amharic does not acquire a second English rendering three books later.
 
-    python tools/lookup.py ቍርባን                 # 6 hits anywhere
-    python tools/lookup.py ቍርባን 20              # 20 hits
-    python tools/lookup.py ቍርባን 20 exodus,leviticus
+    python tools/translation/lookup.py ቍርባን                 # 6 hits anywhere
+    python tools/translation/lookup.py ቍርባን 20              # 20 hits
+    python tools/translation/lookup.py ቍርባን 20 exodus,leviticus
 """
 
 from __future__ import annotations
@@ -15,9 +15,9 @@ import sqlite3
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 
-from ebible.data.store import DB_PATH  # noqa: E402
+from ebible.core.scripture import DB_PATH  # noqa: E402
 
 
 def main() -> int:

@@ -9,8 +9,8 @@ MUST NOT run while readers hold the database open: store.py opens it with
 `immutable=1`, which promises SQLite the file will not change. Writing under that
 promise is undefined behaviour. Run this only when nothing else is using the db.
 
-    python tools/repair_artifacts.py --dry-run
-    python tools/repair_artifacts.py
+    python tools/translation/repair_artifacts.py --dry-run
+    python tools/translation/repair_artifacts.py
 """
 
 from __future__ import annotations
@@ -21,9 +21,9 @@ import sqlite3
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 
-from ebible.data.store import DB_PATH, WRITE_TIMEOUT  # noqa: E402
+from ebible.core.scripture import DB_PATH, WRITE_TIMEOUT  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build_db import clean_verse  # noqa: E402

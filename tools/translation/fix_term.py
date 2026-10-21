@@ -9,9 +9,9 @@ hit.
 Wholesale drift (a whole book transliterated) should still be re-translated;
 search-and-replace across hundreds of verses hides collateral damage.
 
-    python tools/fix_term.py --am ዲዲሞስ --from Didymos --to Didymus --dry-run
-    python tools/fix_term.py --am ዲዲሞስ --from Didymos --to Didymus
-    python tools/fix_term.py --from Didymos --to Didymus --book john
+    python tools/translation/fix_term.py --am ዲዲሞስ --from Didymos --to Didymus --dry-run
+    python tools/translation/fix_term.py --am ዲዲሞስ --from Didymos --to Didymus
+    python tools/translation/fix_term.py --from Didymos --to Didymus --book john
 """
 
 from __future__ import annotations
@@ -22,9 +22,9 @@ import sqlite3
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 
-from ebible.data.store import DB_PATH, WRITE_TIMEOUT  # noqa: E402
+from ebible.core.scripture import DB_PATH, WRITE_TIMEOUT  # noqa: E402
 
 
 def main() -> int:

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Compile assets/Bible81/*.txt into the shipped SQLite store.
+"""Compile source/Bible81/*.txt into the shipped SQLite store.
 
-Source layout:  assets/Bible81/<id> - <amharic name>/<seq> - <chapter>.txt
+Source layout:  source/Bible81/<id> - <amharic name>/<seq> - <chapter>.txt
 Verse lines:    "<n>. <text>"  -- audited clean across all 39,169 lines, so the
                 parser is strict: anything unexpected aborts the build rather
                 than being silently skipped.
 
-Usage:  python tools/build_db.py [--assets DIR] [--out FILE]
+Usage:  python tools/translation/build_db.py [--assets DIR] [--out FILE]
 """
 
 from __future__ import annotations
@@ -17,12 +17,12 @@ import sqlite3
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 
 from ebible import canon  # noqa: E402
 
-REPO = Path(__file__).resolve().parents[1]
-DEFAULT_ASSETS = REPO / 'assets' / 'Bible81'
+REPO = Path(__file__).resolve().parents[2]
+DEFAULT_ASSETS = REPO / 'source' / 'Bible81'
 DEFAULT_OUT = REPO / 'src' / 'ebible' / 'data' / 'bible.db'
 SCHEMA = REPO / 'src' / 'ebible' / 'data' / 'schema.sql'
 

@@ -6,10 +6,10 @@ here. `pull` writes a chapter out as numbered lines, `push` reads translated
 lines back in. That keeps the pipeline honest about the one rule that matters:
 verse numbers must survive the round trip exactly.
 
-    python tools/translate.py status
-    python tools/translate.py pull  genesis 1        > /tmp/gen1.txt
-    python tools/translate.py push  genesis 1 < /tmp/gen1-en.txt
-    python tools/translate.py next  --count 5        # what still needs doing
+    python tools/translation/translate.py status
+    python tools/translation/translate.py pull  genesis 1        > /tmp/gen1.txt
+    python tools/translation/translate.py push  genesis 1 < /tmp/gen1-en.txt
+    python tools/translation/translate.py next  --count 5        # what still needs doing
 """
 
 from __future__ import annotations
@@ -19,9 +19,17 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 
-from ebible.data.store import DB_PATH, Store, open_writable  # noqa: E402
+from ebible.core.scripture import (  # noqa: E402
+    DB_PATH,
+)
+from ebible.core.scripture import (
+    ScriptureStore as Store,
+)
+from ebible.core.scripture import (
+    open_readonly as open_writable,
+)
 
 LINE_RE = re.compile(r'^(\d+)[.:]\s*(.*)$')
 

@@ -5,8 +5,8 @@ Batches are sized by verse count, not chapter count -- chapters range from 1 to
 176 verses, so splitting by chapter produces wildly uneven work. A batch never
 spans two books, which keeps each agent in one voice and one context.
 
-    python tools/plan_batches.py --target 500
-    python tools/plan_batches.py --target 500 --exclude genesis:1-5,matthew:1-3
+    python tools/translation/plan_batches.py --target 500
+    python tools/translation/plan_batches.py --target 500 --exclude genesis:1-5,matthew:1-3
 """
 
 from __future__ import annotations
@@ -16,9 +16,9 @@ import sqlite3
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'src'))
 
-from ebible.data.store import DB_PATH  # noqa: E402
+from ebible.core.scripture import DB_PATH  # noqa: E402
 
 
 def parse_exclude(spec: str) -> set[tuple[str, int]]:
