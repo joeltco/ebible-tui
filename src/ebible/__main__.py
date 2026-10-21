@@ -13,7 +13,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument('reference', nargs='*', metavar='REF', help='e.g. "john 3:16" or "ዘፍ 1"')
     parser.add_argument('--version', action='version', version=f'ebible {__version__}')
     parser.add_argument(
-        '--theme', metavar='NAME', help='Textual theme (custom themes arrive in batch 2)'
+        '--theme',
+        metavar='NAME',
+        help='Theme: meskel, tewahedo, parchment, lalibela, midnight, high-contrast, or a Textual built-in',
     )
     args = parser.parse_args(argv)
 

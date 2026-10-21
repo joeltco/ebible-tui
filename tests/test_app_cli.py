@@ -4,41 +4,12 @@ import sys
 from pathlib import Path
 
 import pytest
-from textual.widgets import Button, Static
 
 from ebible import __version__
 from ebible.__main__ import main
 from ebible.app import EBibleApp
 from ebible.core.models import VerseRef
 from ebible.core.scripture import DB_PATH
-
-
-@pytest.mark.parametrize('size', [(50, 30), (120, 40)])
-async def test_boot_reference_theme_and_touch_quit(size, tmp_path):
-    app = EBibleApp(VerseRef(58, 3, 16), theme_name='textual-light')
-    async with app.run_test(size=size) as pilot:
-        await pilot.pause()
-        assert app.theme == 'textual-light'
-        assert 'John 3:16' in str(app.query_one('#reference', Static).content)
-        for widget in app.query('#placeholder, #placeholder Static, #quit'):
-            assert 0 <= widget.region.x and widget.region.right <= size[0]
-            assert 0 <= widget.region.y and widget.region.bottom < size[1]
-        assert app.query_one('#quit', Button).size.width >= 3
-        assert not app.use_command_palette
-        assert not any('ctrl+' in key or 'alt+' in key for key in app._bindings.key_to_bindings)
-        path = Path(app.save_screenshot('fixture.svg', path=str(tmp_path)))
-        assert '<svg' in path.read_text(encoding='utf-8')
-        assert await pilot.click('#quit')
-        assert app._exit
-
-
-@pytest.mark.parametrize('key', ['q', 'escape'])
-async def test_quit_by_key(key):
-    app = EBibleApp()
-    assert app.reference == VerseRef(1)
-    async with app.run_test(size=(50, 30)) as pilot:
-        await pilot.press(key)
-        assert app._exit
 
 
 def test_version_help_and_invalid_arguments(capsys):

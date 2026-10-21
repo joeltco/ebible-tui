@@ -11,6 +11,7 @@ def isolated_paths(tmp_path, monkeypatch):
     monkeypatch.setenv('XDG_CONFIG_HOME', str(tmp_path / 'config'))
     monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path / 'data'))
     monkeypatch.delenv('ANTHROPIC_API_KEY', raising=False)
+    monkeypatch.delenv('NO_COLOR', raising=False)
 
 
 @pytest.fixture
@@ -21,3 +22,21 @@ def scripture():
 @pytest.fixture
 def userdata():
     return UserDataStore()
+
+
+@pytest.fixture(params=[(50, 30), (120, 40)], ids=['phone', 'desktop'])
+def terminal_size(request):
+    return request.param
+
+
+@pytest.fixture
+async def running_app(terminal_size):
+    import asyncio
+
+    from ebible.app import EBibleApp
+
+    app = EBibleApp()
+    async with app.run_test(size=terminal_size) as pilot:
+        await asyncio.wait_for(app.ready.wait(), 5)
+        await pilot.pause()
+        yield app, pilot
