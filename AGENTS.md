@@ -139,37 +139,48 @@ Highlight colours are theme-aware (readable on every theme).
 
 ## Status
 
-- 2026-10-21: **Batches 1 and 2 complete** on `rebuild/v2`, package `ebible`
+- 2026-10-21: **Batches 1–3 complete** on `rebuild/v2`, package `ebible`
   2.0.0.dev0. The complete UI includes all reader layouts/flows, book/chapter and
   reference navigation, verse actions, search, bookmarks/highlights/notes/history,
   generated plans, live settings, resume, help, and all six custom themes.
+- Batch 3 fixes P1–P4: one-row headers below 80 columns with **26 reading rows
+  at 50×30**, preserved wide headers and graceful title ellipsis; one notice plus
+  Amharic-only verses for wholly untranslated chapters; short partial placeholders
+  without ◇; plan progress spacing; and one-cell themed scrollbars throughout.
+  Also fixed dropdowns clipped to one row and shifted sideways by passage-list CSS.
+  The unmarked Bookmark button no longer uses the machine-translation diamond.
 - Review fixes F1–F3 have regression tests: safe plain search with explicit `=`
   advanced mode and friendly errors; source-valid chapter/verse jumps with Psalm
   151 guidance; unchanged translation guide plus a numbered-output addendum and
   strict parsing that tolerates one surrounding code fence.
 - Required gates passed in `.venv` (Python 3.14.7, Textual 8.2.8):
   `ruff check src tests tools` — all checks passed;
-  `ruff format --check src tests` — **50 files already formatted**;
+  `ruff format --check src tests` — **51 files already formatted**;
   `mypy src` — **no issues in 38 source files**;
-  `pytest -q` — **319 passed in 148.92s**, including **102 UI tests**;
+  `pytest -q` — **337 passed in 178.42s**, including **120 UI tests**
+  (**18 new polish tests**);
   `python tools/smoke.py --out /tmp/ebible-smoke` — **144 SVGs passed**:
   24 screen/modal/layout states × 50×30 and 120×40 × meskel, parchment, lalibela.
-  Smoke uses temporary XDG directories, checks horizontal layout and binding
-  tables, and records every SVG filename in `/tmp/ebible-smoke/manifest.txt`.
+  Smoke uses temporary XDG directories, checks horizontal layout, phone reading
+  height, scrollbar width, dropdown height, and binding tables. Every fresh SVG
+  filename is recorded in `/tmp/ebible-smoke/manifest.txt`.
 - Pilot coverage includes navigation, selection, annotation persistence across
   restart, settings/theme switching, search/plan jumps, mark-read, resume, every
   screen's Escape route, and removal of Ctrl/Alt bindings throughout the mounted UI.
-  Actual SVGs were visually inspected, including the light theme and wide reader.
-- Additional validation: built wheel contains all **38 Python modules** and
-  byte-identical DB/schema/stylesheet/translation guide. Packaged full-reader boot,
-  including imports and settled first render, took **0.688s** on this host.
-  `ebible --version` reports `ebible 2.0.0.dev0`.
+  All **72 phone views** (24 states under each of three themes) were personally
+  inspected from fresh SVG rasterizations; corrected dropdowns were rechecked.
+- Regression verification against an isolated copy of the pushed Batch 2 source:
+  **six checks failed on the expected old behavior**, covering P1, P2 in both
+  flows, P3, P4, and dropdown clipping. Current gates all pass.
+  `ebible --version` still reports `ebible 2.0.0.dev0`.
 - Protected database unchanged: SHA-256
   `167e4b3d97977e74ea77eebeb9609e8b0ef2fdd68798a6aa2a05cc1cf7d7e6cb`.
   Canon rows, raw source, schema, and binding translation documentation unchanged.
   Translation and device-service tests use fakes; no translation network calls.
-- Physical Termux touch/clipboard/vibration and real translation services were not
-  exercised. See [UI decisions](docs/UI_DECISIONS.md) and
-  [foundation decisions](docs/FOUNDATION.md) for implementation judgements and API
-  conventions. Batch 2 implementation commits: `ebaad6c` and `8898f1b`, followed
-  by the documentation/status commit. Nothing pushed or published.
+- No physical Termux session or real translation service was exercised in Batch 3.
+  The maintainer reported successful Batch 2 tmux testing at 50×30 and visual approval.
+  See [polish review](docs/POLISH_REVIEW.md), [UI decisions](docs/UI_DECISIONS.md), and
+  [foundation decisions](docs/FOUNDATION.md) for the inspection record, judgements,
+  and API conventions. Batch 3 implementation commits: `9be246c` and `c73e2bb`,
+  followed by the documentation/status commit. Batch 2 was already pushed by the
+  maintainer; **Batch 3 remains local. No push or publication was performed.**

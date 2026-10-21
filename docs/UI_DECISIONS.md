@@ -1,4 +1,4 @@
-# Batch 2 interaction and visual decisions
+# UI interaction and visual decisions
 
 These are the implementation choices left open by the specification. The core
 conventions in FOUNDATION.md still apply, with the reviewed search/reference/
@@ -11,8 +11,11 @@ translation contracts updated there.
   immediately. A CLI theme overrides the saved theme for the session; a subsequent
   preference edit saves the current session preferences together.
 - The reading column is centred and bounded by the configured width, with two cells
-  of outer margin on a phone. A small brand line, two-line chapter header, two one-row
-  action bars, and a dim status line keep most of the terminal available for scripture.
+  of outer margin on a phone. Below 80 columns, the book/chapter header is one row,
+  the brand is hidden, and the viewport has no vertical padding. Two one-row action
+  bars and the dim status line remain: scripture gets 26 of 30 rows. At 80 columns
+  and wider the brand and full chapter header remain. Long compact titles ellipsize
+  the book name while preserving the chapter/count suffix and tappable arrows.
 - Selected verses have a narrow theme-coloured rule and a 9% tint. English uses the
   secondary colour, numbers are dim, and bookmarks/notes retain their gutter glyphs.
   Highlights use distinct light/dark foreground palettes. No CSS colour literals.
@@ -67,9 +70,14 @@ translation contracts updated there.
 - Live translation is explicit, via the verse menu. Only one request runs at a time.
   Navigation remains available; completion refreshes the reader only if that chapter
   is still open. Failure is a notification and never replaces reviewed text.
-- Live text and copied live English both include a machine marker. Disabling detailed
-  untranslated messages shortens the explanation but never hides the missing text;
-  deuterocanonical passages retain their distinct label.
+- Live text and copied live English both include a machine marker. Only live English
+  uses ◇; an unmarked Bookmark button has no diamond. A wholly untranslated chapter
+  has one calm notice and Amharic-only verses, in every layout/flow. The notice names
+  deuterocanonical status when applicable and explains the verse menu's translation
+  action and backend requirement. This is a display fallback; the layout preference
+  stays unchanged. Partial chapters use short dim per-verse placeholders without ◇.
+  Disabling detailed placeholders shortens those to “Untranslated”; the chapter
+  notice is always shown. No source or overlay data changes.
 - Copy includes the English reference followed by the requested language(s). It uses
   termux-clipboard-set if present, otherwise OSC 52. Termux copy has a five-second
   timeout; optional vibration has a two-second timeout and does not undo a successful
@@ -94,3 +102,8 @@ translation contracts updated there.
 - Visuals were inspected from the actual SVGs, not only widget geometry. The app is
   tested headlessly on this host. Physical Android touch/clipboard/vibration and
   remote translation services still require device/service verification.
+- Batch 3 inspected every one of the 24 phone views under all three smoke themes.
+  Scrollbars are one cell throughout, with theme-derived colours. Plan percentages
+  have one-cell gaps from the bar and scrollbar. Passage-list layout rules exclude
+  Select overlays, so dropdowns retain their full list height and aligned borders.
+  See [polish review](POLISH_REVIEW.md) for the complete inspection record and limits.

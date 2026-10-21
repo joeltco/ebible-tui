@@ -26,6 +26,8 @@ The reader resumes your last position. An explicit CLI reference overrides resum
 
 - Amharic, English, interleaved, or parallel languages. Parallel falls back to
   interleaved below 90 terminal columns. Choose verse lines or continuous paragraphs.
+- Below 80 columns, a one-row book/chapter header leaves 26 of 30 rows for reading.
+  Wider terminals retain the full header. Long compact titles ellipsize the book name.
 - Six custom themes: `meskel`, `tewahedo`, `parchment` (light), `lalibela`, `midnight`,
   and `high-contrast`, plus Textual's built-ins.
 - Tap a verse or press Enter for bookmarks, colour highlights, Markdown notes,
@@ -75,7 +77,9 @@ XDG variables use the defaults. The app never changes `~/.termux`.
 
 Live English is stored separately in `user.db`, with backend and timestamp
 provenance, and displayed with **◇ Machine**. Bundled English always wins.
-Missing English always shows an honest marker; Settings can shorten its explanation.
+Wholly untranslated chapters show one notice and Amharic-only verses. Partial chapters
+use short dim placeholders; Settings can shorten these further. ◇ is reserved for
+live machine English.
 
 ```sh
 # Optional Claude backend, installed inside the activated venv:
