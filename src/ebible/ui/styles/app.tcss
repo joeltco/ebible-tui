@@ -28,7 +28,7 @@ Input:focus { border: tall $primary; }
 Select > SelectCurrent { border: tall $panel; background: $surface; }
 Select:focus > SelectCurrent { border: tall $primary; }
 SelectOverlay { border: solid $primary; }
-OptionList {
+PassageList {
     margin: 0 2;
     padding: 0;
     border: none;

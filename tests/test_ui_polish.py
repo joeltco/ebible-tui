@@ -157,3 +157,33 @@ async def test_scrollbars_one_cell_visible_and_themed_throughout(running_app):
             assert seen
         if key:
             await pilot.press('escape')
+
+
+async def test_theme_dropdown_shows_multiple_choices_and_accepts_taps(running_app):
+    app, pilot = running_app
+    await pilot.press('s')
+    assert await pilot.click('#setting-theme SelectCurrent')
+    await pilot.pause()
+    choice = app.screen.query_one('#setting-theme')
+    overlay = choice.query_one('SelectOverlay')
+    assert overlay.content_size.height >= 4
+    assert overlay.region.x == choice.region.x
+    assert overlay.region.width == choice.region.width
+    assert overlay.show_vertical_scrollbar
+    assert overlay.vertical_scrollbar.region.width == 1
+    overlay.scroll_home(animate=False)
+    await pilot.pause()
+    assert await pilot.click(overlay, offset=(3, 2))
+    await pilot.pause()
+    assert app.theme == list(app.available_themes)[1]
+    assert not choice.expanded
+
+
+async def test_untranslated_canonical_chapter_notice_has_no_deuterocanonical_label(running_app):
+    app, pilot = running_app
+    await app.navigate(VerseRef(10))  # Real 2 Samuel 1 has no bundled English.
+    await pilot.pause()
+    notice = app.reader.query_one('#chapter-notice', Static)
+    assert 'This chapter is not yet translated' in str(notice.content)
+    assert 'deuterocanonical' not in str(notice.content)
+    assert '◇' not in str(notice.content)

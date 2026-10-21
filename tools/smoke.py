@@ -27,6 +27,7 @@ def check_layout(app: EBibleApp) -> None:
             assert widget.region.right <= app.size.width, f'{widget}: clips at right edge'
             if widget.is_scrollable:
                 assert widget.max_scroll_x == 0, f'{widget}: horizontal overflow'
+                assert widget.styles.scrollbar_size_vertical == 1, f'{widget}: wide scrollbar'
     for node in [app, *app.screen_stack, *app.screen.walk_children()]:
         assert not any(mod in key for key in node._bindings.key_to_bindings for mod in ('ctrl+', 'alt+', 'super+')), f'{node}: desktop-only binding'
 
@@ -47,6 +48,10 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
         async def capture(name: str) -> None:
             await pilot.pause()
             check_layout(app)
+            if name == 'reader' and size[0] < 80:
+                assert app.screen.query_one('#reading-scroll').content_size.height >= 24
+            if name == 'theme-picker':
+                assert app.screen.query_one('#setting-theme SelectOverlay').content_size.height >= 4
             filename = f'{theme}-{size[0]}x{size[1]}-{name}.svg'
             app.save_screenshot(filename, path=str(out))
             names.append(filename)
