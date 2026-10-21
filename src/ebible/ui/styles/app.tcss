@@ -1,4 +1,11 @@
 /* One visual language: paper, a quiet rule, and room around the words. */
+* {
+    scrollbar-size: 1 1;
+    scrollbar-color: $primary 50%;
+    scrollbar-color-hover: $primary 75%;
+    scrollbar-color-active: $primary;
+    scrollbar-background: $surface;
+}
 Screen {
     background: $background;
     color: $foreground;
@@ -67,6 +74,12 @@ HeaderBar Button { width: 5; height: 3; background: $background; color: $accent;
 .compact .verse-line { margin-bottom: 0; }
 #paragraph { width: 1fr; height: auto; padding: 0 1; }
 #reading-status { height: 1; text-align: center; color: $text-muted; margin: 0 1; }
+.compact-chrome #brand { display: none; }
+.compact-chrome HeaderBar { height: 1; }
+.compact-chrome HeaderBar Button { height: 1; width: 3; }
+.compact-chrome #book-title { height: 1; }
+.compact-chrome #reading-scroll { padding: 0 2; }
+#chapter-notice { height: auto; color: $text-muted; margin: 0 1 1 1; }
 #chapter-grid { grid-size: 5; grid-columns: 1fr; grid-rows: 3; grid-gutter: 1; height: auto; }
 #chapter-grid Button { width: 1fr; }
 #search-more { width: 1fr; margin: 1 2; }
@@ -75,8 +88,9 @@ HeaderBar Button { width: 5; height: 3; background: $background; color: $accent;
 #settings-scroll Select, #settings-scroll Input { margin: 0 0 1 0; width: 1fr; }
 #settings-scroll Switch { margin: 0 0 1 0; }
 #plan-readings { height: auto; min-height: 4; margin: 0; }
-#plan-progress { width: 1fr; margin: 1 0; }
+#plan-progress { width: 100%; margin: 1 0; padding-right: 1; }
 #plan-progress Bar { width: 1fr; }
+#plan-progress PercentageStatus { width: 4; margin-left: 1; }
 #plan-scroll > Button { width: 1fr; margin-top: 1; }
 #plan-scroll .button-row { margin: 1 0; }
 #plan-summary { margin: 1 0; }

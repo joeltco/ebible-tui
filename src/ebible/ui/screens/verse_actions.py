@@ -47,7 +47,7 @@ class VerseActions(Sheet):
 
     async def update_bookmark_label(self) -> None:
         marked = any(b.ref == self.ref for b in await asyncio.to_thread(self.eb.userdata.bookmarks))
-        self.query_one('#bookmark-verse', Button).label = '◆ Bookmarked' if marked else '◇ Bookmark'
+        self.query_one('#bookmark-verse', Button).label = '◆ Bookmarked' if marked else 'Bookmark'
         colours = await asyncio.to_thread(self.eb.userdata.highlights)
         selected = next((h.colour for h in colours if h.ref == self.ref), None)
         for colour in HIGHLIGHT_COLOURS:

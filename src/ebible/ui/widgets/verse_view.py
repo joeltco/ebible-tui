@@ -77,15 +77,9 @@ class VerseView(Vertical):
             text.append(verse.text_am)
         elif verse.english_source == 'placeholder':
             placeholder = (
-                verse.english
-                if settings.show_untranslated_placeholder
-                else (
-                    'Untranslated · deuterocanonical'
-                    if self.chapter and self.chapter.book.deuterocanonical
-                    else 'Not yet translated'
-                )
+                'Not yet translated' if settings.show_untranslated_placeholder else 'Untranslated'
             )
-            text.append('◇ ' + placeholder, style=Style(color=colours['text-muted'], italic=True))
+            text.append(placeholder, style=Style(color=colours['text-muted'], italic=True))
         else:
             if verse.english_source == 'live':
                 text.append('◇ Machine · ', style=Style(color=colours['text-muted'], italic=True))
@@ -140,6 +134,20 @@ class VerseView(Vertical):
         )
         await self.remove_children()
         self.set_class(settings.verse_spacing == 'compact', 'compact')
+        if all(verse.english_source == 'placeholder' for verse in self.chapter):
+            self.effective_layout = 'amharic'
+            description = (
+                'This deuterocanonical chapter'
+                if self.chapter.book.deuterocanonical
+                else 'This chapter'
+            )
+            await self.mount(
+                Static(
+                    f'{description} is not yet translated. “Translate this chapter” in the verse menu can fill it when a backend is available.',
+                    id='chapter-notice',
+                    markup=False,
+                )
+            )
         if settings.verse_flow == 'paragraph':
             await self.mount(Paragraph(id='paragraph', markup=False))
             self.update_paragraph()
@@ -186,6 +194,10 @@ class VerseView(Vertical):
         self.call_after_refresh(self.reveal_selection, True)
 
     def reveal_selection(self, animate: bool = False) -> None:
+        if not animate and self.chapter and self.selected == self.chapter.verses[0].verse:
+            if isinstance(self.parent, VerticalScroll):
+                self.parent.scroll_home(animate=False)
+            return
         if self.eb.settings.verse_flow == 'paragraph':
             width = max(
                 1,
@@ -205,7 +217,11 @@ class VerseView(Vertical):
                     # Reader viewport is the scrolling parent, not the auto-height column.
 
                     if isinstance(self.parent, VerticalScroll):
-                        self.parent.scroll_to(y=y, animate=animate, duration=0.12)
+                        self.parent.scroll_to(
+                            y=self.query_one(Paragraph).virtual_region.y + y,
+                            animate=animate,
+                            duration=0.12,
+                        )
                     break
         else:
             line = self.query_one(f'#verse-{self.selected}', VerseLine)

@@ -40,6 +40,7 @@ class ReaderScreen(Page):
         self.chapter_data: Chapter | None = None
 
     def compose(self) -> ComposeResult:
+        self.set_class(self.app.size.width < 80, 'compact-chrome')
         yield Static('✣  e B i b l e', id='brand', markup=False)
         yield HeaderBar()
         with Horizontal(id='reader-nav'):
@@ -83,8 +84,8 @@ class ReaderScreen(Page):
             'en': chapter.book.name_en,
             'both': chapter.book.display,
         }[self.eb.settings.book_name_language]
-        self.query_one('#book-title', Static).update(
-            f'{name}\nCHAPTER {chapter.number}  /  {self.eb.chapter_counts[chapter.book.id]}'
+        self.query_one(HeaderBar).show_title(
+            name, chapter.number, self.eb.chapter_counts[chapter.book.id]
         )
         await self.query_one(VerseView).show_chapter(chapter, bookmarks, highlights, notes)
         self.query_one('#previous-chapter', Button).disabled = (
@@ -178,5 +179,7 @@ class ReaderScreen(Page):
         self.call_after_refresh(self.set_focus, None)
 
     async def on_resize(self) -> None:
+        self.set_class(self.app.size.width < 80, 'compact-chrome')
+        self.query_one(HeaderBar).call_after_refresh(self.query_one(HeaderBar).refresh_title)
         if self.chapter_data is not None:
             await self.query_one(VerseView).rebuild()

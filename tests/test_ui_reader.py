@@ -202,7 +202,7 @@ async def test_empty_english_placeholder_and_live_marking(running_app):
     view = app.reader.query_one(VerseView)
     verse = app.reader.chapter_data.verses[0]
     assert verse.english_source == 'placeholder'
-    assert 'deuterocanonical' in view.verse_text(verse, 'en').plain
+    assert 'deuterocanonical' in str(view.query_one('#chapter-notice', Static).content)
     await app.update_setting('show_untranslated_placeholder', False)
     assert 'Untranslated' in view.verse_text(verse, 'en').plain
     # Explicit temporary live-text fixture using actual bundled English.
