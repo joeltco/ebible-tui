@@ -1,5 +1,6 @@
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 from datetime import date, timedelta
 
 import pytest
@@ -11,7 +12,7 @@ from ebible.core.userdata import _MIGRATIONS, SCHEMA_VERSION, UserDataStore
 
 
 def test_migrations_empty_and_reopen(userdata):
-    with sqlite3.connect(userdata.path) as db:
+    with closing(sqlite3.connect(userdata.path)) as db, db:
         assert db.execute('PRAGMA user_version').fetchone()[0] == SCHEMA_VERSION
         tables = {r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
     assert {
@@ -30,7 +31,7 @@ def test_migrations_empty_and_reopen(userdata):
 
 def test_forward_migration_preserves_data(tmp_path):
     path = tmp_path / 'fixture-v1.db'
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db, db:
         for statement in _MIGRATIONS[1]:
             db.execute(statement)
         db.execute('PRAGMA user_version=1')
@@ -42,11 +43,11 @@ def test_forward_migration_preserves_data(tmp_path):
 
 def test_future_version_rejected_unchanged(tmp_path):
     path = tmp_path / 'fixture-future.db'
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db, db:
         db.execute('PRAGMA user_version=999')
     with pytest.raises(ValueError, match='newer'):
         UserDataStore(path)
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db, db:
         assert db.execute('PRAGMA user_version').fetchone()[0] == 999
         assert db.execute('SELECT count(*) FROM sqlite_master').fetchone()[0] == 0
 
@@ -56,7 +57,7 @@ def test_migration_failure_rolls_back(tmp_path, monkeypatch):
     path = tmp_path / 'fixture-failure.db'
     with pytest.raises(sqlite3.OperationalError):
         UserDataStore(path)
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db, db:
         assert db.execute('PRAGMA user_version').fetchone()[0] == 0
         assert db.execute('SELECT count(*) FROM sqlite_master').fetchone()[0] == 0
 

@@ -1,6 +1,7 @@
 import hashlib
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import closing
 
 import pytest
 
@@ -60,7 +61,7 @@ def test_overlay_precedence(scripture, userdata):
 def test_null_distinct_from_empty(tmp_path):
     # Explicit temporary DB fixture for a state that should not occur in production.
     path = tmp_path / 'fixture.db'
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db, db:
         db.execute('CREATE TABLE verse(book_id,chapter,verse,text_am,text_en)')
         real = ScriptureStore().verse(VerseRef(1))
         db.execute('INSERT INTO verse VALUES(1,1,1,?,?)', (real.text_am, ''))

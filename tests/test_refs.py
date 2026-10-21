@@ -1,3 +1,4 @@
+from contextlib import closing
 from dataclasses import FrozenInstanceError
 
 import pytest
@@ -76,7 +77,7 @@ def test_database_bounds_and_source_gap(scripture, tmp_path):
 
     # Explicit temporary gap fixture, populated only with real source verses.
     path = tmp_path / 'gap-fixture.db'
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db, db:
         db.execute('CREATE TABLE verse(book_id,chapter,verse,text_am,text_en)')
         for number in (1, 3):
             verse = scripture.verse(VerseRef(1, 1, number))

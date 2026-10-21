@@ -20,3 +20,7 @@ build/
 # milestone commit.
 src/ebible/data/bible.db-wal
 src/ebible/data/bible.db-shm
+
+.ruff_cache/
+.coverage
+htmlcov/

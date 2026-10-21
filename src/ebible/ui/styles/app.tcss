@@ -1,0 +1,31 @@
+Screen {
+    background: $background;
+    color: $foreground;
+    align: center middle;
+}
+
+#placeholder {
+    width: 100%;
+    max-width: 70;
+    height: auto;
+    padding: 1 2;
+    border: round $primary;
+    background: $surface;
+}
+
+#heading {
+    text-style: bold;
+    color: $accent;
+    margin-bottom: 1;
+}
+
+#reference {
+    margin-top: 1;
+    margin-bottom: 1;
+    color: $text-muted;
+}
+
+#quit {
+    min-width: 8;
+    height: 3;
+}

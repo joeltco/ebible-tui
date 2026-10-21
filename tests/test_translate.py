@@ -5,6 +5,7 @@ import importlib
 import sqlite3
 import subprocess
 import threading
+from contextlib import closing
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -241,7 +242,7 @@ def test_backend_selection(monkeypatch):
 def partial_store(tmp_path, scripture):
     # Explicit temporary mixed-coverage fixture using real verses and translations.
     path = tmp_path / 'partial-fixture.db'
-    with sqlite3.connect(path) as db:
+    with closing(sqlite3.connect(path)) as db, db:
         db.execute('CREATE TABLE verse(book_id,chapter,verse,text_am,text_en)')
         for n in (1, 2, 3):
             verse = scripture.verse(VerseRef(1, 1, n))
