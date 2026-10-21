@@ -1,9 +1,8 @@
 # Batch 1 foundation decisions
 
-These choices resolve details not fixed by AGENTS.md. No reader screens, custom
-themes, clipboard/haptics integration, or live translation controls are included
-in this batch. The CLI validates its reference and passes it to the placeholder;
-UI resume and persisted preference wiring remain batch 2 work.
+These choices resolve details not fixed by AGENTS.md. Batch 2 now supplies the
+reader, themes, device integration, and persisted UI wiring; see UI_DECISIONS.md.
+The reference, search, and translation contracts below include the review fixes.
 
 ## Scripture and references
 
@@ -15,16 +14,19 @@ UI resume and persisted preference wiring remain batch 2 work.
   Full Amharic names and prefixes of their distinctive names work. Numbered
   English books accept Arabic digits and I/II/III. Chapter/verse input uses Arabic
   digits. A bare book or chapter selects verse 1. No cross-chapter ranges.
-- Parsing is IO-free. Pass `validate=store.validate_reference` to check actual
-  chapter and range endpoints. Interior source gaps are not filled or renumbered.
-- Search accepts FTS5 syntax, ranks results, and supports offset pagination
+- Parsing validates actual chapter and range endpoints by default. Pass
+  `validate=store.validate_reference` to use a specific store. UI parsing runs off
+  the UI thread. Psalm 151 errors identify its location at Psalms 150:7-14.
+  Interior source gaps are not filled or renumbered.
+- Search quotes plain word tokens, with a prefix on the final token. Raw FTS5 is
+  opt-in with a leading `=`. It ranks results and supports offset pagination
   (default 100 results, maximum 1,000). It searches bundled text only; live user
   translations are not part of the protected FTS index. Snippets carry control
   characters U+0001/U+0002 around matches, not Rich markup. UI code must render
-  spans safely and invoke search in a Textual worker in batch 2.
+  literal Text spans safely; the UI invokes search in a Textual worker.
 - Verse values retain raw `text_en` separately from display `english` and
   `english_source`. NULL means untranslated; an existing empty bundled string is
-  not silently replaced. UI styling of placeholders and live markers is batch 2.
+  not silently replaced. The UI styles placeholders and labels live English ◇ Machine.
 
 ## Personal data and settings
 
@@ -33,7 +35,7 @@ UI resume and persisted preference wiring remain batch 2 work.
   versions are rejected unchanged; failures roll back schema and version.
 - Annotations attach to individual verses; range annotations are rejected. There
   is one bookmark, highlight, and Markdown note per verse. Highlight names are
-  gold, green, red, blue, purple; theme-aware rendering belongs to batch 2.
+  gold, green, red, blue, purple; their rendering adapts to light/dark themes.
   Empty notes are preserved until explicitly deleted.
 - History defaults to the last 200 positions. Consecutive identical positions
   update their timestamp without adding duplicates. Recording a position updates
@@ -42,7 +44,8 @@ UI resume and persisted preference wiring remain batch 2 work.
   individually fall back to defaults. Max text width is 20–240 (default 100).
   The additional `verse_flow` setting is `lines` or `paragraph`. Theme names are
   nonempty strings of at most 100 characters; registration/availability is a UI
-  concern. The placeholder supports Textual built-ins only.
+  concern. Unknown saved theme names fall back to meskel; the UI supports six
+  custom themes and Textual built-ins.
 - Atomic JSON writes use a unique temporary file in the destination directory,
   flush/fsync, then `os.replace`; failures clean up the temporary file.
 
@@ -65,7 +68,7 @@ UI resume and persisted preference wiring remain batch 2 work.
 ## Translation
 
 - The async service offloads scripture reads, backend selection, translation, and
-  writes with `asyncio.to_thread`. A batch 2 Textual worker can await this API.
+  writes with `asyncio.to_thread`. The UI awaits it inside a Textual worker.
 - Whole-chapter source text is sent even when only some verses lack English.
   Exact verse-number alignment is required for every backend. Persist only verses
   missing both bundled and live English; existing reviewed/live text is preserved.
@@ -75,11 +78,13 @@ UI resume and persisted preference wiring remain batch 2 work.
   Claude gets one request per chapter, a 120-second timeout, no automatic retries,
   and 16,384 output tokens. Non-final/truncated responses are rejected even if
   their verse numbers happen to match. Missing/extra/duplicate numbers, wrapped
-  lines, commentary, and blank output reject the batch before writes.
+  lines, commentary, and blank output reject the batch before writes. A single
+  surrounding code fence is accepted. The guide remains unchanged; an appended
+  in-app system-prompt addendum explicitly forbids summaries and commentary.
 - translate-shell receives Amharic over stdin (no shell interpolation), uses
   Google explicitly, translates per verse, and has a 20-second per-verse timeout.
   Its output is machine translation; it cannot enforce the Claude translation
-  guide. All live text carries provenance and must be visibly marked in batch 2.
+  guide. All live text carries provenance and is visibly marked in the reader and copies.
 - The packaged guide is a byte-for-byte copy of the binding documentation. A test
   catches drift. No network translations or invented scripture were used in tests.
 - Offline pipeline changes are import/path fixes only. `translate.py`'s historical
@@ -89,7 +94,7 @@ UI resume and persisted preference wiring remain batch 2 work.
 
 ## API references consulted
 
-The placeholder and smoke runner use Textual's documented
+The reader and smoke runner use Textual's documented
 [headless testing API](https://textual.textualize.io/guide/testing/) and
 [screenshot API](https://textual.textualize.io/api/app/). Claude request construction
 follows the [Messages API](https://platform.claude.com/docs/en/api/messages/create),
