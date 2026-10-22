@@ -139,10 +139,16 @@ Highlight colours are theme-aware (readable on every theme).
 
 ## Status
 
-- 2026-10-21: **Batches 1–3 complete** on `rebuild/v2`, package `ebible`
+- 2026-10-21: **Batches 1–4 complete** on `rebuild/v2`, package `ebible`
   2.0.0.dev0. The complete UI includes all reader layouts/flows, book/chapter and
   reference navigation, verse actions, search, bookmarks/highlights/notes/history,
   generated plans, live settings, resume, help, and all six custom themes.
+- Batch 4 fixes B1–B3 and P1–P5: exact snippet whitespace and visible SVG gaps;
+  singular/plural counts; `<1%` for positive progress below one percent; separate bilingual
+  paragraph blocks with inline dim markers and preserved tap/selection behavior;
+  grouped eBible-first themes; one-row secondary headers below 80 columns; the
+  requested note-editor wording; and grouped help key chips. Concurrent paragraph
+  rebuilds and immediate restart/shutdown are covered. No new features or data edits.
 - Batch 3 fixes P1–P4: one-row headers below 80 columns with **26 reading rows
   at 50×30**, preserved wide headers and graceful title ellipsis; one notice plus
   Amharic-only verses for wholly untranslated chapters; short partial placeholders
@@ -155,32 +161,36 @@ Highlight colours are theme-aware (readable on every theme).
   strict parsing that tolerates one surrounding code fence.
 - Required gates passed in `.venv` (Python 3.14.7, Textual 8.2.8):
   `ruff check src tests tools` — all checks passed;
-  `ruff format --check src tests` — **51 files already formatted**;
-  `mypy src` — **no issues in 38 source files**;
-  `pytest -q` — **337 passed in 178.42s**, including **120 UI tests**
-  (**18 new polish tests**);
+  `ruff format --check src tests` — **53 files already formatted**;
+  `mypy src` — **no issues in 39 source files**;
+  `pytest -q` — **363 passed in 217.15s**, including **136 phone/desktop Pilot cases**
+  (**26 new cases: 8 unit and 18 Pilot**);
   `python tools/smoke.py --out /tmp/ebible-smoke` — **144 SVGs passed**:
   24 screen/modal/layout states × 50×30 and 120×40 × meskel, parchment, lalibela.
   Smoke uses temporary XDG directories, checks horizontal layout, phone reading
-  height, scrollbar width, dropdown height, and binding tables. Every fresh SVG
-  filename is recorded in `/tmp/ebible-smoke/manifest.txt`.
+  height, secondary-header row budget, scrollbar width, dropdown height, and binding
+  tables. Every fresh SVG filename is recorded in `/tmp/ebible-smoke/manifest.txt`.
+  The full directory listing is `/tmp/ebible-smoke-listing.txt` (144 SVGs plus manifest).
 - Pilot coverage includes navigation, selection, annotation persistence across
   restart, settings/theme switching, search/plan jumps, mark-read, resume, every
   screen's Escape route, and removal of Ctrl/Alt bindings throughout the mounted UI.
-  All **72 phone views** (24 states under each of three themes) were personally
-  inspected from fresh SVG rasterizations; corrected dropdowns were rechecked.
-- Regression verification against an isolated copy of the pushed Batch 2 source:
-  **six checks failed on the expected old behavior**, covering P1, P2 in both
-  flows, P3, P4, and dropdown clipping. Current gates all pass.
+  Batch 3 inspected all 72 phone views. Batch 4 inspected 12 affected phone states
+  in all three themes, the paragraph language boundary in all three themes, and
+  wide search/theme/paragraph views. See the Batch 4 review for the exact list.
+- Regression verification against an isolated copy of the pushed Batch 3 source:
+  **eight phone checks failed on the expected old behavior**, one per requested item.
+  The concurrent paragraph-rebuild regression also failed before its lifecycle fix.
   `ebible --version` still reports `ebible 2.0.0.dev0`.
 - Protected database unchanged: SHA-256
   `167e4b3d97977e74ea77eebeb9609e8b0ef2fdd68798a6aa2a05cc1cf7d7e6cb`.
+  Read-only `PRAGMA integrity_check` returned `ok`.
   Canon rows, raw source, schema, and binding translation documentation unchanged.
   Translation and device-service tests use fakes; no translation network calls.
-- No physical Termux session or real translation service was exercised in Batch 3.
+- No physical Termux session or real translation service was exercised in Batch 4.
   The maintainer reported successful Batch 2 tmux testing at 50×30 and visual approval.
-  See [polish review](docs/POLISH_REVIEW.md), [UI decisions](docs/UI_DECISIONS.md), and
-  [foundation decisions](docs/FOUNDATION.md) for the inspection record, judgements,
-  and API conventions. Batch 3 implementation commits: `9be246c` and `c73e2bb`,
-  followed by the documentation/status commit. Batch 2 was already pushed by the
-  maintainer; **Batch 3 remains local. No push or publication was performed.**
+  See [Batch 4 review](docs/BATCH4_REVIEW.md), [Batch 3 review](docs/POLISH_REVIEW.md),
+  [UI decisions](docs/UI_DECISIONS.md), and [foundation decisions](docs/FOUNDATION.md)
+  for the inspection records, judgements, and API conventions. Batch 4 implementation
+  commits: `8853547`, `b9238fd`, and `b2fd1be`, followed by the documentation/status
+  commit. Batch 3 was pushed by Claude before this work; **Batch 4 remains local.
+  No push or publication was performed.**

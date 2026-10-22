@@ -7,9 +7,10 @@ translation contracts updated there.
 ## Reading and navigation
 
 - Meskel is the default. All six custom palettes define every required Theme field;
-  Textual built-ins remain available. Theme previews and every other preference save
-  immediately. A CLI theme overrides the saved theme for the session; a subsequent
-  preference edit saves the current session preferences together.
+  the picker lists these first under “eBible themes”, in specification order, then
+  Textual built-ins under “More themes”. Headings cannot be selected. Theme previews
+  and every other preference save immediately. A CLI theme overrides the saved theme
+  for the session; a subsequent preference edit saves the current session preferences together.
 - The reading column is centred and bounded by the configured width, with two cells
   of outer margin on a phone. Below 80 columns, the book/chapter header is one row,
   the brand is hidden, and the viewport has no vertical padding. Two one-row action
@@ -21,8 +22,11 @@ translation contracts updated there.
   Highlights use distinct light/dark foreground palettes. No CSS colour literals.
 - Paragraph flow joins verses continuously, retaining per-verse hit targets, numbers
   (if enabled), and annotation glyphs. Selection is bold/underlined in paragraph flow.
-  Interleaved paragraphs separate each verse's languages with a slash. Parallel
-  paragraphs have separate language columns; the cursor scroll follows the first.
+  Interleaved paragraphs show the entire Amharic block, a two-row gap, then the entire
+  English block. Each language has inline dim superscript verse numbers; single-language
+  flow retains its original numbering. Tapping either block selects that verse, and
+  cursor scrolling follows the last tapped block. Parallel paragraphs have separate
+  language columns; the cursor scroll follows the first.
 - Parallel becomes interleaved whenever terminal width is below 90, including live
   resizing. Verse cursor movement scrolls smoothly; initial/resumed positions and
   re-layout jump directly to the selected verse.
@@ -40,6 +44,11 @@ translation contracts updated there.
 - Desktop modifier bindings are removed from screens, inputs, text areas, scroll
   containers, passage lists, and Select overlays. Note Undo/Redo are tappable buttons.
   Help includes all bindings and touch routes, including a Quit button.
+- Secondary pages use a single-row, three-cell Back button and ellipsizing title below
+  80 columns; their heading subtitles are hidden. Wide headers retain their margins,
+  Back label, and subtitle. The note editor's requested Markdown/privacy hint remains
+  a separate single line. Help uses a fixed 16-cell accent key column with wrapping
+  descriptions under the existing headings.
 
 ## Search and collections
 
@@ -52,6 +61,8 @@ translation contracts updated there.
 - The result page starts at 40 passages; Show more adds 40, up to the core's 1,000 cap.
   Language and scope selectors apply immediately. Snippets use literal Rich Text
   spans with bold/underlined matches, so source brackets cannot become markup.
+  Whitespace after a match has a separate non-underlined span to preserve its visible
+  SVG advance as well as the exact underlying characters.
 - Collection screens share tabs for bookmarks, highlights, notes, and history.
   References and note previews are literal text. Deletion requires confirmation.
 - Notes use a soft-wrapped TextArea and explicit Save. Escape/Back asks before
@@ -67,6 +78,8 @@ translation contracts updated there.
   date; Mark day read toggles a day, and day arrows allow browsing/backfilling.
   Today is disabled outside a plan's schedule. Restart requires confirmation.
   The screen shows completed-day count, progress bar, and actual-calendar-day streak.
+  Positive progress below one percent displays “<1%”; zero and larger percentages
+  keep their normal labels. Count labels use singular at one, including “history entry”.
 - Live translation is explicit, via the verse menu. Only one request runs at a time.
   Navigation remains available; completion refreshes the reader only if that chapter
   is still open. Failure is a notification and never replaces reviewed text.
