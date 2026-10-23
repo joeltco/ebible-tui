@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Walk every UI screen/modal at two sizes and three themes, using temporary data."""
+"""Walk every UI screen/modal at two sizes and all six themes, using temporary data."""
 
 import argparse
 import asyncio
@@ -29,7 +29,7 @@ SMOKE_KEYS = (
     'sk-ant-INVALID FIXTURE',
 )
 
-SMOKE_THEMES = ('meskel', 'parchment', 'lalibela')
+SMOKE_THEMES = tuple(theme.name for theme in THEMES)
 SMOKE_SIZES = ((50, 30), (120, 40))
 
 
@@ -85,7 +85,7 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
         patch.object(TranslationService, 'translate_verse', fixture_translate),
         patch.object(TranslationService, 'translate_query', fixture_query),
     ):
-        async with app.run_test(size=size) as pilot:
+        async with app.run_test(size=size, notifications=True) as pilot:
             await asyncio.wait_for(app.ready.wait(), 10)
             view = app.reader.query_one(VerseView)
             timeline = [100.0]
@@ -111,8 +111,22 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
                 print(f'OK {filename}', flush=True)
 
             await capture('reader')
+            for severity in ('information', 'warning', 'error'):
+                app.notify(
+                    'Explicit smoke notification fixture',
+                    title='Notification fixture',
+                    severity=severity,
+                    timeout=60,
+                    markup=False,
+                )
+                await capture('notification-' + severity)
+                app.clear_notifications()
+                await pilot.pause()
             await pilot.press('a')
             await capture('verse-actions')
+            await app.update_setting('theme', 'parchment' if app.current_theme.dark else 'meskel')
+            await capture('actions-theme-switch')
+            await app.update_setting('theme', theme)
             assert not app.screen.query('#copy-both')
             await pilot.press('escape')
             await pilot.press('enter')
@@ -125,10 +139,13 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
             timeline[0] += 0.5
             view.tick()
             await capture('reader-morph')
-            timeline[0] += 0.5
+            await app.update_setting('theme', 'parchment' if app.current_theme.dark else 'meskel')
+            await capture('morph-theme-switch')
+            await app.update_setting('theme', theme)
+            timeline[0] += 0.65
             view.tick()
             await capture('reader-flourish')
-            timeline[0] += 0.3
+            timeline[0] += 0.15
             view.tick()
             await capture('reader-translated')
             assert VerseRef(1) in app.translations

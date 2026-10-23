@@ -6,6 +6,7 @@ from typing import Literal, cast
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import Horizontal
+from textual.content import Content
 from textual.widgets import Button, Static
 
 from ebible.core.models import HIGHLIGHT_COLOURS, HighlightColour, VerseRef
@@ -41,7 +42,16 @@ class VerseActions(Sheet):
             yield Button('Back to reading', id='close-actions')
 
     async def on_mount(self) -> None:
+        self.app.theme_changed_signal.subscribe(self, lambda _: self.refresh_colours())
         await self.update_bookmark_label()
+
+    def refresh_colours(self) -> None:
+        for colour in HIGHLIGHT_COLOURS:
+            # Content equality compares letters only; explicitly replace and invalidate.
+            label = Text('●', style=highlight_colour(colour, self.app.current_theme.dark))
+            button = self.query_one(f'#highlight-{colour}', Button)
+            button.set_reactive(Button.label, Content.from_rich_text(label))
+            button.mutate_reactive(Button.label)
 
     async def update_bookmark_label(self) -> None:
         marked = any(b.ref == self.ref for b in await asyncio.to_thread(self.eb.userdata.bookmarks))

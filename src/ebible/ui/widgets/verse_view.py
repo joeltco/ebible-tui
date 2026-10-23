@@ -14,7 +14,16 @@ from textual.timer import Timer
 from textual.widgets import Static
 
 from ebible.core.models import Chapter, HighlightColour, Verse, VerseRef
-from ebible.ui.morph import FRAME_INTERVAL, Morph, Palette, morph_text, palette, shimmer_text
+from ebible.ui.morph import (
+    COLOUR_SETTLE,
+    FRAME_INTERVAL,
+    Morph,
+    Palette,
+    morph_text,
+    palette,
+    settle_text,
+    shimmer_text,
+)
 from ebible.ui.themes import effect_colours, highlight_colour
 
 if TYPE_CHECKING:
@@ -61,9 +70,18 @@ class VerseView(Vertical):
         self.active: set[VerseRef] = set()
         self.motion_timer: Timer | None = None
         self._paragraph_parts: dict[int, Text] = {}
+        self._last_body: dict[VerseRef, Text] = {}
+        self._colour_tail: dict[VerseRef, tuple[float, Text]] = {}
 
     def on_mount(self) -> None:
+        self.app.theme_changed_signal.subscribe(self, lambda _: self.refresh_colours())
         self.motion_timer = self.set_interval(FRAME_INTERVAL, self.tick, pause=True)
+
+    def refresh_colours(self) -> None:
+        self._last_body.clear()
+        self._colour_tail.clear()
+        if self.chapter is not None and not self._rebuild_lock.locked():
+            self.update_verses({verse.ref for verse in self.chapter})
 
     def colours(self, verse: Verse) -> Palette:
         variables = self.app.get_css_variables()
@@ -87,10 +105,26 @@ class VerseView(Vertical):
         if pending:
             self.fetch_started.setdefault(ref, now)
         else:
+            if (
+                ref in self.fetch_started
+                and ref in self._last_body
+                and ref not in self.eb.translation_errors
+                and not self.eb.settings.reduce_motion
+            ):
+                self._colour_tail[ref] = (now, self._last_body[ref])
             self.fetch_started.pop(ref, None)
         visible = ref in self.eb.visible_translations and ref in self.eb.translations
+        if (
+            not self.eb.settings.reduce_motion
+            and not visible
+            and state.flourish(now) > 0
+            and ref in self._last_body
+        ):
+            self._colour_tail[ref] = (now, self._last_body[ref])
         state.retarget(visible, now, instant=self.eb.settings.reduce_motion)
-        if not self.eb.settings.reduce_motion and (pending or state.animating(now)):
+        if not self.eb.settings.reduce_motion and (
+            pending or state.animating(now) or ref in self._colour_tail
+        ):
             self.active.add(ref)
         else:
             self.active.discard(ref)
@@ -131,18 +165,38 @@ class VerseView(Vertical):
         changed = self.active.copy()
         now = self.clock()
         for ref in changed:
-            if ref not in self.eb.translating and not self.morphs[ref].animating(now):
+            if ref in self._colour_tail and now - self._colour_tail[ref][0] >= COLOUR_SETTLE:
+                self._colour_tail.pop(ref)
+            if (
+                ref not in self.eb.translating
+                and not self.morphs[ref].animating(now)
+                and ref not in self._colour_tail
+            ):
                 self.active.discard(ref)
         self.update_verses(changed)
         self._wake_timer()
 
     def body_text(self, verse: Verse) -> Text:
+        text = self._body_text(verse)
+        tail = self._colour_tail.get(verse.ref)
+        if tail and not self.eb.settings.reduce_motion:
+            text = settle_text(
+                tail[1],
+                text,
+                min(1.0, max(0.0, (self.clock() - tail[0]) / COLOUR_SETTLE)),
+                self.colours(verse),
+                self.app.console,
+            )
+        self._last_body[verse.ref] = text
+        return text
+
+    def _body_text(self, verse: Verse) -> Text:
         colours = self.colours(verse)
         ref, now = verse.ref, self.clock()
         if ref in self.eb.translating:
             if self.eb.settings.reduce_motion:
                 text = Text(verse.text_am, style=colours.ink.hex)
-                text.append(' · Translating…', style=colours.muted.hex)
+                text.append(' · Translating…', style=colours.translation.hex)
                 return text
             return shimmer_text(verse.text_am, now - self.fetch_started.get(ref, now), colours)
         english = self.eb.translations.get(ref, '')
@@ -180,7 +234,8 @@ class VerseView(Vertical):
         text = self.verse_text(verse)
         if verse.ref in self.eb.translation_errors:
             text.append(
-                '\n' + self.eb.translation_errors[verse.ref], style=self.colours(verse).muted.hex
+                '\n' + self.eb.translation_errors[verse.ref],
+                style=self.colours(verse).translation.hex,
             )
         return text
 

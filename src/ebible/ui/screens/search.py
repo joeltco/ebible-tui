@@ -66,6 +66,9 @@ class QuerySummary(Static, can_focus=True, inherit_bindings=False):
         self.original = ''
         self.selected = 0
 
+    def on_mount(self) -> None:
+        self.app.theme_changed_signal.subscribe(self, lambda _: self.update_terms())
+
     def show_terms(self, original: str, variants: tuple[str, ...]) -> None:
         self.original, self.variants, self.selected = original, variants, 0
         self.display = bool(variants)
@@ -154,6 +157,7 @@ class SearchScreen(Page):
         yield Button('Show more', id='search-more', disabled=True)
 
     def on_mount(self) -> None:
+        self.app.theme_changed_signal.subscribe(self, lambda _: self.tick_busy())
         self.busy_timer = self.set_interval(FRAME_INTERVAL, self.tick_busy, pause=True)
         self.query_one(TextInput).focus()
 
@@ -172,7 +176,7 @@ class SearchScreen(Page):
         )
         label = 'Translating…'
         self.query_one('#search-busy', Static).update(
-            Text(label, style=colours.muted.hex)
+            Text(label, style=colours.translation.hex)
             if self.eb.settings.reduce_motion
             else shimmer_text(label, self.clock() - self.busy_started, colours)
         )

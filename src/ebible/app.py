@@ -19,7 +19,7 @@ from ebible.core.settings import Settings, load_settings, save_settings
 from ebible.core.translate.base import AlignmentError, TranslationError
 from ebible.core.translate.service import BackendSetting, TranslationService
 from ebible.core.userdata import UserDataStore
-from ebible.ui.themes import THEMES, ordered_theme_names
+from ebible.ui.themes import THEMES, ordered_theme_names, role_variables
 
 if TYPE_CHECKING:
     from ebible.ui.screens.reader import ReaderScreen
@@ -34,6 +34,10 @@ class EBibleApp(App[None], inherit_bindings=False):
     CSS_PATH = 'ui/styles/app.tcss'
     ENABLE_COMMAND_PALETTE = False
     BINDINGS: ClassVar[list[BindingType]] = []
+
+    def get_css_variables(self) -> dict[str, str]:
+        variables = super().get_css_variables()
+        return {**variables, **role_variables(self.current_theme, variables)}
 
     @property
     def available_themes(self) -> dict[str, Theme]:

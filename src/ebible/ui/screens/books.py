@@ -21,8 +21,16 @@ class BooksScreen(Page):
         yield Static('Choose a book, then a chapter', classes='page-footnote', markup=False)
 
     def on_mount(self) -> None:
+        self.app.theme_changed_signal.subscribe(self, lambda _: self.refresh_colours())
         self.filter_books('')
         self.query_one(TextInput).focus()
+
+    def refresh_colours(self) -> None:
+        listing = self.query_one(OptionList)
+        selected, scroll = listing.highlighted, listing.scroll_y
+        self.filter_books(self.query_one(TextInput).value)
+        listing.highlighted = selected
+        listing.scroll_to(y=scroll, animate=False)
 
     def filter_books(self, query: str) -> None:
         options: list[Option] = []
@@ -40,7 +48,7 @@ class BooksScreen(Page):
             text.append(
                 f'{book.name_en}  ·  {count_label(self.eb.chapter_counts[book.id], "chapter")}'
                 + ('  ◇' if book.deuterocanonical else ''),
-                style='dim',
+                style=self.app.get_css_variables()['secondary'],
             )
             text.append('\n')
             options.append(Option(text, id=f'book-{book.id}'))

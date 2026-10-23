@@ -17,7 +17,7 @@ from ebible.core.models import VerseRef
 from ebible.core.refs import format_reference
 from ebible.ui.morph import FRAME_INTERVAL, Palette, palette
 from ebible.ui.screens.base import Page
-from ebible.ui.themes import effect_colours
+from ebible.ui.themes import effect_colours, entrance_colour
 
 ENTRANCE_DURATION = 0.8
 OPEN_DURATION = 0.6
@@ -49,8 +49,8 @@ def cover_art(
     inside = right - left - 5
     frame = colours.accent.hex
     fade = max(0.0, min(1.0, (progress - 0.45) / 0.55))
-    title_ink = background.blend(colours.effects.glow, fade).hex
-    quiet = Style(color=background.blend(colours.translation, fade).hex)
+    title_ink = entrance_colour(colours.effects.glow, colours.effects, fade).hex
+    quiet = Style(color=entrance_colour(colours.translation, colours.effects, fade).hex)
 
     def put(x: int, y: int, text: Text) -> None:
         if 0 <= y < height:

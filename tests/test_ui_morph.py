@@ -290,11 +290,11 @@ async def test_completion_pulse_updates_only_verse_then_stops_and_reverse_is_qui
     view.tick()
     assert view.active == {verse.ref}
     peak = view.body_text(verse)
-    assert peak.plain == FIXTURE and peak.style == view.colours(verse).effects.glow.hex
+    assert peak.plain == FIXTURE and peak.style == view.colours(verse).translation.hex
     assert updates == ['verse-1' if flow == 'lines' else 'paragraph']
     clock[0] += 0.15
     view.tick()
-    assert view.body_text(verse).style != peak.style and view.active
+    assert view.body_text(verse).style == view.colours(verse).effects.glow.hex and view.active
     clock[0] += 0.15
     view.tick()
     assert view.body_text(verse).style == view.colours(verse).translation.hex and not view.active

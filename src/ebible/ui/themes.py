@@ -126,6 +126,8 @@ class EffectColours:
     glow: Color
     background: Color
     panel: Color
+    base: Color
+    minimum: float
 
 
 def effect_colours(theme: Theme) -> EffectColours:
@@ -135,11 +137,102 @@ def effect_colours(theme: Theme) -> EffectColours:
         theme.panel or theme.surface or theme.background or ('black' if theme.dark else 'white'),
         theme.foreground or ('white' if theme.dark else 'black'),
         theme.dark,
+        theme.background or ('black' if theme.dark else 'white'),
+        theme.name == 'high-contrast',
     )
 
 
 @lru_cache(maxsize=64)
-def _effect_colours(accent: str, panel: str, foreground: str, dark: bool) -> EffectColours:
+def _effect_colours(
+    accent: str, panel: str, foreground: str, dark: bool, background: str, high_contrast: bool
+) -> EffectColours:
     colour, base = Color.parse(accent), Color.parse(panel)
     peak = colour.blend(Color.parse('white' if dark else foreground), 0.6)
-    return EffectColours(peak, base.blend(colour, 0.35), base)
+    minimum = 7.1 if high_contrast else 3.1
+    tint = readable(base.blend(colour, 0.35), (peak,), base, minimum)
+    return EffectColours(peak, tint, base, Color.parse(background), minimum)
+
+
+def contrast(first: Color, second: Color) -> float:
+    """WCAG sRGB relative-luminance contrast, before terminal quantisation."""
+
+    def luminance(colour: Color) -> float:
+        channels = [channel / 255 for channel in colour[:3]]
+        linear = [c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+        return sum(c * weight for c, weight in zip(linear, (0.2126, 0.7152, 0.0722), strict=True))
+
+    low, high = sorted((luminance(first), luminance(second)))
+    return (high + 0.05) / (low + 0.05)
+
+
+@lru_cache(maxsize=1024)
+def readable(colour: Color, backgrounds: tuple[Color, ...], target: Color, minimum: float) -> Color:
+    """Smallest 1/255 blend toward a theme anchor that clears every background."""
+    for step in range(256):
+        candidate = colour.blend(target, step / 255)
+        if all(contrast(candidate, background) >= minimum for background in backgrounds):
+            return candidate
+    return target
+
+
+def effect_muted(ink: Color, background: Color, effects: EffectColours) -> Color:
+    return readable(ink.blend(background, 0.4), (background, effects.panel), ink, effects.minimum)
+
+
+def entrance_colour(colour: Color, colours: EffectColours, progress: float) -> Color:
+    """Fade from readable quiet ink, never from invisible text, in either polarity."""
+    start = readable(colours.panel, (colours.panel, colours.base), colour, colours.minimum)
+    return start.blend(colour, max(0.0, min(1.0, progress)))
+
+
+@lru_cache(maxsize=64)
+def _roles(
+    primary: str,
+    secondary: str,
+    accent: str,
+    ink: str,
+    background: str,
+    surface: str,
+    panel: str,
+    selection: str,
+    high_contrast: bool,
+) -> dict[str, str]:
+    primary_c, secondary_c, accent_c, ink_c, base, surface_c, panel_c = map(
+        Color.parse, (primary, secondary, accent, ink, background, surface, panel)
+    )
+    minimum = 7.1 if high_contrast else 4.6
+    backgrounds = (base, surface_c, panel_c, base.blend(primary_c, 0.22).blend(ink_c, 0.05))
+    secondary_c = readable(secondary_c, backgrounds, ink_c, minimum)
+    border = readable(panel_c, (base, surface_c), primary_c, 3.1)
+    thumb = readable(surface_c.blend(primary_c, 0.5), (surface_c,), primary_c, 3.1)
+    colour, _, alpha = selection.partition(' ')
+    selected = Color.parse(colour)
+    if alpha.endswith('%'):
+        selected = selected.with_alpha(float(alpha[:-1]) / 100)
+    selected = surface_c.blend(ink_c, 0.05).blend(selected.with_alpha(1), selected.a)
+    selected = readable(selected, (ink_c,), surface_c, minimum)
+    return {
+        'secondary': secondary_c.hex,
+        'text-muted': secondary_c.hex,
+        'text-disabled': secondary_c.hex,
+        'role-border': border.hex,
+        'role-scrollbar': thumb.hex,
+        'input-selection-background': selected.hex,
+        'input-selection-foreground': ink_c.hex,
+    }
+
+
+def role_variables(theme: Theme, variables: Mapping[str, str] | None = None) -> dict[str, str]:
+    """Own the few framework defaults that failed the rendered audit; retain base hues."""
+    generated = variables if variables is not None else theme.to_color_system().generate()
+    return _roles(
+        generated['primary'],
+        generated['secondary'],
+        generated['accent'],
+        generated['foreground'],
+        generated['background'],
+        generated['surface'],
+        generated['panel'],
+        generated['input-selection-background'],
+        theme.name == 'high-contrast',
+    ).copy()

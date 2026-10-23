@@ -18,7 +18,7 @@ from ebible.ui.screens.title import (
     TitleScreen,
     cover_art,
 )
-from ebible.ui.themes import THEMES
+from ebible.ui.themes import THEMES, contrast
 
 SIZES = ((40, 20), (50, 30), (74, 30), (120, 40))
 
@@ -309,7 +309,7 @@ def test_entrance_draws_from_corners_and_title_brightens():
         cover_art(50, 30, p, colours, 'Explicit text fixture', 'Genesis 1', False, 0)[0]
         for p in (0, 0.25, 0.6, 1)
     ]
-    # At zero only the corners; each side grows from both ends before the title appears.
+    # The corners draw first; the readable quiet title then brightens.
     assert frames[0][1].plain.count('═') == 0
     assert 0 < frames[1][1].plain.count('═') < frames[2][1].plain.count('═')
     assert frames[1][1].plain[2] == '═' and frames[1][1].plain[-3] == '═'
@@ -320,6 +320,8 @@ def test_entrance_draws_from_corners_and_title_brightens():
     initial = frames[0][6].get_style_at_offset(console, index)
     middle = frames[2][6].get_style_at_offset(console, index)
     final = frames[3][6].get_style_at_offset(console, index)
-    assert initial.color.get_truecolor() == colours.effects.panel.rich_color.get_truecolor()
+    from textual.color import Color
+
+    assert contrast(Color.from_rich_color(initial.color), colours.effects.panel) >= 3
     assert initial.color != middle.color != final.color
     assert final.bold

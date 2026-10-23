@@ -59,7 +59,15 @@ class CollectionScreen(Page):
             yield Button('Delete', id='delete-entry')
 
     async def on_mount(self) -> None:
+        self.app.theme_changed_signal.subscribe(self, lambda _: self.refresh_colours())
         await self.reload()
+
+    def refresh_colours(self) -> None:
+        listing = self.query_one(OptionList)
+        selected, scroll = listing.highlighted, listing.scroll_y
+        self.show_entries()
+        listing.highlighted = selected
+        listing.scroll_to(y=scroll, animate=False)
 
     async def reload(self) -> None:
         loaders: dict[str, Callable[[], tuple[Entry, ...]]] = {
@@ -69,6 +77,9 @@ class CollectionScreen(Page):
             'history': self.eb.userdata.history,
         }
         self.entries = await asyncio.to_thread(loaders[self.kind])
+        self.show_entries()
+
+    def show_entries(self) -> None:
         options = []
         for index, entry in enumerate(self.entries):
             text = Text(format_reference(entry.ref) + '\n', style='bold')
@@ -81,7 +92,7 @@ class CollectionScreen(Page):
                 if isinstance(entry, HistoryEntry)
                 else entry.created_at.astimezone().strftime('Kept on %d %b %Y')
             )
-            text.append(detail + '\n', style='dim')
+            text.append(detail + '\n', style=self.app.get_css_variables()['secondary'])
             options.append(Option(text, id=f'entry-{index}'))
         self.query_one(OptionList).clear_options().add_options(options)
         self.query_one('#collection-message', Static).update(

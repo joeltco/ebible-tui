@@ -8,7 +8,7 @@ from textual.color import Color
 from textual.theme import Theme
 
 from ebible.ui.morph import Morph, morph_text, palette, shimmer_text
-from ebible.ui.themes import THEMES, effect_colours
+from ebible.ui.themes import THEMES, contrast, effect_colours
 
 
 def lab(colour):
@@ -47,12 +47,13 @@ def test_edge_is_twelve_steps_bold_tinted_and_distinct(scripture, theme):
     assert [s.start for s in edge if s.style.bold] == [13, 14, 15]
     backgrounds = [s.style.bgcolor for s in edge if s.style.bgcolor]
     assert len(backgrounds) == len(set(backgrounds)) == 3
-    assert (
-        backgrounds[-1]
-        == Style(
-            bgcolor=Color.parse(theme.panel).blend(Color.parse(theme.accent), 0.35).hex
-        ).bgcolor
-    )
+    assert backgrounds[-1] == Style(bgcolor=colours.effects.background.hex).bgcolor
+    if theme.name == 'high-contrast':
+        assert contrast(colours.effects.glow, colours.effects.background) >= 7
+    else:
+        assert colours.effects.background == Color.parse(theme.panel).blend(
+            Color.parse(theme.accent), 0.35
+        )
     assert text.plain == 'Explicit temporary English effect fixture.'[:16] + am[16:]
 
 
@@ -81,10 +82,10 @@ def test_flourish_is_one_forward_only_300ms_fade(scripture):
     am = scripture.chapter(1, 1).verses[0].text_am
     english = 'Explicit flourish fixture [red]literal[/red].'
     colours = colours_for(THEMES[0])
-    for elapsed, strength in [(0, 1), (0.1, 2 / 3), (0.15, 0.5), (0.299, 1 / 300), (0.3, 0)]:
+    for elapsed, strength in [(0, 0), (0.075, 0.5), (0.15, 1), (0.225, 0.5), (0.3, 0)]:
         now = 11 + elapsed
         assert state.flourish(now) == pytest.approx(strength)
-        assert state.animating(now) == (strength > 0)
+        assert state.animating(now) == (elapsed < 0.3)
         text = morph_text(am, english, len(english), False, colours, state.flourish(now))
         assert text.plain == english and not text.spans
         actual = Color.parse(text.style)

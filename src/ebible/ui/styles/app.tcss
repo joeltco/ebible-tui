@@ -1,7 +1,7 @@
 /* One visual language: paper, a quiet rule, and room around the words. */
 * {
     scrollbar-size: 1 1;
-    scrollbar-color: $primary 50%;
+    scrollbar-color: $role-scrollbar;
     scrollbar-color-hover: $primary 75%;
     scrollbar-color-active: $primary;
     scrollbar-background: $surface;
@@ -23,9 +23,9 @@ Button:focus { background: $primary 22%; text-style: bold; }
 Button.-primary { background: $primary 22%; color: $foreground; }
 Button.-warning { background: $warning 22%; color: $foreground; }
 Input, Select { margin: 0 2 1 2; width: 1fr; }
-Input { background: $surface; border: tall $panel; }
+Input { background: $surface; border: tall $role-border; }
 Input:focus { border: tall $primary; }
-Select > SelectCurrent { border: tall $panel; background: $surface; }
+Select > SelectCurrent { border: tall $role-border; background: $surface; }
 Select:focus > SelectCurrent { border: tall $primary; }
 SelectOverlay { border: solid $primary; }
 PassageList {
@@ -142,3 +142,11 @@ Toast { max-width: 90%; }
 /* The cover is an opaque sheet over the ready reader; opening exposes it left to right. */
 TitleScreen { background: transparent; align: left top; }
 Cover { width: 100%; height: 100%; background: $background; overflow: hidden; }
+
+/* Explicit readable roles replace framework opacity and auto-colour defaults. */
+Button:disabled { opacity: 1; text-opacity: 1; color: $secondary; }
+Input > .input--placeholder, Input > .input--suggestion { color: $secondary; }
+SelectCurrent .arrow, SelectCurrent Static#label { color: $secondary; }
+SelectCurrent.-has-value Static#label { color: $foreground; }
+TextArea .text-area--placeholder, TextArea .text-area--suggestion { color: $secondary; }
+TextArea .text-area--selection { color: $input-selection-foreground; background: $input-selection-background; }
