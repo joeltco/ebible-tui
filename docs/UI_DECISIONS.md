@@ -59,7 +59,8 @@ translation contracts updated there.
   spans with bold/underlined matches, so source brackets cannot become markup.
   Whitespace after a match has a separate non-underlined span to preserve its visible
   SVG advance as well as the exact underlying characters. Every result uses one
-  explicit bottom padding row; wrapping no longer changes the inter-result gap.
+  explicit bottom padding row and reserves scrollbar space before measuring heights;
+  wrapping no longer changes the inter-result gap.
 - Collection screens share tabs for bookmarks, highlights, notes, and history.
   References and note previews are literal text. Deletion requires confirmation.
 - Notes use a soft-wrapped TextArea and explicit Save. Escape/Back asks before

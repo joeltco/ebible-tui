@@ -128,7 +128,9 @@ Highlight colours are theme-aware (readable on every theme).
   Startup < 1 s: lazy-import translate backends and anything optional.
 - Never block the UI thread on IO > a few ms: translation and search run in Textual workers.
 - Ge'ez/Ethiopic glyphs are 1 cell wide in Rich (verified); don't special-case widths.
-- Never write outside the config/data dirs. Never touch `~/.termux`.
+- Runtime persistence stays inside the config/data dirs. Conversion and test/smoke
+  tools may write their explicitly requested output paths and temporary fixtures.
+  Never touch `~/.termux`.
 
 ## Code laws
 
@@ -152,7 +154,47 @@ Highlight colours are theme-aware (readable on every theme).
 
 ## Status
 
-- Batch 5 in progress (2026-10-23): product direction changed to Amharic-only scripture
-  with ephemeral, on-demand single-verse translation. Batches 1–4 are historical;
-  their English overlays/layouts and persistence requirements are superseded above.
-- Batch 4 was verified and pushed by Claude before this work. Never push from this session.
+- 2026-10-23: **Batch 5 complete** on `rebuild/v2`, package `ebible` 2.0.0.dev0.
+  The product is an Amharic reader with on-demand single-verse translation.
+  Enter/tap translates or hides; `a`/Verse opens actions. Pending, result and
+  actionable error states are inline. Results survive navigation only in session
+  memory and disappear on restart. No translation network calls were made.
+- Removed bundled English, English FTS/coverage metadata, the persistent cache
+  (forward user schema v3 migration), overlay, language layouts, English search,
+  placeholders and offline pipeline. Personal annotations, history, resume, plans,
+  book-name languages, themes and Amharic paragraph flow remain. Legacy removed
+  settings load safely. The translation guide and source-issues document are intact.
+- New packaged DB: **12,521,472 bytes**, previously 19,423,232. SHA-256:
+  `46da43911496d300784fd303a69cbf5a108486a06a8e45ea2c82efa1c11e9997`.
+  Read-only integrity check: `ok`; freelist: zero. Golden checksum tests match
+  **every one of the original 39,169 Amharic verse tuples and all 81 book rows**.
+  Actual reconstruction from `e1564db` and repeated tool builds are byte-identical
+  on SQLite 3.53.4. No old database copy or archive remains in the tree.
+- Search results now have an allocated one-row gap, including wrapped snippets
+  after the scrollbar appears. Translation refreshes also guard queued cursor/
+  scroll callbacks while verse widgets are replaced; both flows have regressions.
+- All required gates passed in `.venv` (Python 3.14.7, Textual 8.2.8):
+  `ruff check src tests tools` — **all checks passed**;
+  `ruff format --check src tests` — **55 files already formatted**;
+  `mypy src` — **no issues in 39 source files**;
+  `pytest -q` — **348 passed in 237.71s**, including **139 UI cases** and
+  **26 Batch 5 Pilot cases**;
+  `python tools/smoke.py --out /tmp/ebible-smoke` — **162 SVGs passed**,
+  27 states × 50×30 and 120×40 × meskel, parchment, lalibela. Temporary XDG dirs
+  and fake translation responses keep smoke isolated from real personal data/services.
+  The directory contains 162 SVGs plus `manifest.txt`; its complete listing is
+  `/tmp/ebible-smoke-listing.txt`. Gate log: `/tmp/b5-gates.log`.
+- Eight checks reject the pushed Batch 4 behavior, covering the new data/translation/
+  actions/settings/help/search contracts; reverting only the rebuild guards also
+  fails both phone-flow race tests. Obsolete English-overlay/layout/pipeline tests
+  were replaced with current-contract tests. `ebible --version` still reports
+  `ebible 2.0.0.dev0`.
+- Reviewed 12 affected phone states in all three smoke themes, final search gaps,
+  a wide translated reader, and translated paragraph geometry at both sizes.
+  See [Batch 5 review](docs/BATCH5_REVIEW.md) for preservation checks, regression
+  evidence, visual inspection, decisions, and limits. No physical Termux or real
+  translation service was exercised. Batches 1–4 are historical and their English
+  contracts are superseded by this spec.
+- Local implementation commits: `485ff44` and `f6774da`, followed by the review/
+  status commit. Batch 4 was pushed by Claude before this work. **No Batch 5 push
+  or publication was performed.**
