@@ -159,3 +159,62 @@ class ScriptureStore:
             )
             for r in rows
         )
+
+    def search_substrings(
+        self,
+        variants: tuple[str, ...],
+        scope: Literal['all', 'ot', 'nt', 'book'] = 'all',
+        *,
+        book_id: int | None = None,
+        limit: int = 40,
+        offset: int = 0,
+    ) -> tuple[SearchResult, ...]:
+        """Literal Amharic substrings, ORed and paginated in canonical order."""
+        if scope not in ('all', 'ot', 'nt', 'book'):
+            raise SearchError('Unknown scope')
+        if limit < 1 or limit > 1000 or offset < 0:
+            raise SearchError('Limit must be 1–1000; offset must be nonnegative')
+        if scope == 'book' and book_id not in BY_ID:
+            raise SearchError('Current-book search requires a valid book_id')
+        if not variants:
+            return ()
+        if len(variants) > 3 or any(not variant for variant in variants):
+            raise SearchError('Use one to three nonempty variants')
+        filters = {
+            'all': '',
+            'ot': ' AND book_id < 55',
+            'nt': ' AND book_id >= 55',
+            'book': ' AND book_id = ?',
+        }
+        params: list[str | int] = list(variants)
+        if scope == 'book':
+            assert book_id is not None
+            params.append(book_id)
+        params.extend((limit, offset))
+        with open_readonly(self.path) as db:
+            rows = db.execute(
+                'SELECT book_id, chapter, verse, text_am FROM verse WHERE ('
+                + ' OR '.join('instr(text_am, ?) > 0' for _ in variants)
+                + ')'
+                + filters[scope]
+                + ' ORDER BY book_id, chapter, verse LIMIT ? OFFSET ?',
+                params,
+            ).fetchall()
+        pattern = re.compile(
+            '|'.join(re.escape(word) for word in sorted(set(variants), key=len, reverse=True))
+        )
+        results = []
+        for row in rows:
+            source = row['text_am']
+            match = pattern.search(source)
+            assert match is not None
+            start = max(0, match.start() - 48)
+            end = min(len(source), max(start + 180, match.end()))
+            snippet = pattern.sub(lambda m: '\x01' + m[0] + '\x02', source[start:end])
+            results.append(
+                SearchResult(
+                    VerseRef(row['book_id'], row['chapter'], row['verse']),
+                    ('…' if start else '') + snippet + ('…' if end < len(source) else ''),
+                )
+            )
+        return tuple(results)

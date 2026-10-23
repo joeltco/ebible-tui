@@ -8,6 +8,7 @@ from ebible.core.credentials import CredentialError, active_key
 from ebible.core.models import VerseRef
 from ebible.core.scripture import ScriptureStore
 from ebible.core.translate.base import Backend, TranslationError, validate_alignment
+from ebible.core.translate.query import QUERY_ENABLE_HINT, parse_query_variants
 
 BackendSetting = Literal['auto', 'claude', 'google', 'off']
 
@@ -72,3 +73,28 @@ class TranslationService:
         translated = backend.translate_verse(source.book, ref.chapter, context, ref.verse)
         validate_alignment({ref.verse: context[ref.verse]}, translated)
         return translated[ref.verse]
+
+    async def translate_query(self, query: str) -> tuple[str, ...]:
+        try:
+            return await asyncio.wait_for(
+                asyncio.to_thread(self._translate_query, query), self.timeout
+            )
+        except TimeoutError:
+            raise TranslationError(
+                'Query translation timed out. Check your connection and retry. ' + QUERY_ENABLE_HINT
+            ) from None
+        except TranslationError as exc:
+            message = str(exc)
+            raise TranslationError(
+                message if QUERY_ENABLE_HINT in message else message + ' ' + QUERY_ENABLE_HINT
+            ) from None
+        except Exception:
+            raise TranslationError(
+                'Query translation failed. Check your connection and retry. ' + QUERY_ENABLE_HINT
+            ) from None
+
+    def _translate_query(self, query: str) -> tuple[str, ...]:
+        backend = self.backend or select_backend(self.setting)
+        if backend is None:
+            raise TranslationError('English search needs a translation backend.')
+        return parse_query_variants('\n'.join(backend.translate_query(query)))

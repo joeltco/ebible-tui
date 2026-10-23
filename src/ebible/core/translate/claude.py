@@ -8,6 +8,7 @@ from typing import Protocol, cast
 from ebible.canon import Book
 from ebible.core.credentials import active_key
 from ebible.core.translate.base import TranslationError, parse_numbered_lines
+from ebible.core.translate.query import QUERY_PROMPT, parse_query_variants
 
 MODEL = 'claude-sonnet-5-5'
 APP_ADDENDUM = (
@@ -59,6 +60,17 @@ class ClaudeBackend:
     ) -> dict[int, str]:
         if target not in verses_am:
             raise TranslationError('Target verse is missing from chapter context')
+        content = (
+            f'{book.name_en} {chapter} ({book.name_am})\n\n'
+            + '\n'.join(f'{n}. {text}' for n, text in sorted(verses_am.items()))
+            + f'\n\nThe chapter above is context only. Translate ONLY verse {target}. Return only: {target}. translation'
+        )
+        return parse_numbered_lines(self._request(None, content, 4096), {target: verses_am[target]})
+
+    def translate_query(self, query: str) -> tuple[str, ...]:
+        return parse_query_variants(self._request(QUERY_PROMPT, query, 256))
+
+    def _request(self, system: str | None, content: str, max_tokens: int) -> str:
         client = self._client
         try:
             if client is None:
@@ -85,19 +97,14 @@ class ClaudeBackend:
             try:
                 response = client.messages.create(
                     model=MODEL,
-                    max_tokens=4096,
-                    system=files('ebible.core.translate')
+                    max_tokens=max_tokens,
+                    system=system
+                    if system is not None
+                    else files('ebible.core.translate')
                     .joinpath('TRANSLATION_GUIDE.md')
                     .read_text(encoding='utf-8')
                     + APP_ADDENDUM,
-                    messages=[
-                        {
-                            'role': 'user',
-                            'content': f'{book.name_en} {chapter} ({book.name_am})\n\n'
-                            + '\n'.join(f'{n}. {text}' for n, text in sorted(verses_am.items()))
-                            + f'\n\nThe chapter above is context only. Translate ONLY verse {target}. Return only: {target}. translation',
-                        }
-                    ],
+                    messages=[{'role': 'user', 'content': content}],
                 )
             except Exception:
                 raise TranslationError(
@@ -106,7 +113,7 @@ class ClaudeBackend:
             if response.stop_reason != 'end_turn':
                 raise TranslationError('Incomplete Claude response. Press Enter to retry.')
             text = '\n'.join(block.text for block in response.content if block.type == 'text')
-            return parse_numbered_lines(text, {target: verses_am[target]})
+            return text
         finally:
             if self._client is None and client is not None:
                 try:

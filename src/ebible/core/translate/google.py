@@ -6,6 +6,7 @@ from collections.abc import Mapping
 
 from ebible.canon import Book
 from ebible.core.translate.base import TranslationError, validate_alignment
+from ebible.core.translate.query import parse_query_variants
 
 
 class GoogleBackend:
@@ -41,3 +42,24 @@ class GoogleBackend:
         translated = {target: result.stdout.strip()}
         validate_alignment({target: verses_am[target]}, translated)
         return translated
+
+    def translate_query(self, query: str) -> tuple[str, ...]:
+        executable = self.executable or shutil.which('trans')
+        if not executable:
+            raise TranslationError(
+                'Install translate-shell (trans) or set an Anthropic key in Settings.'
+            )
+        try:
+            result = subprocess.run(
+                [executable, '-b', 'en:am'],
+                input=query,
+                capture_output=True,
+                encoding='utf-8',
+                check=True,
+                timeout=self.timeout,
+            )
+        except (OSError, subprocess.SubprocessError):
+            raise TranslationError(
+                'Query translation failed or timed out. Check your connection and translate-shell.'
+            ) from None
+        return parse_query_variants(result.stdout, limit=1)
