@@ -242,6 +242,10 @@ async def probe(out, themes=THEMES):
                     await snap(control + '-hover')
                     app.screen.query_one('#' + control).focus()
                     await snap(control + '-focus')
+                    button = app.screen.query_one('#' + control)
+                    button.add_class('-active')
+                    await snap(control + '-pressed')
+                    button.remove_class('-active')
                 entry = app.screen.query_one('#audit-input', Input)
                 entry.focus()
                 entry.cursor_blink = False

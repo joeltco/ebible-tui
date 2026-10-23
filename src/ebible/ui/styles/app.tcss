@@ -144,6 +144,7 @@ TitleScreen { background: transparent; align: left top; }
 Cover { width: 100%; height: 100%; background: $background; overflow: hidden; }
 
 /* Explicit readable roles replace framework opacity and auto-colour defaults. */
+Button.-active { tint: $role-pressed-tint; }
 Button:disabled { opacity: 1; text-opacity: 1; color: $secondary; }
 Input > .input--placeholder, Input > .input--suggestion { color: $secondary; }
 SelectCurrent .arrow, SelectCurrent Static#label { color: $secondary; }

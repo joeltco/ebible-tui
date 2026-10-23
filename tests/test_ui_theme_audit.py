@@ -3,14 +3,14 @@
 import runpy
 
 import pytest
-from textual.widgets import Button, Select
+from textual.widgets import Button, OptionList, Select
 
 from ebible.app import EBibleApp
 from ebible.core.models import HIGHLIGHT_COLOURS, VerseRef
 from ebible.ui.morph import Morph
 from ebible.ui.screens.search import QuerySummary
 from ebible.ui.screens.title import Cover
-from ebible.ui.themes import THEMES, highlight_colour
+from ebible.ui.themes import THEMES, effect_colours, highlight_colour
 from ebible.ui.widgets.verse_view import VerseView
 
 audit = runpy.run_path('tools/audit_themes.py')
@@ -48,6 +48,11 @@ async def test_rendered_roles_and_all_animation_frames(theme, tmp_path):
         'toast-error',
         'switch-modal-after',
         'switch-terms-after',
+        'audit-button-pressed',
+        'audit-primary-pressed',
+        'audit-warning-pressed',
+        'audit-error-pressed',
+        'audit-success-pressed',
     } <= states
     for state, count in [
         ('forward', 40),
@@ -66,6 +71,14 @@ async def test_rendered_roles_and_all_animation_frames(theme, tmp_path):
     assert screenshot('query-final') == screenshot('query-reduced')
     assert screenshot('cover-entrance', 24) == screenshot('cover-reduced')
     assert screenshot('cover-open-final') == screenshot('reader-reduced')
+    # The wipe may only reveal existing reader/cover colours or its theme page edge.
+    ends = screenshot('reader-reduced') + screenshot('cover-reduced')
+    foregrounds = {cell['fg'] for cell in ends}
+    backgrounds = {cell['bg'] for cell in ends} | {effect_colours(theme).background.hex.lower()}
+    for frame in range(18):
+        for cell in screenshot('cover-opening', frame):
+            assert cell['fg'] in foregrounds
+            assert cell['bg'] in backgrounds
 
 
 @pytest.mark.parametrize('target', ['parchment', 'high-contrast', 'midnight'])
@@ -135,6 +148,20 @@ async def test_live_switch_mid_motion_settings_cover_search_and_modal(target):
         await pilot.pause()
         assert title.query_one(Cover).render() != before
         assert title.phase == 'entrance'
+        for page in ('books', 'history'):
+            await app.open_page(page)
+            await pilot.pause()
+            listing = app.screen.query_one(OptionList)
+            selected = listing.highlighted
+            for name in ('parchment', 'meskel', target):
+                await app.update_setting('theme', name)
+                await pilot.pause()
+                assert listing.highlighted == selected
+                prompt = listing.get_option_at_index(1 if page == 'books' else 0).prompt
+                assert any(
+                    span.style == app.get_css_variables()['secondary'] for span in prompt.spans
+                )
+            await pilot.press('escape')
 
 
 async def test_fetch_completion_and_interrupted_flourish_carry_colours_without_a_jump(monkeypatch):

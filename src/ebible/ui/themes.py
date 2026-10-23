@@ -217,6 +217,7 @@ def _roles(
         'text-disabled': secondary_c.hex,
         'role-border': border.hex,
         'role-scrollbar': thumb.hex,
+        'role-pressed-tint': 'transparent',
         'input-selection-background': selected.hex,
         'input-selection-foreground': ink_c.hex,
     }
