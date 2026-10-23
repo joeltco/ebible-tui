@@ -66,14 +66,40 @@ src/ebible/
     themes.py        custom textual.theme.Theme objects (see Themes); registered at startup
     morph.py         clock-driven reversible character reveal, theme-derived glow and shimmer
     styles/app.tcss  ONE stylesheet; use theme variables ($primary, $accent, $surface, $panel...), never hex
-    screens/         reader, books (picker), search, bookmarks, notes, history, plans, settings, help,
+    screens/         title (frontispiece), reader, books (picker), search, bookmarks, notes, history, plans, settings, help,
                      verse_actions (modal menu for the selected verse)
     widgets/         header bar, verse view, chapter grid, status/footer bar, etc.
 tests/               pytest; core unit tests + Textual Pilot UI tests
 tools/smoke.py       boots the app headless at 50x30 and 120x40, walks every screen, saves SVG screenshots
                      to a given out dir, exits non-zero on any exception
+tools/record_title.py headless cover entrance/opening SVG sequence and optional review GIF
+tools/measure_startup.py fresh-process first-meaningful-frame measurement
 tools/record_morph.py headless 50x30 SVG sequence at 50 ms animation-time steps for GIF assembly
 ```
+
+### Title page contract
+
+Launch into a centred Bible frontispiece by default. The title is መጽሐፍ ቅዱስ with
+The Holy Bible beneath; never invent an edition, publisher or date. A double-rule
+frame, single-cell corner ornaments and a right-side page edge use theme colours.
+The requested Psalm 119:105 epigraph is stored as **Psalms 118:105** in this source;
+chapter 119 has only seven verses. Load its exact Amharic from the DB alongside
+settings in the background, and label both numbering systems on the cover.
+
+Continue reading (or Begin · Genesis 1 without a saved position) opens the prepared
+reader. Books, Search, Plans and Settings are direct tappable links; Escape or the
+close link quits. Reader `c` and Help's Title page button return to the cover.
+Tab/arrows select links; Enter/Space activate. During an animation any key/tap only
+skips to its end; it must not leak into the reader or activate a link as well.
+
+Draw the frame from its corners, then brighten the title through the existing
+morph palette helpers over 0.8 s at 30 fps. Opening is a 0.6 s left-to-right wipe
+with a highlighted page edge revealing the actual reader beneath. Pause timers
+when not current. Reduce motion shows the final cover and opens instantly.
+`title_page_on_launch` defaults true; turning it off, or passing an explicit CLI
+reference, bypasses the cover. Fit 40×20, 50×30, 74×30 and 120×40. Smoke all four
+sizes and all six custom themes. Record meskel and parchment entrance/opening GIFs.
+Measure first meaningful frame before/after; startup must not regress.
 
 ### Translation contract
 
@@ -111,7 +137,8 @@ accept only Ethiopic letters/combining marks, reject internal spaces/punctuation
 numerals/commentary, ignore junk lines and duplicates; no usable terms is an error.
 
 Search translated variants as literal substrings of text_am (OR), with the same
-scopes, canonical book/chapter/verse order, 40-result pages and highlighted snippets.
+scopes, canonical book/chapter/verse order, 40-result pages and highlighted snippets. Append “· more below” to the loaded
+passage count whenever another page exists.
 Measured page queries including connection setup and snippets must stay below 150 ms
 on this machine. Do not modify typed Amharic's FTS matching or ranking. English
 submission stays on the results page, showing all tappable terms in
@@ -140,6 +167,8 @@ mutate the process environment. Show the active source or Google/no-backend fall
 
 ## Features
 
+- **Title page:** the Bible cover opens at launch by default; Continue opens the saved
+  place, with direct library links and a tappable close action. `c` returns from reading.
 - **Reader:** Amharic verse lines or flowing paragraphs. No English-only, interleaved,
   parallel, or language layout setting. Translations morph in place within the
   continuous paragraph as well as verse lines. Verse cursor up/down/j/k;
@@ -161,9 +190,9 @@ mutate the process environment. Show the active source or Google/no-backend fall
   deleting/discarding; recent history and resume; generated plans with mark-read,
   progress and streak. Positive progress below one percent displays `<1%`.
 - **Settings:** theme, flow, numbers, spacing, book-name language, maximum reading
-  width, Reduce motion (default off), translation backend, an Anthropic API key field, optional haptics. Persist immediately; removed/unknown
+  width, Title page on launch (default on), Reduce motion (default off), translation backend, an Anthropic API key field, optional haptics. Persist immediately; removed/unknown
   legacy JSON keys are ignored. Six custom themes grouped first, built-ins after.
-- **Help:** every binding including Enter = translate, a = actions; accent key chips.
+- **Help:** every binding including Enter = translate, a = actions, c = title page; accent key chips.
 - Below 80 columns, reader and secondary page headers occupy one row. Keep roomy
   wide headers, visible one-cell themed scrollbars, and a centred reading column.
 
@@ -179,7 +208,7 @@ Highlight colours are theme-aware (readable on every theme).
 ## Termux-first laws
 
 - Design for **50 columns × ~30 rows** first; must also look good at 120×40. Nothing may clip or
-  require horizontal scroll at 50 cols. Test both sizes.
+  require horizontal scroll at 50 cols. Test both sizes; additionally test the cover at 40×20 and 74×30.
 - **Touch**: every primary action reachable by tap (Textual mouse events work in Termux). Generous
   tap targets (buttons ≥ 3 cells wide, 1 row tall min, spaced).
 - **Keys**: single keys and arrows/Esc/Enter/Tab only (the Termux extra-keys row). No binding may
@@ -214,57 +243,63 @@ Highlight colours are theme-aware (readable on every theme).
 
 ## Status
 
-- 2026-10-23: **Batch 9 complete** on `rebuild/v2`, package `ebible` 2.0.0.dev0.
-  Search accepts Amharic or English. Latin-only queries translate to Amharic on
-  Enter/Search only, with a worker and shimmer hint beside the editable query.
-  Reduce motion shows a static hint. Typed Amharic, mixed queries and explicit
-  raw FTS retain their existing search path; no keystroke translation calls.
-- Google uses `trans -b en:am` and one result; Claude uses a short dedicated
-  scripture-word-form prompt for up to three variants. Only unique Ethiopic
-  letter/mark lines are accepted; junk is ignored. Empty/failed responses show
-  inline configuration/retry messages. Backend selection and key precedence are
-  unchanged; keys remain explicit and SDK errors sanitized.
-- Translated terms use scoped literal substring matching in canonical order,
-  40-row pages and highlighted snippets. The caption shows every Amharic variant
-  and original query; tap a term or use Tab/arrows/Enter to refine it. English
-  submission remains on results for inspection; typed Amharic Enter still jumps.
-  Successful query translations are cached only on the app instance, keyed by
-  backend setting and trimmed/case-folded query. No schema or disk-cache changes.
-- Measured **240 page queries**, including fresh read-only connections, SQL and
-  snippets (40 rows, 20 runs per offset, first/middle/last/beyond-last pages).
-  Common word እግዚአብሔር: **33.51 ms maximum**; ብርሃን: **46.74 ms maximum**;
-  three variants together: **99.61 ms maximum**. Every sample is below 150 ms.
-  ብርሃን finds **282 verses**, starting at **Genesis 1:3**, including affixed forms.
-  Full timings: `/tmp/b9-search-benchmark.json`; methodology in the review.
+- 2026-10-23: **Batch 10 complete** on `rebuild/v2`, package `ebible` 2.0.0.dev0.
+  Launch now opens a Bible frontispiece with a centred double-rule frame,
+  single-cell ornaments, right-side page edge, Amharic title and English subtitle.
+  All six themes work at **40×20, 50×30, 74×30 and 120×40**.
+- Continue/Begin opens the prepared reader at the saved position. Books, Search,
+  Plans, Settings and close are tappable and keyboard-accessible. Reader `c` and
+  Help's Title page button return to the cover. The persisted **Title page on launch**
+  setting defaults on; turning it off or supplying a CLI reference bypasses it.
+- The requested Psalm 119:105 is stored as **Psalms 118:105** in this DB; chapter
+  119 has seven verses. The epigraph uses that exact DB text, loaded alongside
+  settings in the background. The cover labels both numbering systems. Metadata
+  contained no edition/publisher/date, so none was invented. No source changes.
+- Entrance draws the frame from its corners then brightens the lettering over
+  **0.8 s**; opening wipes across the actual reader with a highlighted page edge
+  over **0.6 s**. One 30 fps timer pauses at rest and off screen. Any key/tap skips
+  only the current animation, including taps over the revealed reader. Reduce
+  motion renders the final cover and opens instantly.
+- Fresh-process first-meaningful-frame measurement, **12 runs per version at 50×30**:
+  median **708.70 ms before → 596.50 ms after** (15.8% faster); maxima **807.21 ms
+  → 662.18 ms**. Includes imports and initialization, excludes interpreter process
+  creation, terminal transport and physical display latency. Same probe against
+  `48fba9d` and current code, fresh temporary personal data, warm source filesystem.
+  JSON: `/tmp/b10-startup-before.json`, `/tmp/b10-startup-after.json`.
 - Required gates passed in `.venv` (Python 3.14.7, Textual 8.2.8):
   `ruff check src tests tools` — **all checks passed**;
-  `ruff format --check src tests` — **66 files already formatted**;
-  `mypy src` — **no issues in 42 source files**;
-  `pytest -q` — **487 passed in 343.05s**, including **189 UI cases**;
-  `python tools/smoke.py --out /tmp/ebible-smoke` — **258 SVGs passed**,
-  43 states × 50×30 and 120×40 × meskel, parchment, lalibela.
-  Gate output: `/tmp/b9-gates.log`.
-- Added **40 core cases and 20 Pilot cases** for detection, variant validation,
-  both fake backends, thread/timeout/error safety, substring scopes/order/pages/
-  highlights/affixes, performance, cache/restart/no-disk behaviour, no per-keystroke
-  calls, cancellation, pending scope changes, reduced motion, refinement and jumps.
-  Existing verse translation and native Amharic search regressions pass unchanged.
-- Smoke adds English entry, query shimmer, reduced-motion pending, translated
-  variants, refined Amharic and translation-error states. Inspected all six new
-  phone states under all three themes and wide pending/result/error views. No
-  clipping or alignment fixes were required. All 258 SVGs passed an independent
-  raw/XML-text scan for full fake keys. Output has 258 SVGs + manifest.txt;
-  complete listing: `/tmp/ebible-smoke-listing.txt`.
-- Packaged database unchanged: **12,521,472 bytes**, SHA-256
+  `ruff format --check src tests` — **69 files already formatted**;
+  `mypy src` — **no issues in 43 source files**;
+  `pytest -q` — **532 passed in 445.77s**;
+  `python tools/smoke.py --out /tmp/ebible-smoke` — **354 SVGs passed**.
+  Gate output: `/tmp/b10-gates.log`.
+- Added **42 cover cases** (40 Pilot + two unit cases), plus one app-driven recorder
+  test. Covers launch/default/off/CLI, saved position, all tap/keyboard links, close,
+  epigraph/threading, persistence, literal text, motion/skip/pause, exact frame
+  widths and all theme/size combinations. Existing reader tests opt out of the
+  cover; Help and smoke-isolation regressions include the new shortcut and matrix.
+  Claude's **“40 passages · more below”** correction remains unchanged and tested.
+- Smoke retains 258 existing screen/modal views and adds **96 cover views**:
+  entrance, finished, half-open and reduced-motion × six themes × four sizes.
+  All 96 were visually inspected; no remaining clipping, frame wrapping or
+  collisions. Fixed a drawing issue that left background rectangles behind title/
+  action lettering. Contact sheets: `/tmp/b10-visual/`. Independent raw/XML-text
+  disclosure scan passed for **458 SVGs**, including both recording sequences.
+  Output: 354 SVGs + manifest.txt; listing: `/tmp/ebible-smoke-listing.txt`.
+- GIFs: `/tmp/ebible-title-meskel/title.gif` and
+  `/tmp/ebible-title-parchment/title.gif`. Each has **52 frames / 2.6 seconds**,
+  plus its SVG sequence and JSON timing manifest. `tools/record_title.py --gif`
+  uses optional system librsvg/ImageMagick tools; no app dependency was added.
+- Packaged DB unchanged: **12,521,472 bytes**, SHA-256
   `46da43911496d300784fd303a69cbf5a108486a06a8e45ea2c82efa1c11e9997`.
-  Original-data checksum tests match all **39,169 Amharic verse tuples and 81 book
+  Original-data checksums still match **39,169 Amharic verse tuples and 81 book
   rows**; integrity tests pass. Schema, canon, raw source, source-issues documentation
-  and both translation-guide copies remain unchanged. No English scripture index.
-- Help, README and current architecture/spec notes describe English query submission
-  and refinement. See [Batch 9 review](docs/BATCH9_REVIEW.md) for every judgement,
-  timing detail, test and artifact location. No live query translation or physical
-  Termux session was run; all tests and smoke used fake backends. Page timings are
-  host database-query measurements, excluding network and terminal rendering.
-- Batch 8 was independently verified and pushed by Claude before this work.
-  Implementation commits: `30ccfcb` (core/backend search), `5fe4078` (UI/cache/smoke),
-  followed by the documentation/status commit. **No Batch 9 push or publication.**
+  and both translation-guide copies are unchanged.
+- See [Batch 10 review](docs/BATCH10_REVIEW.md) for every design judgement, timing
+  method, test and artifact location. No physical Termux session or live translation
+  call was run; existing translation tests/smoke use fake backends. Glyph widths
+  are verified by Rich and rasterized SVGs, not Joel's physical terminal font.
+- Batch 9 and `48fba9d` were independently verified/pushed by Claude before this work.
+  Implementation commits: `75694d4` (cover), `6a0bd2e` (tools/matrix), `17638f1`
+  (regression expectations), followed by the documentation/status commit.
+  **No Batch 10 push or publication.**

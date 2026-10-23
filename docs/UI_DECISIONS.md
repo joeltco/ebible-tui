@@ -4,6 +4,27 @@ These are the implementation choices left open by the specification. The core
 conventions in FOUNDATION.md still apply, with the reviewed search/reference/
 translation contracts updated there.
 
+## Cover and opening
+
+- A centred, maximum-66-cell double-rule panel uses single-width glyph ornaments,
+  warm paper/panel colour and a right-side edge. At 40×20, vertical gaps tighten;
+  all links and the exact DB epigraph remain visible. No edition metadata is invented.
+- The requested Psalm 119:105 is source Psalm 118:105. The cover displays the DB
+  text verbatim and labels both references. This does not change reference parsing.
+- Default launch shows the cover with the reader prepared behind it. CLI references
+  and the off preference bypass it. `c` and Help's Title page button return to it;
+  Escape/close quits there. Other pages' Back returns to the cover when opened there;
+  choosing a book/search result/plan chapter opens the reader through normal validation.
+- A primary two-line Continue/Begin link keeps long saved references readable on
+  phones. Four secondary links share one row; a close link sits below the frame.
+  Tab/arrows cycle the six targets; Enter/Space or a tap activates them.
+- Entrance is a corner-drawn frame followed by a theme-derived title brightening
+  (0.8 s). Opening wipes left to right with a two-cell highlighted edge (0.6 s),
+  revealing the actual reader. The skipping key/tap is consumed. Reduce motion
+  renders the finished cover and opens immediately. Off-screen timers pause.
+- See [Batch 10 review](BATCH10_REVIEW.md) for timing measurements, recordings,
+  test coverage, source-numbering decisions and visual inspection.
+
 ## Reading and navigation
 
 - Meskel is the default. All six custom palettes define every required Theme field;
@@ -59,6 +80,7 @@ translation contracts updated there.
   static hint. Mixed-script and `=` queries never translate. See
   [Batch 9 review](BATCH9_REVIEW.md) for query validation, cancellation and caching.
 - The result page starts at 40 passages; Show more adds 40, up to the core's 1,000 cap.
+  The count adds “· more below” whenever another page exists.
   Scope changes apply immediately. English queries use canonical-order substring
   pages of 40 Amharic verses, with up to three ORed variants; translated terms are
   tappable and keyboard-refinable. Typed Amharic keeps FTS ranking. Snippets use literal Rich Text
@@ -127,7 +149,8 @@ translation contracts updated there.
 - Smoke creates fresh temporary XDG config/data for each size/theme combination,
   restores the invoking environment, and removes its temporary personal data. Its
   note is explicitly labelled a temporary fixture and quotes real bundled text.
-- Smoke writes 43 views for each of 3 themes × 2 sizes: 258 SVGs and manifest.txt.
+- Smoke writes 43 reader views for each of 3 themes × 2 sizes, plus four cover
+  states × 6 themes × 4 sizes: 354 SVGs and manifest.txt.
   Extra states include error messages, deletion/discard/restart confirmations,
   Select's theme overlay, paragraph and Jubilees readers, and pending/result/error
   translation states (including shimmer, forward/reverse, completion pulse and

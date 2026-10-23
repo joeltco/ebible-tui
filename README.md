@@ -3,7 +3,18 @@
 A Termux-first **Amharic reader** for the 81-book Ethiopian Orthodox Tewahedo
 canon. Built for a 50×30 phone terminal, with a centred reading column on desktop.
 
-**Press Enter or tap a verse to translate it.** A bright, theme-matched band sweeps
+Launch opens an ornamental Bible cover. **Continue reading** opens your saved
+place; **Begin** starts at Genesis 1. Books, Search, Plans and Settings are directly
+tappable. Press **`c`** in the reader to return to the cover, or use Help → Title page.
+Escape (or the close link) quits from the cover. Settings → **Title page on launch**
+turns it off; a CLI reference always opens the reader directly.
+
+The frame draws in and the cover opens with a page-edge wipe. Any key or tap during
+an animation skips it; **Reduce motion** makes both transitions instant. The cover
+fits 40×20, 50×30, 74×30 and 120×40. Its epigraph is the exact DB text of the requested
+Psalm 119:105, stored at **118:105** in this source; both references are shown.
+
+**In the reader, press Enter or tap a verse to translate it.** A bright, theme-matched band sweeps
 over Amharic while fetching. English replaces it from left to right with a bold,
 glowing edge, then briefly pulses before settling.
 Tap again to morph back; tapping mid-animation reverses from that position.
@@ -53,11 +64,12 @@ screens. Deletion/restart requires confirmation; unsaved notes are protected.
 | `←` / `h`, `→` / `l` | Previous / next chapter |
 | Enter / tap a verse | Translate / hide that verse's translation |
 | `a` / footer Verse | Verse actions |
+| `c` / Help → Title page | Return to the cover |
 | `b`, `/`, `g` | Books, search, go to reference |
 | `m`, `v`, `n`, `t` | Bookmarks, highlights, notes, history |
 | `p`, `s`, `?` | Plans, settings, help |
 | Tab, Enter / Space | Focus and activate controls |
-| Escape | Back; in the reader, return focus to reading |
+| Escape | Back; reader: focus reading; title page: quit |
 | `q` | Quit from the reader |
 
 Typing in search, reference, and note fields never activates reader shortcuts.
@@ -164,10 +176,22 @@ python tools/smoke.py --out /tmp/ebible-smoke
 ```
 
 Smoke uses temporary XDG directories at 50×30 and 120×40 under meskel, parchment,
-and lalibela. Its 258 SVGs visit every screen/modal, including shimmer, mid-morph,
+and lalibela. It also captures four cover states at all four sizes under all six
+custom themes: **354 SVGs** total. The reader suite visits every screen/modal, including shimmer, mid-morph,
 reverse, completion pulse, translated, error, actions, and Amharic/English search
 states (including query shimmer, reduced motion, terms and errors). All translation responses in
 smoke and tests are explicitly labelled fixtures; no real backend or network is used.
+
+Record the cover's entrance and opening at 50×30 (52 SVGs at 50 ms steps):
+
+```sh
+python tools/record_title.py --out /tmp/ebible-title-meskel --theme meskel --gif
+python tools/record_title.py --out /tmp/ebible-title-parchment --theme parchment --gif
+python tools/measure_startup.py --out /tmp/ebible-startup.json
+```
+
+`--gif` uses installed `rsvg-convert` and ImageMagick `magick`; omit it for SVGs
+only. The tools use temporary XDG directories and do not call translation services.
 
 Record a deterministic 50×30 morph sequence for a GIF:
 
