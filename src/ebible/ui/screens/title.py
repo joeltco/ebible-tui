@@ -13,6 +13,7 @@ from textual.screen import ModalScreen
 from textual.timer import Timer
 from textual.widget import Widget
 
+from ebible.core.models import VerseRef
 from ebible.core.refs import format_reference
 from ebible.ui.morph import FRAME_INTERVAL, Palette, palette
 from ebible.ui.screens.base import Page
@@ -21,7 +22,8 @@ from ebible.ui.themes import effect_colours
 ENTRANCE_DURATION = 0.8
 OPEN_DURATION = 0.6
 ORNAMENTS = '╔╗╚╝═║✦❖✣│─'
-EPIGRAPH_REFERENCE = 'Psalm 119:105 · source 118:105'
+# The source numbers Psalms as the Ethiopian/Septuagint canon does; label it as the reader does.
+EPIGRAPH = VerseRef(28, 118, 105)
 
 
 def cover_art(
@@ -90,7 +92,7 @@ def cover_art(
     epigraph_y = top + 7 if small else top + 12
     for index, line in enumerate(wrapped):
         centre(epigraph_y + index, line.plain, quiet + Style(italic=True))
-    centre(epigraph_y + len(wrapped) + 1, EPIGRAPH_REFERENCE, quiet)
+    centre(epigraph_y + len(wrapped) + 1, format_reference(EPIGRAPH), quiet)
     action_y = bottom - 5
     action_style = Style(color=title_ink, bold=True, underline=selected == 0)
     centre(action_y, 'Continue reading' if continuing else 'Begin', action_style)

@@ -50,7 +50,8 @@ async def test_default_launch_db_epigraph_continue_and_return(size):
         title.finish_entrance()
         lines, targets = title.art()
         assert 'Begin' in '\n'.join(line.plain for line in lines)
-        assert 'Psalm 119:105 · source 118:105' in '\n'.join(line.plain for line in lines)
+        assert 'Psalms 118:105' in '\n'.join(line.plain for line in lines)
+        assert '119' not in '\n'.join(line.plain for line in lines)
         x, y, _, _ = targets[0]
         await pilot.click(Cover, offset=(x, y))
         assert title.phase == 'opening'

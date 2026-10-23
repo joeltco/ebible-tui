@@ -16,7 +16,7 @@ are more results. No search or translation behaviour was changed in this batch.
   no edition, publisher, translator or date was added.
 - **Source-numbering decision:** the requested “lamp to my feet” verse is stored
   at **Psalms 118:105**. Source chapter 119 has only seven verses. We read 118:105
-  directly from the read-only store and show “Psalm 119:105 · source 118:105”. The
+  directly from the read-only store and label it “Psalms 118:105”, as the reader does (Claude review). The
   entire Amharic string, including its source stanza prefix, is retained. Reference
   parsing and source numbering are unchanged; no verse text is hard-coded.
 - The primary Continue/Begin action uses two centred lines so the saved English

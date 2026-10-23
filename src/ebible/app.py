@@ -101,13 +101,15 @@ class EBibleApp(App[None], inherit_bindings=False):
         self.ready.set()
 
     def _load(self) -> tuple[Settings, UserDataStore, dict[int, int], VerseRef | None, str]:
+        from ebible.ui.screens.title import EPIGRAPH
+
         userdata = UserDataStore()
         return (
             load_settings(),
             userdata,
             self.scripture.chapter_counts(),
             userdata.reading_position(),
-            self.scripture.verse(VerseRef(28, 118, 105)).text_am,
+            self.scripture.verse(EPIGRAPH).text_am,
         )
 
     async def show_title(self, *, continuing: bool = True) -> None:
