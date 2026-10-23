@@ -2,6 +2,7 @@
 
 from collections.abc import Iterable
 
+from rich.repr import Result
 from rich.text import Text
 from textual import events
 from textual.binding import Binding, BindingType
@@ -32,6 +33,13 @@ class TextInput(Input, inherit_bindings=False):
     BINDINGS = phone_bindings(Input.BINDINGS)
 
 
+class SecretPaste(events.Paste):
+    """The message pump may log events before invoking their handlers."""
+
+    def __rich_repr__(self) -> Result:
+        yield 'text', '[redacted]'
+
+
 class SecretInput(TextInput):
     """Masked entry with no credential payload in queued/loggable input messages."""
 
@@ -39,12 +47,16 @@ class SecretInput(TextInput):
         super().__init__(password=True, placeholder='Paste your key', id=id)
 
     def post_message(self, message: Message) -> bool:
+        if isinstance(message, events.Paste) and not isinstance(message, SecretPaste):
+            private = SecretPaste(message.text)
+            message.text = ''
+            message = private
         if isinstance(message, (Input.Changed, Input.Submitted, Input.Blurred)):
             message.value = ''
             message.validation_result = None
         return super().post_message(message)
 
-    def _on_paste(self, event: events.Paste) -> None:
+    def _on_secret_paste(self, event: SecretPaste) -> None:
         # Ordinary Input silently drops later lines. Preserve them for validation.
         self.replace(event.text, *self.selection)
         event.text = ''

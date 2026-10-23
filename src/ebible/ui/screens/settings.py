@@ -21,7 +21,9 @@ class SettingsScreen(Page):
 
     def compose(self) -> ComposeResult:
         settings = self.eb.settings
-        yield from self.heading('Make room for reading', 'Changes are saved as you make them')
+        yield from self.heading(
+            'Make room for reading', 'Preferences save immediately · keys use Save'
+        )
         with PhoneScroll(id='settings-scroll', classes='page-scroll'):
             yield Static('APPEARANCE', classes='eyebrow', markup=False)
             yield Static('Theme', markup=False)

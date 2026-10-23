@@ -158,7 +158,7 @@ async def test_invalid_paste_and_disk_failures_are_inline_and_private(running_ap
         assert_private(app, FAKE)
 
 
-async def test_input_event_reprs_have_no_secret(running_app):
+async def test_input_event_reprs_have_no_secret(running_app, monkeypatch):
     app, pilot = running_app
     await pilot.press('s')
     entry = app.screen.query_one(SecretInput)
@@ -170,6 +170,26 @@ async def test_input_event_reprs_have_no_secret(running_app):
         other.post_message(message)
         assert message.value == ''
         assert FAKE not in repr(message) and FAKE not in pretty_repr(message)
+    assert_private(app, FAKE)
+    # Capture Textual's event log *before* handlers run, including real app paste routing.
+    from types import SimpleNamespace
+
+    logged = []
+
+    class EventLog:
+        def verbosity(self, verbose):
+            return lambda *args: logged.append(repr(args))
+
+    monkeypatch.setattr('textual.message_pump.log', SimpleNamespace(event=EventLog()))
+    entry.value = ''
+    entry.focus()
+    app.post_message(events.Paste(FAKE))
+    await pilot.pause()
+    assert entry.value == FAKE and logged
+    assert any('SecretPaste' in message for message in logged)
+    assert all(FAKE not in message for message in logged)
+    await tap(app, pilot, '#key-save')
+    assert all(FAKE not in message for message in logged)
     assert_private(app, FAKE)
 
 
