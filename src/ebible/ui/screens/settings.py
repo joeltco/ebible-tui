@@ -32,6 +32,8 @@ class SettingsScreen(Page):
                 value=self.app.theme,
                 id='setting-theme',
             )
+            yield Static('Title page on launch', markup=False)
+            yield Switch(settings.title_page_on_launch, id='setting-title_page_on_launch')
             yield Static('Reading flow', markup=False)
             yield Choice(
                 [('One verse at a time', 'lines'), ('Continuous paragraphs', 'paragraph')],

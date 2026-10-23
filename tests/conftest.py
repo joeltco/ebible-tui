@@ -7,7 +7,7 @@ from ebible.core.userdata import UserDataStore
 
 
 @pytest.fixture(autouse=True)
-def isolated_paths(tmp_path, monkeypatch):
+def isolated_paths(tmp_path, monkeypatch, request):
     import shutil
 
     which = shutil.which
@@ -16,6 +16,10 @@ def isolated_paths(tmp_path, monkeypatch):
     monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path / 'data'))
     monkeypatch.delenv('ANTHROPIC_API_KEY', raising=False)
     monkeypatch.delenv('NO_COLOR', raising=False)
+    if request.module.__name__.startswith('test_ui_'):
+        from ebible.core.settings import Settings, save_settings
+
+        save_settings(Settings(title_page_on_launch=False))
 
 
 @pytest.fixture

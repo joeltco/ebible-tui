@@ -54,6 +54,8 @@ class EBibleApp(App[None], inherit_bindings=False):
         self.userdata: UserDataStore
         self.reader: ReaderScreen
         self.chapter_counts: dict[int, int] = {}
+        self.epigraph = ''
+        self.has_saved_position = False
         self.ready = asyncio.Event()
         self._navigation_lock = asyncio.Lock()
         self._settings_lock = asyncio.Lock()
@@ -72,21 +74,48 @@ class EBibleApp(App[None], inherit_bindings=False):
     async def on_mount(self) -> None:
         from ebible.ui.screens.reader import ReaderScreen
 
-        self.settings, self.userdata, self.chapter_counts = await asyncio.to_thread(self._load)
+        (
+            self.settings,
+            self.userdata,
+            self.chapter_counts,
+            saved,
+            self.epigraph,
+        ) = await asyncio.to_thread(self._load)
         chosen = self.theme_override or self.settings.theme
         self.theme = chosen if chosen in self.available_themes else 'meskel'
         # A CLI theme is a session override, becoming persistent only if edited in Settings.
         self.settings = replace(self.settings, theme=self.theme)
-        saved = await asyncio.to_thread(self.userdata.reading_position)
+        self.has_saved_position = saved is not None
         target = self.requested_reference or saved or VerseRef(1)
+        try:
+            await asyncio.to_thread(self.scripture.validate_reference, target)
+        except ReferenceError as exc:
+            self.message(str(exc), error=True)
+            target = VerseRef(1)
+        self.reference = VerseRef(target.book_id, target.chapter, target.verse)
         self.reader = ReaderScreen()
         await self.push_screen(self.reader)
-        if not await self.navigate(target):
-            await self.navigate(VerseRef(1))
+        if self.settings.title_page_on_launch and self.requested_reference is None:
+            await self.show_title(continuing=self.has_saved_position)
+        await self.reader.load_chapter()
         self.ready.set()
 
-    def _load(self) -> tuple[Settings, UserDataStore, dict[int, int]]:
-        return load_settings(), UserDataStore(), self.scripture.chapter_counts()
+    def _load(self) -> tuple[Settings, UserDataStore, dict[int, int], VerseRef | None, str]:
+        userdata = UserDataStore()
+        return (
+            load_settings(),
+            userdata,
+            self.scripture.chapter_counts(),
+            userdata.reading_position(),
+            self.scripture.verse(VerseRef(28, 118, 105)).text_am,
+        )
+
+    async def show_title(self, *, continuing: bool = True) -> None:
+        from ebible.ui.screens.title import TitleScreen
+
+        while len(self.screen_stack) > 2:
+            self.pop_screen()
+        await self.push_screen(TitleScreen(continuing=continuing))
 
     def message(self, text: str, *, error: bool = False) -> None:
         self.last_message = text

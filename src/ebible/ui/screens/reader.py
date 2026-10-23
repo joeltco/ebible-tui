@@ -18,6 +18,7 @@ from ebible.ui.widgets.verse_view import VersePicked, VerseView
 
 class ReaderScreen(Page):
     BINDINGS = [
+        Binding('c', 'cover', 'Title page'),
         Binding('q', 'quit_reader', 'Quit'),
         Binding('down,j', 'move(1)', 'Next verse', show=False),
         Binding('up,k', 'move(-1)', 'Previous verse', show=False),
@@ -173,6 +174,9 @@ class ReaderScreen(Page):
             await self.action_verse_actions()
         elif name is not None:
             await self.action_page(name)
+
+    async def action_cover(self) -> None:
+        await self.eb.show_title()
 
     def action_quit_reader(self) -> None:
         self.app.exit()

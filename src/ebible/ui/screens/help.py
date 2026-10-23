@@ -23,6 +23,7 @@ KEY_GROUPS = (
     (
         'FIND YOUR PLACE',
         (
+            ('c', 'Title page / book cover'),
             ('b', 'Books and chapters'),
             ('/', 'Search scripture'),
             ('g', 'Go to a reference'),
@@ -95,6 +96,7 @@ class HelpScreen(Page):
                 ('settings', 'Settings'),
             ]:
                 yield Button(label, id=f'help-{name}', classes='help-link')
+            yield Button('Title page', id='help-cover', classes='help-link')
             yield Button('Go to reference', id='help-goto', classes='help-link')
             with Vertical(id='help-text'):
                 for title, rows, note in KEY_GROUPS:
@@ -110,7 +112,10 @@ class HelpScreen(Page):
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         name = event.button.id or ''
-        if name == 'help-quit':
+        if name == 'help-cover':
+            event.stop()
+            await self.eb.show_title()
+        elif name == 'help-quit':
             event.stop()
             self.app.exit()
         elif name == 'help-goto':

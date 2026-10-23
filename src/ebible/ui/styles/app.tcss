@@ -138,3 +138,7 @@ Toast { max-width: 90%; }
 #search-submit { width: 10; }
 #search-translation { display: none; height: auto; margin: 0 2 1 2; }
 #search-translation:focus { background: $primary 12%; }
+
+/* The cover is an opaque sheet over the ready reader; opening exposes it left to right. */
+TitleScreen { background: transparent; align: left top; }
+Cover { width: 100%; height: 100%; background: $background; overflow: hidden; }
