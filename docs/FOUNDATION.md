@@ -61,8 +61,9 @@ The reference, search, and translation contracts below include the review fixes.
   No chmod and no newline. Missing-file reads/removals are harmless; failed writes
   preserve the old file and clean up their temporary file. Errors contain no OS
   exception details. This is a private plaintext credential file, not encryption.
-- Save requires `sk-ant-`, a nonempty suffix, and no Unicode whitespace. Paste is
-  preserved exactly for validation; whitespace is never trimmed or silently dropped.
+- Save strips leading/trailing Unicode whitespace (including phone paste newlines),
+  then requires `sk-ant-`, a nonempty suffix, and no internal whitespace. The draft
+  remains password-masked; the stored file contains only the trimmed key.
 - A nonempty environment key wins without reading the saved file. An empty variable
   behaves as unset. The resolved secret has a redacted dataclass repr; the settings
   UI receives only a masked saved-key hint and source label. No network check on save.

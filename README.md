@@ -3,8 +3,10 @@
 A Termux-first **Amharic reader** for the 81-book Ethiopian Orthodox Tewahedo
 canon. Built for a 50×30 phone terminal, with a centred reading column on desktop.
 
-**Press Enter or tap a verse to translate it.** English appears beneath that verse;
-press Enter or tap it again to hide it. Re-showing is instant within the same session.
+**Press Enter or tap a verse to translate it.** A soft shimmer sweeps over Amharic
+while fetching, then English replaces it from left to right with a glowing edge.
+Tap again to morph back; tapping mid-animation reverses from that position.
+Re-showing uses the session result and plays the morph without another request.
 Translations are never saved to disk and disappear when the app closes.
 
 ## Run locally
@@ -27,8 +29,9 @@ overrides the saved theme for the session. Settings changes save immediately.
 ## Read, translate, keep
 
 Choose Amharic verse lines or flowing paragraphs. Book names may be Amharic,
-English, or both. Opening a translation in paragraph flow places it beneath its
-source verse; hiding it restores the continuous paragraph.
+English, or both. Translations replace their source verse in place in either flow;
+text rewraps as its length changes. Full morphs take about one second.
+**Settings → Reduce motion** gives instant swaps and a static fetching hint.
 
 Below 80 columns, one-row headers leave room for reading. Six custom themes
 (`meskel`, `tewahedo`, `parchment`, `lalibela`, `midnight`, `high-contrast`) appear
@@ -68,7 +71,8 @@ pip install -e '.[claude]'
 
 In **Settings → Translation & Touch**, paste your Anthropic API key into the masked
 field and select **Save key** (or press Enter). Saving checks the `sk-ant-` prefix
-and rejects whitespace, without making a network request. After saving, only
+after trimming spaces/newlines from the ends, and rejects internal whitespace.
+Saving never makes a network request. After saving, only
 `sk-ant-…` and the final four characters are shown. **Replace** starts a blank masked
 entry; **Remove** deletes the saved key. Cancel or Escape leaves the existing key
 unchanged. The source label shows whether the environment, saved key, or Google
@@ -91,8 +95,8 @@ whole chapter's Amharic as context, but must return **only the requested verse**
 one `N. text` line. A single surrounding code fence is tolerated; wrong, missing,
 extra, duplicate, empty, incomplete, or commentary-bearing responses are rejected.
 Google receives only the target verse. Requests run in workers while reading and
-navigation remain responsive. `◇ Translation` identifies the secondary-coloured
-English. Repeated taps during a request do not create duplicate requests.
+navigation remain responsive. A dim `◇` beside the verse number identifies
+secondary-coloured machine English. Repeated taps during a request do not create duplicate requests.
 
 ## Search and source numbering
 
@@ -143,9 +147,20 @@ python tools/smoke.py --out /tmp/ebible-smoke
 ```
 
 Smoke uses temporary XDG directories at 50×30 and 120×40 under meskel, parchment,
-and lalibela. It visits every screen/modal, including translating, translated,
-translation-error, actions, and Amharic search states. All translation responses in
+and lalibela. Its 216 SVGs visit every screen/modal, including shimmer, mid-morph,
+reverse, translated, error, actions, and Amharic search states. All translation responses in
 smoke and tests are explicitly labelled fixtures; no real backend or network is used.
+
+Record a deterministic 50×30 morph sequence for a GIF:
+
+```sh
+python tools/record_morph.py --out /tmp/ebible-morph
+```
+
+This exports 65 SVG frames at 50 ms animation-time steps (20 fps), plus
+`manifest.json` with order, timing and reveal indices. It uses real Genesis 1:1
+Amharic and explicitly labelled fixture English, isolated temporary XDG dirs,
+and no network. The sequence includes fetching, forward, rest and reverse.
 
 See [AGENTS.md](AGENTS.md) for the binding spec and current gate results and
 [UI decisions](docs/UI_DECISIONS.md) for interaction choices.
