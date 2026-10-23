@@ -72,13 +72,16 @@ async def test_smoke_isolates_and_restores_xdg_environment(tmp_path, monkeypatch
 
     monkeypatch.setenv('NO_COLOR', '1')
     monkeypatch.setitem(namespace['smoke'].__globals__, 'walk', fake_walk)
+    monkeypatch.setitem(namespace['smoke'].__globals__, 'cover_walk', fake_walk)
     await namespace['smoke'](tmp_path / 'screenshots')
-    assert len(seen) == 6
+    assert len(seen) == 30
+    assert len({path for path, _, _ in seen}) == 30
+    assert {size for _, _, size in seen} == {(40, 20), (50, 30), (74, 30), (120, 40)}
     assert all(not path.exists() for path, _, _ in seen)
     assert os.environ['XDG_CONFIG_HOME'] == original_config
     assert os.environ['XDG_DATA_HOME'] == original_data
     assert os.environ['NO_COLOR'] == '1'
     assert (
         len((tmp_path / 'screenshots' / 'manifest.txt').read_text(encoding='utf-8').splitlines())
-        == 6
+        == 30
     )

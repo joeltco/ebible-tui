@@ -174,7 +174,7 @@ async def test_help_key_chips_have_fixed_accent_column_and_all_groups(running_ap
         'THE ETHIOPIAN PSALTER',
     ]
     rows = list(help_card.query('.key-row'))
-    assert len(rows) == 23
+    assert len(rows) == 24
     for row in rows:
         chip = row.query_one('.key-chip')
         description = row.query_one('.key-description')
@@ -184,6 +184,7 @@ async def test_help_key_chips_have_fixed_accent_column_and_all_groups(running_ap
         assert description.region.right < app.size.width
     assert {str(w.content) for w in help_card.query('.key-chip')} >= {
         'q',
+        'c',
         'Esc',
         'Tab',
         'Enter',
