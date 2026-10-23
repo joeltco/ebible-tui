@@ -93,6 +93,12 @@ translation contracts updated there.
   termux-clipboard-set if present, otherwise OSC 52. Termux copy has a five-second
   timeout; optional vibration has a two-second timeout and does not undo a successful
   bookmark if unavailable/failing. Both subprocess paths are tested with fakes.
+- The Anthropic key has a separate masked entry and explicit Save/Enter. Saved
+  credentials show only a prefix and four-character suffix; Replace never prefills
+  them, Cancel/Escape preserves the old key, and Remove deletes only the saved key.
+  The source label reflects environment-over-file precedence. An explicit Google/Off
+  selection is also noted. Password input messages carry no key value; leaving the
+  screen clears the draft. Credential errors use fixed text without exception details.
 - Settings/annotations/position reads and writes run with asyncio.to_thread. Search
   and translation additionally have Textual worker lifecycles. Saved-position writes
   complete before the next reader input event is handled.
@@ -105,10 +111,12 @@ translation contracts updated there.
 - Smoke creates fresh temporary XDG config/data for each size/theme combination,
   restores the invoking environment, and removes its temporary personal data. Its
   note is explicitly labelled a temporary fixture and quotes real bundled text.
-- Smoke writes 27 views for each of 3 themes × 2 sizes: 162 SVGs and manifest.txt.
+- Smoke writes 33 views for each of 3 themes × 2 sizes: 198 SVGs and manifest.txt.
   Extra states include error messages, deletion/discard/restart confirmations,
   Select's theme overlay, paragraph and Jubilees readers, and pending/result/error
-  translation states. Translation responses are explicit in-memory fake fixtures.
+  translation states, plus six masked-key entry/saved/replacement/error/environment/
+  removal states. Translation responses and credentials are explicit fake fixtures.
+  Every screenshot is checked for full fake-key disclosure before it is saved.
   Colour is enabled explicitly for screenshots even if the invoking CI shell has
   NO_COLOR set; the real app otherwise respects the user's NO_COLOR setting.
 - Visuals were inspected from the actual SVGs, not only widget geometry. The app is

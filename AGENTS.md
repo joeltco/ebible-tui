@@ -47,6 +47,7 @@ src/ebible/
                      created/updated), history (last N positions), reading_position (resume), plan progress. No translation storage. Schema versioned with PRAGMA user_version + forward migrations.
     settings.py      typed Settings dataclass ↔ JSON at config dir; atomic write (tmp + os.replace);
                      unknown/invalid keys fall back to defaults with no crash
+    credentials.py   separate atomic 0600 anthropic_key file; safe repr/errors, env-over-saved resolution
     plans.py         reading plans GENERATED from canon chapter counts (no hand-typed schedules):
                      whole canon in a year, New Testament in 90 days, Psalms+Proverbs monthly, Gospels in 30 days.
                      day N -> list of (book, chapter); progress = days completed; "today" from plan start date
@@ -55,7 +56,7 @@ src/ebible/
       claude.py      lazy optional Anthropic SDK, claude-sonnet-5-5; whole chapter's Amharic as context,
                      ONLY target verse as one N. text line; exact alignment verified
       google.py      translate-shell subprocess for target verse ONLY, bounded timeout
-      service.py     auto = Claude if ANTHROPIC_API_KEY, else Google if trans on PATH, else off;
+      service.py     auto = Claude if environment or saved Anthropic key, else Google if trans on PATH, else off;
                      async thread worker with timeout; no database writes
   ui/
     themes.py        custom textual.theme.Theme objects (see Themes); registered at startup
@@ -79,6 +80,20 @@ Results exist only in process memory and disappear on restart. Never write them 
 Existing user databases migrate forward by dropping `live_translation` and erasing its
 freed contents; bookmarks, highlights, notes, history, resume, and plans survive.
 
+### Anthropic key contract
+
+Settings provides a password-masked API key field with explicit Save/Enter, Replace,
+and Remove. After saving, display only `sk-ant-…` plus the last four characters;
+never prefill the key. Never expose full keys in UI, logs, errors, SVGs, or Settings
+repr. Keep credentials out of settings.json. Store only the key in
+`<config dir>/anthropic_key`, created with `os.open(..., 0o600)` before writing;
+replace atomically and never chmod afterward. Missing files are normal; removal
+unlinks the file. Reject keys without the `sk-ant-` prefix, an empty suffix, or any
+whitespace; errors are inline and leave the old file unchanged. Saving never calls
+a service. Nonempty ANTHROPIC_API_KEY wins over the saved key; auto treats either
+as Claude credentials. Pass the resolved key explicitly as `api_key=...`; never
+mutate the process environment. Show the active source or Google/no-backend fallback.
+
 ## Features
 
 - **Reader:** Amharic verse lines or flowing paragraphs. No English-only, interleaved,
@@ -101,7 +116,7 @@ freed contents; bookmarks, highlights, notes, history, resume, and plans survive
   deleting/discarding; recent history and resume; generated plans with mark-read,
   progress and streak. Positive progress below one percent displays `<1%`.
 - **Settings:** theme, flow, numbers, spacing, book-name language, maximum reading
-  width, translation backend, optional haptics. Persist immediately; removed/unknown
+  width, translation backend, an Anthropic API key field, optional haptics. Persist immediately; removed/unknown
   legacy JSON keys are ignored. Six custom themes grouped first, built-ins after.
 - **Help:** every binding including Enter = translate, a = actions; accent key chips.
 - Below 80 columns, reader and secondary page headers occupy one row. Keep roomy
@@ -153,6 +168,9 @@ Highlight colours are theme-aware (readable on every theme).
   and every judgement call you made that the spec didn't settle.
 
 ## Status
+
+- Batch 6 in progress: secure in-app Anthropic key entry; Batch 5 was independently
+  verified and pushed by Claude, including real Google translation in tmux at 50×30.
 
 - 2026-10-23: **Batch 5 complete** on `rebuild/v2`, package `ebible` 2.0.0.dev0.
   The product is an Amharic reader with on-demand single-verse translation.

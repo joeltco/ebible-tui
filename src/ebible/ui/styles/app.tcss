@@ -126,3 +126,8 @@ Toast { max-width: 90%; }
 .help-note { height: auto; color: $text-muted; margin: 0 0 1 0; }
 /* Reserve the search scrollbar before measuring wrapped result heights. */
 #search-results { scrollbar-gutter: stable; }
+
+#key-panel, #key-editor, #key-saved { height: auto; }
+#key-panel .button-row { margin: 0 0 1 0; }
+#key-label { height: auto; margin-top: 1; }
+#key-source, #key-mask { height: auto; margin-bottom: 1; }

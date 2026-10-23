@@ -66,7 +66,21 @@ Every primary action is tappable; no Ctrl/Alt combinations are required.
 pip install -e '.[claude]'
 ```
 
-Automatic mode chooses Claude when `ANTHROPIC_API_KEY` is set; otherwise it uses
+In **Settings → Translation & Touch**, paste your Anthropic API key into the masked
+field and select **Save key** (or press Enter). Saving checks the `sk-ant-` prefix
+and rejects whitespace, without making a network request. After saving, only
+`sk-ant-…` and the final four characters are shown. **Replace** starts a blank masked
+entry; **Remove** deletes the saved key. Cancel or Escape leaves the existing key
+unchanged. The source label shows whether the environment, saved key, or Google
+fallback is active. An environment key continues to work after removing a saved key.
+
+The key is stored separately at `$XDG_CONFIG_HOME/ebible/anthropic_key` (default
+`~/.config/ebible/anthropic_key`), created privately with mode `0600` and replaced
+atomically. It never enters `settings.json`. This is a private local file, not an
+encrypted credential vault.
+
+Automatic mode chooses Claude when `ANTHROPIC_API_KEY` is set or a saved key exists.
+A nonempty environment key takes precedence over the saved key. Otherwise it uses
 translate-shell's `trans` when available, otherwise off. Settings also offers
 explicit Claude, Google, and Off choices. With no backend, Enter explains how to
 configure one inline. Network errors, timeouts, and mismatched verse numbers also

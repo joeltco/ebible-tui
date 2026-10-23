@@ -1,4 +1,4 @@
-# Foundation decisions (updated for Batch 5)
+# Foundation decisions (updated for Batch 6)
 
 These choices resolve details not fixed by AGENTS.md. Batch 2 now supplies the
 reader, themes, device integration, and persisted UI wiring; see UI_DECISIONS.md.
@@ -53,6 +53,23 @@ The reference, search, and translation contracts below include the review fixes.
 - Atomic JSON writes use a unique temporary file in the destination directory,
   flush/fsync, then `os.replace`; failures clean up the temporary file.
 
+## Credentials
+
+- API keys are not Settings fields. `core/credentials.py` resolves the XDG config
+  path at call time and stores only the key in `anthropic_key`. Unique temporary
+  files use exclusive `os.open` with `0o600`, UTF-8, flush/fsync, then atomic replace.
+  No chmod and no newline. Missing-file reads/removals are harmless; failed writes
+  preserve the old file and clean up their temporary file. Errors contain no OS
+  exception details. This is a private plaintext credential file, not encryption.
+- Save requires `sk-ant-`, a nonempty suffix, and no Unicode whitespace. Paste is
+  preserved exactly for validation; whitespace is never trimmed or silently dropped.
+- A nonempty environment key wins without reading the saved file. An empty variable
+  behaves as unset. The resolved secret has a redacted dataclass repr; the settings
+  UI receives only a masked saved-key hint and source label. No network check on save.
+- Claude receives the resolved key explicitly as `api_key=...`. No environment
+  mutation. SDK construction/request exceptions are replaced by fixed actionable
+  errors with the original exception chain suppressed; close errors are suppressed.
+
 ## Plans
 
 - Chapter counts come from the bundled DB: 1,466 chapters in Ethiopian order.
@@ -78,7 +95,7 @@ The reference, search, and translation contracts below include the review fixes.
   Amharic as context and returns only the requested numbered verse. Missing, extra,
   duplicate, wrong numbers, blank output, or commentary reject the result. A single
   surrounding code fence is accepted. Truncated/non-final responses are rejected.
-- Claude is lazy-imported and preferred when an API key exists. A missing optional
+- Claude is lazy-imported and preferred when an environment or saved API key exists. A missing optional
   SDK or backend error is reported, not silently retried through Google. Requests
   use a 30-second SDK timeout, no retries, and a 4,096-token output budget. The guide
   is byte-identical, with an appended single-verse/no-commentary output contract.

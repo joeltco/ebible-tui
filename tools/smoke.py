@@ -15,7 +15,14 @@ from ebible.core.models import VerseRef
 from ebible.core.translate.base import TranslationError
 from ebible.core.translate.service import TranslationService
 from ebible.ui.screens.books import ChaptersScreen
-from ebible.ui.widgets.controls import NoteArea, TextInput
+from ebible.ui.widgets.controls import NoteArea, SecretInput, TextInput
+
+# Deliberately fake credentials: never accepted by or sent to a real service.
+SMOKE_KEYS = (
+    'sk-ant-FAKE-SMOKE-NOT-REAL-1234',
+    'sk-ant-FAKE-SMOKE-REPLACE-5678',
+    'sk-ant-FAKE-SMOKE-ENV-9012',
+)
 
 SMOKE_THEMES = ('meskel', 'parchment', 'lalibela')
 SMOKE_SIZES = ((50, 30), (120, 40))
@@ -76,7 +83,9 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
                         >= 4
                     )
                 filename = f'{theme}-{size[0]}x{size[1]}-{name}.svg'
-                app.save_screenshot(filename, path=str(out))
+                svg = app.export_screenshot()
+                assert all(key not in svg for key in SMOKE_KEYS), 'Credential leaked in screenshot'
+                (out / filename).write_text(svg, encoding='utf-8')
                 names.append(filename)
                 print(f'OK {filename}', flush=True)
 
@@ -148,6 +157,25 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
             await capture('confirm-restart')
             await pilot.press('escape', 'escape', 's')
             await capture('settings')
+            entry = app.screen.query_one(SecretInput)
+            entry.value = SMOKE_KEYS[0]
+            entry.scroll_visible(animate=False)
+            await capture('settings-key-entry')
+            await click(pilot, '#key-save')
+            await capture('settings-key-saved')
+            await click(pilot, '#key-replace')
+            entry.value = SMOKE_KEYS[1]
+            await capture('settings-key-replace')
+            entry.value += ' '
+            await click(pilot, '#key-save')
+            await capture('settings-key-invalid')
+            entry.value = SMOKE_KEYS[1]
+            await click(pilot, '#key-save')
+            with patch.dict(os.environ, {'ANTHROPIC_API_KEY': SMOKE_KEYS[2]}):
+                await app.screen.refresh_key_status()
+                await capture('settings-key-environment')
+            await click(pilot, '#key-remove')
+            await capture('settings-key-removed')
             await click(pilot, '#setting-theme SelectCurrent')
             await capture('theme-picker')
             # Escape is back on every screen, including when a Select overlay is open.
@@ -181,6 +209,7 @@ async def smoke(out: Path) -> None:
                 ):
                     # Theme screenshots must exercise colour, even in a NO_COLOR CI shell.
                     os.environ.pop('NO_COLOR', None)
+                    os.environ.pop('ANTHROPIC_API_KEY', None)
                     names.extend(await walk(out, theme, (width, height)))
     (out / 'manifest.txt').write_text('\n'.join(names) + '\n', encoding='utf-8')
     print(

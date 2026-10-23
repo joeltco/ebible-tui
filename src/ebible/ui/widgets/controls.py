@@ -3,8 +3,10 @@
 from collections.abc import Iterable
 
 from rich.text import Text
+from textual import events
 from textual.binding import Binding, BindingType
 from textual.containers import VerticalScroll
+from textual.message import Message
 from textual.widgets import Input, OptionList, Select, TextArea
 
 from ebible.ui.themes import THEMES
@@ -28,6 +30,28 @@ def phone_bindings(bindings: Iterable[BindingType]) -> list[BindingType]:
 
 class TextInput(Input, inherit_bindings=False):
     BINDINGS = phone_bindings(Input.BINDINGS)
+
+
+class SecretInput(TextInput):
+    """Masked entry with no credential payload in queued/loggable input messages."""
+
+    def __init__(self, *, id: str) -> None:
+        super().__init__(password=True, placeholder='Paste your key', id=id)
+
+    def post_message(self, message: Message) -> bool:
+        if isinstance(message, (Input.Changed, Input.Submitted, Input.Blurred)):
+            message.value = ''
+            message.validation_result = None
+        return super().post_message(message)
+
+    def _on_paste(self, event: events.Paste) -> None:
+        # Ordinary Input silently drops later lines. Preserve them for validation.
+        self.replace(event.text, *self.selection)
+        event.text = ''
+        event.stop()
+
+    def on_unmount(self) -> None:
+        self.value = ''
 
 
 class NoteArea(TextArea, inherit_bindings=False):
