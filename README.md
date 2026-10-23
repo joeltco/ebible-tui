@@ -3,8 +3,9 @@
 A Termux-first **Amharic reader** for the 81-book Ethiopian Orthodox Tewahedo
 canon. Built for a 50×30 phone terminal, with a centred reading column on desktop.
 
-**Press Enter or tap a verse to translate it.** A soft shimmer sweeps over Amharic
-while fetching, then English replaces it from left to right with a glowing edge.
+**Press Enter or tap a verse to translate it.** A bright, theme-matched band sweeps
+over Amharic while fetching. English replaces it from left to right with a bold,
+glowing edge, then briefly pulses before settling.
 Tap again to morph back; tapping mid-animation reverses from that position.
 Re-showing uses the session result and plays the morph without another request.
 Translations are never saved to disk and disappear when the app closes.
@@ -147,20 +148,22 @@ python tools/smoke.py --out /tmp/ebible-smoke
 ```
 
 Smoke uses temporary XDG directories at 50×30 and 120×40 under meskel, parchment,
-and lalibela. Its 216 SVGs visit every screen/modal, including shimmer, mid-morph,
-reverse, translated, error, actions, and Amharic search states. All translation responses in
+and lalibela. Its 222 SVGs visit every screen/modal, including shimmer, mid-morph,
+reverse, completion pulse, translated, error, actions, and Amharic search states. All translation responses in
 smoke and tests are explicitly labelled fixtures; no real backend or network is used.
 
 Record a deterministic 50×30 morph sequence for a GIF:
 
 ```sh
-python tools/record_morph.py --out /tmp/ebible-morph
+python tools/record_morph.py --out /tmp/ebible-morph --theme meskel
 ```
 
-This exports 65 SVG frames at 50 ms animation-time steps (20 fps), plus
+This exports 71 SVG frames at 50 ms animation-time steps (20 fps), plus
 `manifest.json` with order, timing and reveal indices. It uses real Genesis 1:1
 Amharic and explicitly labelled fixture English, isolated temporary XDG dirs,
-and no network. The sequence includes fetching, forward, rest and reverse.
+and no network. The sequence includes fetching, forward, a 300 ms completion
+pulse, rest and reverse. Pass `--text` with existing English text to record it
+instead of the fixture; `--theme` also accepts parchment, midnight and other themes.
 
 See [AGENTS.md](AGENTS.md) for the binding spec and current gate results and
 [UI decisions](docs/UI_DECISIONS.md) for interaction choices.

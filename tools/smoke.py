@@ -111,6 +111,9 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
             await capture('reader-morph')
             timeline[0] += 0.5
             view.tick()
+            await capture('reader-flourish')
+            timeline[0] += 0.3
+            view.tick()
             await capture('reader-translated')
             assert VerseRef(1) in app.translations
             await pilot.press('a')

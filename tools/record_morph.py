@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Record actual 50×30 reader SVGs at 50ms animation-time steps, without network IO.
 
-Uses real Genesis 1:1 Amharic and an explicitly labelled fake English response.
+Uses real Genesis 1:1 Amharic and caller-supplied English (a labelled fixture by default).
 The deterministic clock makes the resulting sequence suitable for a 20fps GIF,
 independent of how long SVG rendering takes on the recording host.
 """
@@ -23,14 +23,14 @@ FIXTURE = 'Recording fixture: English replaces Amharic here.'
 STEP = 0.05
 
 
-async def record(out: Path, theme: str = 'meskel') -> None:
+async def record(out: Path, theme: str = 'meskel', text: str = FIXTURE) -> None:
     out.mkdir(parents=True, exist_ok=True)
     frames: list[dict[str, object]] = []
     release = asyncio.Event()
 
     async def fake(service: TranslationService, ref: VerseRef) -> str:
         await release.wait()
-        return FIXTURE
+        return text
 
     with TemporaryDirectory(prefix='ebible-morph-') as temporary:
         with (
@@ -64,7 +64,8 @@ async def record(out: Path, theme: str = 'meskel') -> None:
                                 'file': name,
                                 'time_ms': len(frames) * 50,
                                 'stage': stage,
-                                'reveal_index': state.index(clock[0], verse.text_am, FIXTURE),
+                                'flourish': state.flourish(clock[0]),
+                                'reveal_index': state.index(clock[0], verse.text_am, text),
                             }
                         )
                         clock[0] = 100 + len(frames) * STEP
@@ -77,6 +78,8 @@ async def record(out: Path, theme: str = 'meskel') -> None:
                     await app.workers.wait_for_complete()
                     for _ in range(21):
                         await capture('forward')
+                    for _ in range(6):
+                        await capture('flourish')
                     for _ in range(4):
                         await capture('english')
                     await app.toggle_translation(VerseRef(1))
@@ -92,7 +95,7 @@ async def record(out: Path, theme: str = 'meskel') -> None:
                 'size': [50, 30],
                 'theme': theme,
                 'reference': 'Genesis 1:1',
-                'fixture': True,
+                'fixture': text == FIXTURE,
                 'frames': frames,
             },
             indent=2,
@@ -107,5 +110,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--theme', default='meskel')
+    parser.add_argument(
+        '--text', default=FIXTURE, help='English to reveal; defaults to labelled fixture'
+    )
     args = parser.parse_args()
-    asyncio.run(record(args.out, args.theme))
+    asyncio.run(record(args.out, args.theme, args.text))
