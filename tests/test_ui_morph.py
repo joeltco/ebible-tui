@@ -95,6 +95,9 @@ async def test_shimmer_morph_interrupt_reverse_cache_and_single_widget(motion, m
     assert '◇ ' in view.verse_text(verse).plain and view.verse_text(verse).plain.startswith(' 1 ')
     assert '\n' not in view.line_content(verse).plain
     assert verse.text_am not in view.line_content(verse).plain
+    assert view.active  # The completed forward morph now has a short colour flourish.
+    clock[0] += 0.3
+    view.tick()
     assert view.body_text(verse).style == app.get_css_variables()['secondary']
     assert not any(
         isinstance(span.style, Style) and span.style.bold for span in view.body_text(verse).spans
@@ -237,12 +240,15 @@ async def test_real_interval_completes_in_about_one_second(running_app, monkeypa
         return FIXTURE
 
     monkeypatch.setattr('ebible.app.TranslationService.translate_verse', fake)
-    completed = []
+    completed, pulses, settled = [], [], []
     original = VerseLine.update
 
     def track(widget, text):
         if widget.id == 'verse-1' and FIXTURE in text.plain:
-            completed.append(monotonic())
+            now = monotonic()
+            completed.append(now)
+            state = view.morphs[VerseRef(1)]
+            (pulses if state.flourish(now) > 0 else settled).append(now)
         return original(widget, text)
 
     monkeypatch.setattr(VerseLine, 'update', track)
@@ -250,6 +256,74 @@ async def test_real_interval_completes_in_about_one_second(running_app, monkeypa
     await app.workers.wait_for_complete()
     state = view.morphs[VerseRef(1)]
     assert view.motion_timer._interval == FRAME_INTERVAL
-    await pilot.pause(1.1)
+    await pilot.pause(1.4)
     assert completed and 0.95 <= completed[0] - state.started <= 1.4
+    assert pulses and settled
+    assert 1.3 <= settled[0] - state.started <= 1.7
     assert not view.active and FIXTURE in view.query_one('#verse-1').content.plain
+
+
+@pytest.mark.parametrize('flow', ['lines', 'paragraph'])
+async def test_completion_pulse_updates_only_verse_then_stops_and_reverse_is_quiet(
+    motion, monkeypatch, flow
+):
+    app, pilot, view, clock = motion
+    await app.update_setting('verse_flow', flow)
+
+    async def fake(service, ref):
+        return FIXTURE
+
+    monkeypatch.setattr('ebible.app.TranslationService.translate_verse', fake)
+    await pilot.press('enter')
+    await app.workers.wait_for_complete()
+    verse = app.scripture.verse(VerseRef(1))
+    clock[0] += 1
+    updates = []
+    kind = VerseLine if flow == 'lines' else Paragraph
+    original = kind.update
+
+    def track(widget, *args, **kwargs):
+        updates.append(widget.id)
+        return original(widget, *args, **kwargs)
+
+    monkeypatch.setattr(kind, 'update', track)
+    view.tick()
+    assert view.active == {verse.ref}
+    peak = view.body_text(verse)
+    assert peak.plain == FIXTURE and peak.style == view.colours(verse).effects.glow.hex
+    assert updates == ['verse-1' if flow == 'lines' else 'paragraph']
+    clock[0] += 0.15
+    view.tick()
+    assert view.body_text(verse).style != peak.style and view.active
+    clock[0] += 0.15
+    view.tick()
+    assert view.body_text(verse).style == view.colours(verse).translation.hex and not view.active
+    updates.clear()
+    view.tick()
+    assert updates == []
+    await pilot.press('enter')
+    clock[0] += 1
+    view.tick()
+    assert view.body_text(verse).plain == verse.text_am and not view.active
+    clock[0] += 0.1
+    view.tick()
+    assert view.body_text(verse).plain == verse.text_am and not view.active
+
+
+async def test_reduce_motion_cancels_flourish_without_replaying_it(motion, monkeypatch):
+    app, pilot, view, clock = motion
+
+    async def fake(service, ref):
+        return FIXTURE
+
+    monkeypatch.setattr('ebible.app.TranslationService.translate_verse', fake)
+    await pilot.press('enter')
+    await app.workers.wait_for_complete()
+    clock[0] += 1
+    view.tick()
+    assert view.active
+    await app.update_setting('reduce_motion', True)
+    verse = app.scripture.verse(VerseRef(1))
+    assert not view.active and view.body_text(verse).style == view.colours(verse).translation.hex
+    await app.update_setting('reduce_motion', False)
+    assert not view.active and view.body_text(verse).style == view.colours(verse).translation.hex

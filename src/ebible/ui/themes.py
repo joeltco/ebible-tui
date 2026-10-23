@@ -1,7 +1,10 @@
 """Ethiopian-inspired palettes; colour literals live here, never in the stylesheet."""
 
 from collections.abc import Mapping
+from dataclasses import dataclass
+from functools import lru_cache
 
+from textual.color import Color
 from textual.theme import Theme
 
 from ebible.core.models import HighlightColour
@@ -116,3 +119,27 @@ def highlight_colour(colour: HighlightColour, dark: bool) -> str:
 def ordered_theme_names(available: Mapping[str, Theme]) -> tuple[str, ...]:
     custom = tuple(theme.name for theme in THEMES if theme.name in available)
     return custom + tuple(name for name in available if name not in custom)
+
+
+@dataclass(frozen=True)
+class EffectColours:
+    glow: Color
+    background: Color
+    panel: Color
+
+
+def effect_colours(theme: Theme) -> EffectColours:
+    """Keep every effect in the palette's family, with light/dark polarity."""
+    return _effect_colours(
+        theme.accent or theme.primary,
+        theme.panel or theme.surface or theme.background or ('black' if theme.dark else 'white'),
+        theme.foreground or ('white' if theme.dark else 'black'),
+        theme.dark,
+    )
+
+
+@lru_cache(maxsize=64)
+def _effect_colours(accent: str, panel: str, foreground: str, dark: bool) -> EffectColours:
+    colour, base = Color.parse(accent), Color.parse(panel)
+    peak = colour.blend(Color.parse('white' if dark else foreground), 0.6)
+    return EffectColours(peak, base.blend(colour, 0.35), base)

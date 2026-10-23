@@ -15,7 +15,7 @@ from textual.widgets import Static
 
 from ebible.core.models import Chapter, HighlightColour, Verse, VerseRef
 from ebible.ui.morph import FRAME_INTERVAL, Morph, Palette, morph_text, palette, shimmer_text
-from ebible.ui.themes import highlight_colour
+from ebible.ui.themes import effect_colours, highlight_colour
 
 if TYPE_CHECKING:
     from ebible.app import EBibleApp
@@ -72,7 +72,13 @@ class VerseView(Vertical):
             if verse.verse in self.highlights
             else variables['foreground']
         )
-        return palette(ink, variables['secondary'], variables['accent'], variables['background'])
+        return palette(
+            ink,
+            variables['secondary'],
+            variables['accent'],
+            variables['background'],
+            effect_colours(self.app.current_theme),
+        )
 
     def _sync_state(self, verse: Verse, now: float) -> None:
         ref = verse.ref
@@ -84,7 +90,7 @@ class VerseView(Vertical):
             self.fetch_started.pop(ref, None)
         visible = ref in self.eb.visible_translations and ref in self.eb.translations
         state.retarget(visible, now, instant=self.eb.settings.reduce_motion)
-        if not self.eb.settings.reduce_motion and (pending or state.running(now)):
+        if not self.eb.settings.reduce_motion and (pending or state.animating(now)):
             self.active.add(ref)
         else:
             self.active.discard(ref)
@@ -125,7 +131,7 @@ class VerseView(Vertical):
         changed = self.active.copy()
         now = self.clock()
         for ref in changed:
-            if ref not in self.eb.translating and not self.morphs[ref].running(now):
+            if ref not in self.eb.translating and not self.morphs[ref].animating(now):
                 self.active.discard(ref)
         self.update_verses(changed)
         self._wake_timer()
@@ -147,6 +153,7 @@ class VerseView(Vertical):
             state.index(now, verse.text_am, english),
             state.running(now),
             colours,
+            flourish=0.0 if self.eb.settings.reduce_motion else state.flourish(now),
         )
 
     @property

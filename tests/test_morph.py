@@ -12,7 +12,7 @@ from ebible.ui.morph import (
     palette,
     shimmer_text,
 )
-from ebible.ui.themes import THEMES
+from ebible.ui.themes import THEMES, effect_colours
 
 
 @pytest.mark.parametrize(
@@ -21,7 +21,11 @@ from ebible.ui.themes import THEMES
 def test_character_sequence_duration_reverse_and_interrupt(scripture, english):
     am = scripture.chapter(1, 1).verses[0].text_am
     colours = palette(
-        THEMES[0].foreground, THEMES[0].secondary, THEMES[0].accent, THEMES[0].background
+        THEMES[0].foreground,
+        THEMES[0].secondary,
+        THEMES[0].accent,
+        THEMES[0].background,
+        effect_colours(THEMES[0]),
     )
     state = Morph()
     state.retarget(True, 10)
@@ -50,14 +54,16 @@ def test_character_sequence_duration_reverse_and_interrupt(scripture, english):
 def test_edge_gradient_dim_suffix_and_literal_markup(scripture, theme):
     am = scripture.chapter(1, 1).verses[0].text_am
     english = 'Explicit [bold]fixture[/bold] & <literal> translation.'
-    colours = palette(theme.foreground, theme.secondary, theme.accent, theme.background)
+    colours = palette(
+        theme.foreground, theme.secondary, theme.accent, theme.background, effect_colours(theme)
+    )
     text = morph_text(am, english, 15, True, colours)
     assert text.plain == english[:15] + am[15:]
-    # The six revealed characters closest to the boundary each have their own colour.
+    # The twelve revealed characters closest to the boundary each have their own colour.
     edge = text.spans[:EDGE_WIDTH]
-    assert [(span.start, span.end) for span in edge] == [(i, i + 1) for i in range(9, 15)]
+    assert [(span.start, span.end) for span in edge] == [(i, i + 1) for i in range(3, 15)]
     assert len({span.style.color for span in edge}) == EDGE_WIDTH
-    assert edge[-1].style.color == Style(color=theme.accent).color
+    assert edge[-1].style.color == Style(color=colours.effects.glow.hex).color
     assert text.spans[-1].style == colours.muted.hex
     rest = morph_text(am, english, max(len(am), len(english)), False, colours)
     assert rest.plain == english and rest.style == colours.translation.hex
@@ -70,7 +76,9 @@ def test_shimmer_sweeps_repeats_and_never_changes_letters(scripture):
 
     am = scripture.chapter(1, 1).verses[0].text_am
     theme = THEMES[0]
-    colours = palette(theme.foreground, theme.secondary, theme.accent, theme.background)
+    colours = palette(
+        theme.foreground, theme.secondary, theme.accent, theme.background, effect_colours(theme)
+    )
     left = shimmer_text(am, SHIMMER_PERIOD * 0.3, colours)
     right = shimmer_text(am, SHIMMER_PERIOD * 0.7, colours)
     assert left.plain == right.plain == am
@@ -94,7 +102,9 @@ def test_literal_amharic_fixture_brackets_are_never_interpreted(scripture):
     # Explicit markup edge-case fixture based on the real Amharic verse.
     am = scripture.chapter(1, 1).verses[0].text_am + ' [red]fixture[/red]'
     theme = THEMES[0]
-    colours = palette(theme.foreground, theme.secondary, theme.accent, theme.background)
+    colours = palette(
+        theme.foreground, theme.secondary, theme.accent, theme.background, effect_colours(theme)
+    )
     for text in (
         morph_text(am, 'English fixture', 3, True, colours),
         shimmer_text(am, 0.7, colours),
