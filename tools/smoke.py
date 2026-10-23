@@ -166,7 +166,7 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
             await click(pilot, '#key-replace')
             entry.value = SMOKE_KEYS[1]
             await capture('settings-key-replace')
-            entry.value += ' '
+            entry.value += ' internal'
             await click(pilot, '#key-save')
             await capture('settings-key-invalid')
             entry.value = SMOKE_KEYS[1]

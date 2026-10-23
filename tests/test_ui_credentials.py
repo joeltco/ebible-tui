@@ -57,10 +57,11 @@ async def test_save_replace_cancel_remove_restart_and_all_surfaces(
                 entry.scroll_visible(animate=False)
                 await pilot.pause()
                 entry.focus()
-                paste = events.Paste(FAKE)
+                pasted = ' \n' + FAKE + '\r\n '
+                paste = events.Paste(pasted)
                 entry.post_message(paste)
                 await pilot.pause()
-                assert entry.value == FAKE and paste.text == ''
+                assert entry.value == pasted and paste.text == ''
                 assert_private(app, FAKE)
                 assert not key_path().exists()  # Typing/pasting does not save.
                 await pilot.press('enter')
@@ -129,7 +130,7 @@ async def test_invalid_paste_and_disk_failures_are_inline_and_private(running_ap
     app, pilot = running_app
     await pilot.press('s')
     entry = app.screen.query_one(SecretInput)
-    for bad in ['wrong-prefix', FAKE + '\nextra', FAKE + ' ', FAKE + '\textra']:
+    for bad in ['wrong-prefix', FAKE + '\nextra', FAKE + ' internal', FAKE + '\textra']:
         entry.value = ''
         entry.post_message(events.Paste(bad))
         await pilot.pause()

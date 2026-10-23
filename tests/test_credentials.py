@@ -75,8 +75,7 @@ def test_private_atomic_create_replace_and_remove(monkeypatch, umask):
         '',
         'wrong-prefix',
         'sk-ant-',
-        ' sk-ant-FAKE',
-        'sk-ant-FAKE ',
+        ' sk-ant- ',
         'sk-ant-FAKE\nMORE',
         'sk-ant-FAKE\tMORE',
         'sk-ant-FAKE\u00a0MORE',
@@ -225,3 +224,12 @@ def test_sdk_failures_never_expose_credentials(monkeypatch, scripture, caplog, s
             traceback.format_exception(error.value)
         )
     assert FAKE not in caplog.text
+
+
+@pytest.mark.parametrize('padding', [' ', '\n', '\r\n\t', '\u00a0'])
+def test_phone_key_ends_are_trimmed_before_validation(padding):
+    save_key(padding + FAKE + padding)
+    assert key_path().read_bytes() == FAKE.encode()
+    with pytest.raises(CredentialError):
+        save_key('sk-ant-FAKE' + padding + 'INTERNAL')
+    assert key_path().read_bytes() == FAKE.encode()

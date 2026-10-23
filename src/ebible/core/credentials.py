@@ -43,6 +43,7 @@ def active_key() -> AnthropicKey | None:
 
 
 def save_key(value: str) -> None:
+    value = value.strip()
     if not value.startswith('sk-ant-') or len(value) <= 7 or any(c.isspace() for c in value):
         raise CredentialError('Key must start with sk-ant- and contain no whitespace.')
     target = key_path()
