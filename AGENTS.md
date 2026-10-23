@@ -169,50 +169,48 @@ Highlight colours are theme-aware (readable on every theme).
 
 ## Status
 
-- Batch 6 in progress: secure in-app Anthropic key entry; Batch 5 was independently
-  verified and pushed by Claude, including real Google translation in tmux at 50×30.
-
-- 2026-10-23: **Batch 5 complete** on `rebuild/v2`, package `ebible` 2.0.0.dev0.
-  The product is an Amharic reader with on-demand single-verse translation.
-  Enter/tap translates or hides; `a`/Verse opens actions. Pending, result and
-  actionable error states are inline. Results survive navigation only in session
-  memory and disappear on restart. No translation network calls were made.
-- Removed bundled English, English FTS/coverage metadata, the persistent cache
-  (forward user schema v3 migration), overlay, language layouts, English search,
-  placeholders and offline pipeline. Personal annotations, history, resume, plans,
-  book-name languages, themes and Amharic paragraph flow remain. Legacy removed
-  settings load safely. The translation guide and source-issues document are intact.
-- New packaged DB: **12,521,472 bytes**, previously 19,423,232. SHA-256:
-  `46da43911496d300784fd303a69cbf5a108486a06a8e45ea2c82efa1c11e9997`.
-  Read-only integrity check: `ok`; freelist: zero. Golden checksum tests match
-  **every one of the original 39,169 Amharic verse tuples and all 81 book rows**.
-  Actual reconstruction from `e1564db` and repeated tool builds are byte-identical
-  on SQLite 3.53.4. No old database copy or archive remains in the tree.
-- Search results now have an allocated one-row gap, including wrapped snippets
-  after the scrollbar appears. Translation refreshes also guard queued cursor/
-  scroll callbacks while verse widgets are replaced; both flows have regressions.
-- All required gates passed in `.venv` (Python 3.14.7, Textual 8.2.8):
+- 2026-10-23: **Batch 6 complete** on `rebuild/v2`, package `ebible` 2.0.0.dev0.
+  Settings → Translation & Touch has a password-masked Anthropic API key field,
+  Save/Enter, blank Replace, Cancel and Remove. Saved keys show only `sk-ant-…`
+  plus the last four characters. Source labels identify environment/saved-key or
+  Google/no-backend fallback and note explicit backend overrides.
+- Credentials stay out of Settings and settings.json. The separate XDG config
+  `anthropic_key` file contains only the key, created with exclusive `os.open`
+  mode 0600, fsynced and atomically replaced; no chmod. Missing files are harmless,
+  invalid keys never write, failed saves preserve the old file, and Remove unlinks
+  only the saved credential. Saving never contacts a service.
+- Nonempty environment keys win over saved keys; both select Claude in auto mode.
+  The resolved key is passed explicitly as `api_key=...`, without environment
+  mutation. Key holders have redacted repr; input messages omit secret payloads;
+  paste events are redacted before Textual's pre-dispatch logging. SDK/file errors
+  use safe messages and suppress original exception details. Drafts clear on exit.
+- Required gates passed in `.venv` (Python 3.14.7, Textual 8.2.8):
   `ruff check src tests tools` — **all checks passed**;
-  `ruff format --check src tests` — **55 files already formatted**;
-  `mypy src` — **no issues in 39 source files**;
-  `pytest -q` — **348 passed in 237.71s**, including **139 UI cases** and
-  **26 Batch 5 Pilot cases**;
-  `python tools/smoke.py --out /tmp/ebible-smoke` — **162 SVGs passed**,
-  27 states × 50×30 and 120×40 × meskel, parchment, lalibela. Temporary XDG dirs
-  and fake translation responses keep smoke isolated from real personal data/services.
-  The directory contains 162 SVGs plus `manifest.txt`; its complete listing is
-  `/tmp/ebible-smoke-listing.txt`. Gate log: `/tmp/b5-gates.log`.
-- Eight checks reject the pushed Batch 4 behavior, covering the new data/translation/
-  actions/settings/help/search contracts; reverting only the rebuild guards also
-  fails both phone-flow race tests. Obsolete English-overlay/layout/pipeline tests
-  were replaced with current-contract tests. `ebible --version` still reports
-  `ebible 2.0.0.dev0`.
-- Reviewed 12 affected phone states in all three smoke themes, final search gaps,
-  a wide translated reader, and translated paragraph geometry at both sizes.
-  See [Batch 5 review](docs/BATCH5_REVIEW.md) for preservation checks, regression
-  evidence, visual inspection, decisions, and limits. No physical Termux or real
-  translation service was exercised. Batches 1–4 are historical and their English
-  contracts are superseded by this spec.
-- Local implementation commits: `485ff44` and `f6774da`, followed by the review/
-  status commit. Batch 4 was pushed by Claude before this work. **No Batch 5 push
-  or publication was performed.**
+  `ruff format --check src tests` — **58 files already formatted**;
+  `mypy src` — **no issues in 40 source files**;
+  `pytest -q` — **377 passed in 272.93s**, including **149 UI cases**;
+  **19 new unit cases and 10 new Pilot cases** cover Batch 6;
+  `python tools/smoke.py --out /tmp/ebible-smoke` — **198 SVGs passed**,
+  33 states × 50×30 and 120×40 × meskel, parchment, lalibela.
+- Smoke adds masked entry, saved, replacement, invalid, environment and removal
+  states, with only fake keys and isolated temporary XDG directories. Every SVG
+  is checked for full fake keys before writing; an independent final scan also
+  checked joined XML text. No disclosure found in any of the 198 SVGs. The output
+  directory has 198 SVGs plus manifest.txt; complete listing:
+  `/tmp/ebible-smoke-listing.txt`. Gate log: `/tmp/b6-final-gates.log`.
+- Six isolated mutation checks fail on broken permissions, precedence, masking,
+  removal, validation and paste-event redaction. Inspected all six new phone
+  states under all three smoke themes and the wide saved-key view. See
+  [Batch 6 review](docs/BATCH6_REVIEW.md) for decisions, tests, inspection and limits.
+- Packaged database unchanged: **12,521,472 bytes**, SHA-256
+  `46da43911496d300784fd303a69cbf5a108486a06a8e45ea2c82efa1c11e9997`.
+  Original-data checksum tests still match all **39,169 Amharic verse tuples and
+  81 book rows**; integrity tests pass. Schema, canon, raw source, source-issues
+  documentation and both translation-guide copies are unchanged.
+- Batch 5 was independently verified and pushed by Claude before this work,
+  including a real Google translation of John 3:16, toggle/re-show, actions and
+  absence of a translation table in tmux at 50×30. Batch 6 used fake credentials
+  and clients only; no real Anthropic request or physical Termux session was run.
+  The Amharic-only/session-translation product direction remains unchanged.
+- Local implementation commits: `7a5b5c4`, `5eea4a8`, `777a63f`, followed by the
+  status/review commit. **No Batch 6 push or publication was performed.**
