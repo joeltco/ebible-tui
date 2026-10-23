@@ -48,6 +48,8 @@ class SettingsScreen(Page):
             )
             yield Static('Verse numbers', markup=False)
             yield Switch(settings.verse_numbers, id='setting-verse_numbers')
+            yield Static('Reduce motion', markup=False)
+            yield Switch(settings.reduce_motion, id='setting-reduce_motion')
             yield Static('Book names', markup=False)
             yield Choice(
                 [('አማርኛ', 'am'), ('English', 'en'), ('Both languages', 'both')],

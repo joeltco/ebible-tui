@@ -182,6 +182,7 @@ class ReaderScreen(Page):
 
     def on_screen_resume(self) -> None:
         self.call_after_refresh(self.set_focus, None)
+        self.call_after_refresh(self.query_one(VerseView).resume_motion)
 
     async def on_resize(self) -> None:
         self.set_class(self.app.size.width < 80, 'compact-chrome')

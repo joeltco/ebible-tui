@@ -33,6 +33,7 @@ async def test_enter_tap_session_toggle_pending_navigation_and_no_disk(
 ):
     app, pilot = running_app
     await app.update_setting('verse_flow', flow)
+    await app.update_setting('reduce_motion', True)
     started, finish = asyncio.Event(), asyncio.Event()
     calls = []
 
@@ -62,16 +63,16 @@ async def test_enter_tap_session_toggle_pending_navigation_and_no_disk(
     assert FIXTURE not in content(app)
     await app.navigate(VerseRef(1))
     await pilot.pause()
-    assert '◇ Translation · ' + FIXTURE in content(app)
+    assert '◇ ' + FIXTURE in content(app)
     first = app.scripture.verse(VerseRef(1)).text_am
-    assert first + '\n◇ Translation · ' + FIXTURE in content(app)
+    assert first not in content(app)  # Translation replaces the source in place.
     await pilot.press('enter')
     assert FIXTURE not in content(app)
     selector = '#verse-1' if flow == 'lines' else '#paragraph'
     assert await pilot.click(selector, offset=(4, 0))
     assert app.screen is app.reader
     assert FIXTURE in content(app) and calls == [VerseRef(1)]
-    translated = app.reader.query_one(VerseView).translation_text(app.scripture.verse(VerseRef(1)))
+    translated = app.reader.query_one(VerseView).body_text(app.scripture.verse(VerseRef(1)))
     assert Style.parse(str(translated.style)).color is not None
     for root in (config_dir(), data_dir()):
         for file in root.rglob('*'):
@@ -112,6 +113,7 @@ async def test_translation_errors_are_inline_actionable_and_retryable(
     running_app, monkeypatch, failure
 ):
     app, pilot = running_app
+    await app.update_setting('reduce_motion', True)
     if failure is None:
         await app.update_setting('translation_backend', 'off')
     else:

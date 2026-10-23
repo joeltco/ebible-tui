@@ -20,6 +20,7 @@ class Settings:
     text_max_width: int = 100
     translation_backend: Literal['auto', 'claude', 'google', 'off'] = 'auto'
     haptic_feedback: bool = False
+    reduce_motion: bool = False
 
 
 _CHOICES: dict[str, set[str]] = {

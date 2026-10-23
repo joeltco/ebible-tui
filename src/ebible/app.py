@@ -232,7 +232,7 @@ class EBibleApp(App[None], inherit_bindings=False):
             self.reference.book_id,
             self.reference.chapter,
         ):
-            await self.reader.query_one(VerseView).rebuild()
+            self.reader.query_one(VerseView).translation_changed(ref)
 
     @work(group='translation', exit_on_error=False)
     async def translate_verse(self, ref: VerseRef) -> None:
