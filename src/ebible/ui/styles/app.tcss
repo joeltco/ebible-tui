@@ -131,3 +131,10 @@ Toast { max-width: 90%; }
 #key-panel .button-row { margin: 0 0 1 0; }
 #key-label { height: auto; margin-top: 1; }
 #key-source, #key-mask { height: auto; margin-bottom: 1; }
+
+#search-query-row { height: 3; margin: 0 2 1 2; }
+#search-query-row Input { margin: 0; width: 1fr; }
+#search-busy { display: none; width: 14; height: 3; content-align: center middle; }
+#search-submit { width: 10; }
+#search-translation { display: none; height: auto; margin: 0 2 1 2; }
+#search-translation:focus { background: $primary 12%; }

@@ -58,7 +58,7 @@ REFERENCE_GROUPS = (
     ),
     (
         'SEARCH',
-        'Search Amharic words safely as you type. Prefix with = for advanced FTS5 expressions.\nExample: ="እግዚአብሔር"',
+        'Type Amharic or English. Amharic searches as you type; submit English with Enter or Search to translate it. Tap a translated term to refine it. Prefix with = for advanced FTS5 expressions.\nExample: ="እግዚአብሔር"',
     ),
     (
         'THE ETHIOPIAN PSALTER',

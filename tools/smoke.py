@@ -15,6 +15,7 @@ from ebible.core.models import VerseRef
 from ebible.core.translate.base import TranslationError
 from ebible.core.translate.service import TranslationService
 from ebible.ui.screens.books import ChaptersScreen
+from ebible.ui.screens.search import QuerySummary, SearchScreen
 from ebible.ui.widgets.controls import NoteArea, SecretInput, TextInput
 from ebible.ui.widgets.verse_view import VerseView
 
@@ -58,6 +59,7 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
     app = EBibleApp(theme_name=theme)
     names: list[str] = []
     release = asyncio.Event()
+    query_release = asyncio.Event()
 
     async def fixture_translate(service: TranslationService, ref: VerseRef) -> str:
         # Explicit smoke fixture, never a network call or claimed scripture translation.
@@ -68,7 +70,19 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
             )
         return 'Temporary smoke translation fixture — session only.'
 
-    with patch.object(TranslationService, 'translate_verse', fixture_translate):
+    async def fixture_query(service: TranslationService, query: str) -> tuple[str, ...]:
+        # Explicit fake query response, using word forms from Genesis 1:3–4.
+        await query_release.wait()
+        if query == 'fixture error':
+            raise TranslationError(
+                'Query translation failed. Check your connection and enable a backend in Settings.'
+            )
+        return ('ብርሃን', 'ብርሃኑ', 'ብርሃንንና')
+
+    with (
+        patch.object(TranslationService, 'translate_verse', fixture_translate),
+        patch.object(TranslationService, 'translate_query', fixture_query),
+    ):
         async with app.run_test(size=size) as pilot:
             await asyncio.wait_for(app.ready.wait(), 10)
             view = app.reader.query_one(VerseView)
@@ -169,6 +183,34 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
             await pilot.pause()
             await app.workers.wait_for_complete()
             await capture('search-error')
+            search = app.screen
+            assert isinstance(search, SearchScreen)
+            search.clock = lambda: timeline[0]
+            search.query_one(TextInput).value = 'light'
+            await pilot.pause()
+            await app.workers.wait_for_complete()
+            await capture('search-english-entry')
+            await click(pilot, '#search-submit')
+            timeline[0] += 0.45
+            search.tick_busy()
+            await capture('search-translating')
+            await app.update_setting('reduce_motion', True)
+            search.tick_busy()
+            await capture('search-translating-reduced')
+            await app.update_setting('reduce_motion', False)
+            query_release.set()
+            await app.workers.wait_for_complete()
+            await capture('search-translated')
+            assert search.results[0].ref == VerseRef(1, 1, 3)
+            assert await pilot.click(search.query_one(QuerySummary), offset=(10, 0))
+            await pilot.pause()
+            await app.workers.wait_for_complete()
+            await capture('search-refined')
+            search.query_one(TextInput).value = 'fixture error'
+            await pilot.pause()
+            await click(pilot, '#search-submit')
+            await app.workers.wait_for_complete()
+            await capture('search-translation-error')
             await pilot.press('escape', 'p')
             await click(pilot, '#start-plan')
             await click(pilot, '#mark-read')

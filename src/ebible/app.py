@@ -17,7 +17,7 @@ from ebible.core.refs import ReferenceError, format_reference, parse_reference
 from ebible.core.scripture import ScriptureStore
 from ebible.core.settings import Settings, load_settings, save_settings
 from ebible.core.translate.base import AlignmentError, TranslationError
-from ebible.core.translate.service import TranslationService
+from ebible.core.translate.service import BackendSetting, TranslationService
 from ebible.core.userdata import UserDataStore
 from ebible.ui.themes import THEMES, ordered_theme_names
 
@@ -58,6 +58,7 @@ class EBibleApp(App[None], inherit_bindings=False):
         self._navigation_lock = asyncio.Lock()
         self._settings_lock = asyncio.Lock()
         self.translations: dict[VerseRef, str] = {}
+        self.query_translations: dict[tuple[BackendSetting, str], tuple[str, ...]] = {}
         self.visible_translations: set[VerseRef] = set()
         self.translating: set[VerseRef] = set()
         self.translation_errors: dict[VerseRef, str] = {}
