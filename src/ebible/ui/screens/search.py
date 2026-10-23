@@ -288,16 +288,16 @@ class SearchScreen(Page):
                 len(previous) if page else (0 if options else None)
             )
             self.query_one(QuerySummary).show_terms(query, self.variants if translated else ())
+            # A full page means there may be more; never present a page size as the total.
+            more = not (len(page) < (40 if translated else self.limit) or len(results) >= 1000)
             self.query_one('#search-message', Static).update(
-                count_label(len(results), 'passage')
+                count_label(len(results), 'passage') + (' · more below' if more else '')
                 if results
                 else 'No passages found'
                 if query
                 else 'Type Amharic or English'
             )
-            self.query_one('#search-more', Button).disabled = (
-                len(page) < (40 if translated else self.limit) or len(results) >= 1000
-            )
+            self.query_one('#search-more', Button).disabled = not more
             if jump and not translated and results:
                 await self.eb.navigate(results[0].ref)
         except (SearchError, TranslationError) as exc:

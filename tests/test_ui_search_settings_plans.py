@@ -230,3 +230,19 @@ async def test_search_results_are_visible_and_tappable(running_app):
     await pilot.click('#search-results', offset=(2, 0))
     await pilot.pause()
     assert app.screen is app.reader and app.reference == target
+
+
+async def test_search_count_never_presents_a_page_as_the_total(running_app):
+    app, pilot = running_app
+    await pilot.press('/')
+    screen = app.screen
+    screen.query_one(TextInput).value = 'እግዚአብሔር'
+    await finish_search(app, pilot)
+    message = str(screen.query_one('#search-message', Static).content)
+    assert message.endswith('· more below')
+    assert not screen.query_one('#search-more', Button).disabled
+    screen.query_one(TextInput).value = 'ኤሴቅ'
+    await finish_search(app, pilot)
+    message = str(screen.query_one('#search-message', Static).content)
+    assert screen.results and 'more below' not in message
+    assert screen.query_one('#search-more', Button).disabled
