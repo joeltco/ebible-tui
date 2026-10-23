@@ -74,6 +74,7 @@ tools/smoke.py       boots the app headless at 50x30 and 120x40, walks every scr
                      to a given out dir, exits non-zero on any exception
 tools/record_title.py headless cover entrance/opening SVG sequence and optional review GIF
 tools/measure_startup.py fresh-process first-meaningful-frame measurement
+tools/audit_themes.py rendered SVG colour pairs, frame sweeps, CSV/JSON and optional PNG sheets
 tools/record_morph.py headless 50x30 SVG sequence at 50 ms animation-time steps for GIF assembly
 ```
 
@@ -84,7 +85,8 @@ The Holy Bible beneath; never invent an edition, publisher or date. A double-rul
 frame, single-cell corner ornaments and a right-side page edge use theme colours.
 The requested Psalm 119:105 epigraph is stored as **Psalms 118:105** in this source;
 chapter 119 has only seven verses. Load its exact Amharic from the DB alongside
-settings in the background, and label both numbering systems on the cover.
+settings in the background, using the shared `EPIGRAPH` constant; label it with
+`format_reference(EPIGRAPH)` as **Psalms 118:105**, exactly as the reader does.
 
 Continue reading (or Begin · Genesis 1 without a saved position) opens the prepared
 reader. Books, Search, Plans and Settings are direct tappable links; Escape or the
@@ -115,7 +117,9 @@ brightest at the edge. Theme effects derive in themes.py: accent blended 60%
 toward white on dark themes or foreground ink on light themes. The leading three
 characters are bold with an accent background tint (35% over panel, feathered).
 Unrevealed Amharic is dimmed. At forward completion, the whole English verse
-pulses once from accent tint to rest over 300 ms; reverse ends quietly. English
+pulses once from rest through accent tint and back over 300 ms; reverse ends quietly.
+Use continuous colour envelopes at effect boundaries and a 120 ms colour handoff
+from fetching or an interrupted pulse, without delaying the character reveal. English
 rests in secondary colour with a dim ◇ marker and the original verse number. No separate translation line.
 Enter/tap reverses the morph back to Amharic; mid-animation toggles reverse from
 the current position. Re-showing cached text morphs forward without fetching.
@@ -205,6 +209,18 @@ foreground, background, surface, panel, success, warning, error, dark flag). At 
 (low-light, very dim, for reading in bed), `high-contrast`. Also allow Textual's built-ins.
 Highlight colours are theme-aware (readable on every theme).
 
+Rendered static body/labels must meet 4.5:1 WCAG sRGB contrast; decorative strokes
+and motion text must meet 3:1. High-contrast uses a 7:1 body/effect target. Derive
+minimal role corrections in themes.py, preserving the base palettes. Cover entrance
+starts with readable quiet lettering. Metadata, placeholders and disabled labels
+use the explicit secondary role, not implicit Rich dim or widget opacity. Inactive
+content behind a modal veil, invisible border filler and nonessential empty-track
+background shading are recorded exceptions; active labels, sliders and filled
+progress segments are not exempt.
+Theme changes must invalidate cached Rich/Content colours without resetting state.
+The audit measures actual SVG cells, including framework controls and motion frames.
+
+
 ## Termux-first laws
 
 - Design for **50 columns × ~30 rows** first; must also look good at 120×40. Nothing may clip or
@@ -243,63 +259,49 @@ Highlight colours are theme-aware (readable on every theme).
 
 ## Status
 
-- 2026-10-23: **Batch 10 complete** on `rebuild/v2`, package `ebible` 2.0.0.dev0.
-  Launch now opens a Bible frontispiece with a centred double-rule frame,
-  single-cell ornaments, right-side page edge, Amharic title and English subtitle.
-  All six themes work at **40×20, 50×30, 74×30 and 120×40**.
-- Continue/Begin opens the prepared reader at the saved position. Books, Search,
-  Plans, Settings and close are tappable and keyboard-accessible. Reader `c` and
-  Help's Title page button return to the cover. The persisted **Title page on launch**
-  setting defaults on; turning it off or supplying a CLI reference bypasses it.
-- The requested Psalm 119:105 is stored as **Psalms 118:105** in this DB; chapter
-  119 has seven verses. The epigraph uses that exact DB text, loaded alongside
-  settings in the background. The cover labels both numbering systems. Metadata
-  contained no edition/publisher/date, so none was invented. No source changes.
-- Entrance draws the frame from its corners then brightens the lettering over
-  **0.8 s**; opening wipes across the actual reader with a highlighted page edge
-  over **0.6 s**. One 30 fps timer pauses at rest and off screen. Any key/tap skips
-  only the current animation, including taps over the revealed reader. Reduce
-  motion renders the final cover and opens instantly.
-- Fresh-process first-meaningful-frame measurement, **12 runs per version at 50×30**:
-  median **708.70 ms before → 596.50 ms after** (15.8% faster); maxima **807.21 ms
-  → 662.18 ms**. Includes imports and initialization, excludes interpreter process
-  creation, terminal transport and physical display latency. Same probe against
-  `48fba9d` and current code, fresh temporary personal data, warm source filesystem.
-  JSON: `/tmp/b10-startup-before.json`, `/tmp/b10-startup-after.json`.
-- Required gates passed in `.venv` (Python 3.14.7, Textual 8.2.8):
-  `ruff check src tests tools` — **all checks passed**;
-  `ruff format --check src tests` — **69 files already formatted**;
-  `mypy src` — **no issues in 43 source files**;
-  `pytest -q` — **532 passed in 445.77s**;
-  `python tools/smoke.py --out /tmp/ebible-smoke` — **354 SVGs passed**.
-  Gate output: `/tmp/b10-gates.log`.
-- Added **42 cover cases** (40 Pilot + two unit cases), plus one app-driven recorder
-  test. Covers launch/default/off/CLI, saved position, all tap/keyboard links, close,
-  epigraph/threading, persistence, literal text, motion/skip/pause, exact frame
-  widths and all theme/size combinations. Existing reader tests opt out of the
-  cover; Help and smoke-isolation regressions include the new shortcut and matrix.
-  Claude's **“40 passages · more below”** correction remains unchanged and tested.
-- Smoke retains 258 existing screen/modal views and adds **96 cover views**:
-  entrance, finished, half-open and reduced-motion × six themes × four sizes.
-  All 96 were visually inspected; no remaining clipping, frame wrapping or
-  collisions. Fixed a drawing issue that left background rectangles behind title/
-  action lettering. Contact sheets: `/tmp/b10-visual/`. Independent raw/XML-text
-  disclosure scan passed for **458 SVGs**, including both recording sequences.
-  Output: 354 SVGs + manifest.txt; listing: `/tmp/ebible-smoke-listing.txt`.
-- GIFs: `/tmp/ebible-title-meskel/title.gif` and
-  `/tmp/ebible-title-parchment/title.gif`. Each has **52 frames / 2.6 seconds**,
-  plus its SVG sequence and JSON timing manifest. `tools/record_title.py --gif`
-  uses optional system librsvg/ImageMagick tools; no app dependency was added.
+- 2026-10-23: **Batch 11 complete** on `rebuild/v2`, package `ebible` 2.0.0.dev0.
+  [Theme audit](docs/THEME_AUDIT.md) was written and committed as **9d7c970** against
+  Claude's pushed **ac05d43**, before application changes. The six approved base
+  palettes and highlight colour tables are unchanged.
+- Fixed stale modal swatches/query links, unreadable entrance lettering, faint
+  placeholders/disabled labels, transient pressed-button tint, low-contrast input
+  selection and idle controls,
+  inconsistent metadata colours, and animation colour discontinuities. Parchment
+  effects darken toward ink; high-contrast centre text now measures **7.18:1**.
+  All colour policy remains in `ui/themes.py`; TCSS uses theme variables.
+- Live theme changes refresh verse/paragraph, modal, query and collection colours
+  without resetting navigation or motion. The 1 s morph, 0.9 s shimmer sweep,
+  0.8 s entrance and 0.6 s opening remain; the 300 ms pulse now rises and falls
+  smoothly. Reduce motion and immediate error restoration are preserved.
+- Added **33 cases** (23 unit, 10 Pilot), including actual rendered pairs for all
+  six themes, every animation's 30 fps samples, family/contrast checks, reduced-motion
+  endpoints, colour continuity, colour-literal lint and live cache invalidation.
+  Each theme's matrix exports **210 states**. The **1,260-capture** matrix has no
+  applicable contrast violations; unavailable modal context is explicitly classified.
+- Required gates in `.venv`: Ruff **all checks passed**; format **71 files already
+  formatted**; mypy **no issues in 43 source files**; pytest **565 passed in 754.81s**;
+  smoke **672 SVGs, all passed**. Log: `/tmp/b11-gates-final.log`.
+- Smoke now covers **six themes × two sizes × 48 reader/screen/modal states**, plus
+  the existing **six themes × four sizes × four cover states**. Notifications of
+  all severities and live-switch captures are included. Output: `/tmp/ebible-smoke/`;
+  complete listing: `/tmp/ebible-smoke-listing.txt`.
+- Full evidence: `/tmp/ebible-theme-before/` and `/tmp/ebible-theme-after/`, with
+  actual SVGs, JSON/CSV pair measurements and before/after PNG contact sheets for
+  every theme. I inspected all six before/after controls sheets and all six after
+  animation sheets. Raw and XML-text disclosure scan passed for all **1,932 SVGs**.
+  Final ledger: **129,814 measured pairs**; every smoke theme contributes 112 SVGs.
 - Packaged DB unchanged: **12,521,472 bytes**, SHA-256
   `46da43911496d300784fd303a69cbf5a108486a06a8e45ea2c82efa1c11e9997`.
-  Original-data checksums still match **39,169 Amharic verse tuples and 81 book
-  rows**; integrity tests pass. Schema, canon, raw source, source-issues documentation
-  and both translation-guide copies are unchanged.
-- See [Batch 10 review](docs/BATCH10_REVIEW.md) for every design judgement, timing
-  method, test and artifact location. No physical Termux session or live translation
-  call was run; existing translation tests/smoke use fake backends. Glyph widths
-  are verified by Rich and rasterized SVGs, not Joel's physical terminal font.
-- Batch 9 and `48fba9d` were independently verified/pushed by Claude before this work.
-  Implementation commits: `75694d4` (cover), `6a0bd2e` (tools/matrix), `17638f1`
-  (regression expectations), followed by the documentation/status commit.
-  **No Batch 10 push or publication.**
+  Original-data checksum test passes for **39,169 Amharic tuples and 81 book rows**.
+  Schema, canon, raw source, source-issues documentation and both translation-guide
+  copies are unchanged. Claude's **Psalms 118:105** epigraph label/shared constant
+  and **“40 passages · more below”** search correction are preserved.
+- [Batch 11 review](docs/BATCH11_REVIEW.md) records exact before/after pairs,
+  thresholds/exceptions, all judgement calls and proposals not implemented.
+  No live translation/API call or physical Termux session; fixtures and exported
+  sRGB colours were used. System librsvg/ImageMagick render optional PNG evidence;
+  no new app dependency or global installation.
+- Implementation commits: **f47b0c2** (colour fixes and regressions), **e521231**
+  (tools/recorder evidence), followed by the strengthened-regression and status
+  commits; **b3e47eb** records the pressed-button follow-up and **a115149** fixes it.
+  **No push or publication.** Batch 10 history remains in its review doc.

@@ -266,3 +266,20 @@ Evidence: [parchment pressed plan button](/tmp/ebible-theme-before/png/parchment
 Small fix: suppress only the whole-widget pressed tint; retain the pressed button's
 existing background/focus state. Add explicit held-pressed captures for all five
 button variants in every theme. No palette redesign is needed.
+
+### Informational — background tracks below the decorative-stroke threshold
+
+The unfilled Plans track uses `$surface` on `$background`: meskel **1.11:1**,
+tewahedo **1.15:1**, parchment **1.09:1**, lalibela **1.14:1**, midnight **1.07:1**,
+high-contrast **1.11:1**. Switch edge/background shading similarly measures about
+**1.02–1.18:1**. These are explicitly flagged low pairs in the raw SVG ledger.
+I classify them as nonessential background paint, not unreadable labels or a missing
+control state: progress is stated numerically and by the contrasting filled segment;
+the switch state uses the contrasting slider and its position. They retain the
+approved quiet backgrounds. This classification does not exempt the filled segment,
+slider, scrollbar thumb, or text. Strengthening these empty tracks would be an
+optional visual revision, not a fix implemented here.
+
+[Plans track evidence](/tmp/ebible-theme-before/png/parchment-pressed-plan.png).
+The exact foreground/background pairs for these tracks and switch shading remain
+in `pairs.csv`; their low values are not omitted from the measurements.
