@@ -11,8 +11,8 @@ pairs. The extractor resolves each SVG text class's fill, maps each character to
 its terminal cell and the background rectangle beneath it, then applies WCAG
 sRGB linearisation and relative-luminance contrast `(Lmax + .05)/(Lmin + .05)`.
 Rich's terminal-window decoration outside the clipped terminal is excluded.
-Spaces and invisible border filler are retained in raw evidence but are not
-readable text. Text remains at the terminal's normal size even when bold: **4.5:1**
+Whitespace is excluded from text-pair measurement. Invisible border filler is
+retained in raw evidence but is not readable text. Text remains at the terminal's normal size even when bold: **4.5:1**
 for static body/labels, **3:1** for decorative strokes and motion text. For the
 advertised high-contrast theme, a **7:1 body/effect target** is used in addition.
 
@@ -199,7 +199,7 @@ endpoints, separately from the transient boundary jumps above.
 
 No hard-coded hex/RGB/named Rich colour occurs in application source outside
 `ui/themes.py`; the stylesheet has no literal hex values. The relevant leaks are
-**implicit policy**: `$text-muted`, `$text-disabled`, Input cursor variables, Select
+**implicit policy**: `$text-muted`, `$text-disabled`, Input selection variables, Select
 arrow opacity, default button disabled opacity, and `style='dim'` in Books and
 Collections. Textual generates palette lighten/darken and severity blends; their
 mere presence is not a failure when the rendered pair is in-family and passes.
@@ -239,3 +239,30 @@ stroke thickness. The audit captures all declared states and 30 fps timeline sam
 it does not claim every possible input string or an uncountable continuous timeline.
 Raw data remains available for independent review. Part B will record before/after
 pairs and regression coverage in `docs/BATCH11_REVIEW.md`.
+
+
+## Post-audit clarification
+
+Part B is recorded in [BATCH11_REVIEW.md](BATCH11_REVIEW.md). The baseline reduced-motion
+search hint confirms the same implicit-dimming defect: parchment **3.79:1**, midnight
+**4.20:1**. Its baseline SVGs are `screens/<theme>-50x30-search-translating-reduced.svg`.
+The repair uses the secondary body role; the original ranked findings above remain
+baseline measurements. The original cursor diagnostic included selected text; Part B
+captures selected text and the reversed cursor separately and freezes cursor blinking
+when comparing animation endpoints. The reversed cursor was not the failing pair.
+
+### 7. Medium — pressed-button tint reduces label contrast (full-smoke follow-up)
+
+The full production-screen ledger exposed a state absent from the initial diagnostic
+hover/focus cases: Textual's transient `Button.-active` tint. This was verified in
+**the original ac05d43 baseline SVGs**, before changing this rule. The Plans screen's
+pressed “Mark unread” label renders **#6b6459 / #e0d5bf = 4.02:1** on parchment and
+**#848792 / #1f232d = 4.39:1** on midnight. The same tint affects pressed Save/Search
+buttons (parchment Search can be **4.30:1**). Enabled body labels require 4.5:1.
+This is a medium-severity framework-opacity defect, alongside finding 3.
+
+Evidence: [parchment pressed plan button](/tmp/ebible-theme-before/png/parchment-pressed-plan.png),
+[midnight pressed plan button](/tmp/ebible-theme-before/png/midnight-pressed-plan.png).
+Small fix: suppress only the whole-widget pressed tint; retain the pressed button's
+existing background/focus state. Add explicit held-pressed captures for all five
+button variants in every theme. No palette redesign is needed.
