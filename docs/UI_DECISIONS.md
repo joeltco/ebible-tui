@@ -81,16 +81,20 @@ translation contracts updated there.
 - Enter or a verse tap translates exactly that verse. A repeated tap during a
   pending request is ignored; different verses may translate concurrently. Navigation
   remains available and completion refreshes only the currently open chapter.
-  A soft shimmer sweeps over the pending verse; actionable errors appear inline
-  after restoring Amharic, and Enter retries after errors.
+  An eight-character shimmer sweeps over the pending verse every 0.9 seconds;
+  actionable errors appear inline after restoring Amharic, and Enter retries after errors.
 - Translation results and visibility are separate in-memory session state. Enter/tap
   morphs between the source and result, even after chapter navigation. Restart loses
   every result. English uses the secondary colour with a dim “◇” marker.
   Full morphs last one second with 30 fps timers; interrupting reverses from the
-  current position at the same speed. The six-character edge grades toward accent
-  and unrevealed Amharic is dimmed. Only animating widgets update; timers pause
+  current position at the same speed. The twelve-character edge grades toward
+  a bright accent tint (deep ink on light themes), with a bold leading three
+  characters and feathered background tint. Unrevealed Amharic is dimmed. A single
+  300 ms whole-verse tint fade follows forward completion; reverse ends quietly.
+  Only animating widgets update; timers pause
   when idle or when another screen is open. Reduce motion gives instant swaps
-  and a static pending hint. See [Batch 7 review](BATCH7_REVIEW.md) for details.
+  and a static pending hint. See [Batch 7 review](BATCH7_REVIEW.md) for timing/interaction
+  decisions and [Batch 8 review](BATCH8_REVIEW.md) for effect colours and visibility checks.
   There are no untranslated notices or placeholders.
 - `a` and the footer Verse button open actions. Amharic copy is always available;
   “With translation” appears only for a verse translated this session, including
@@ -117,10 +121,11 @@ translation contracts updated there.
 - Smoke creates fresh temporary XDG config/data for each size/theme combination,
   restores the invoking environment, and removes its temporary personal data. Its
   note is explicitly labelled a temporary fixture and quotes real bundled text.
-- Smoke writes 36 views for each of 3 themes × 2 sizes: 216 SVGs and manifest.txt.
+- Smoke writes 37 views for each of 3 themes × 2 sizes: 222 SVGs and manifest.txt.
   Extra states include error messages, deletion/discard/restart confirmations,
   Select's theme overlay, paragraph and Jubilees readers, and pending/result/error
-  translation states (including shimmer, forward/reverse and paragraph morphs), plus six masked-key entry/saved/replacement/error/environment/
+  translation states (including shimmer, forward/reverse, completion pulse and
+  paragraph morphs), plus six masked-key entry/saved/replacement/error/environment/
   removal states. Translation responses and credentials are explicit fake fixtures.
   Every screenshot is checked for full fake-key disclosure before it is saved.
   Colour is enabled explicitly for screenshots even if the invoking CI shell has

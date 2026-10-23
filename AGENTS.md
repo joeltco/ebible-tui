@@ -74,18 +74,23 @@ tools/record_morph.py headless 50x30 SVG sequence at 50 ms animation-time steps 
 ### Translation contract
 
 No bundled English, persisted English cache, coverage metadata, or placeholder text.
-Enter or a verse tap translates that one verse in a worker. A soft theme-derived
-shimmer sweeps over Amharic while fetching. When ready, morph IN PLACE using
+Enter or a verse tap translates that one verse in a worker. A visible eight-character
+theme-derived shimmer sweeps over slightly dimmed Amharic every 0.9 seconds while fetching;
+its centre is bold with a soft background tint. When ready, morph IN PLACE using
 `english[:i] + amharic[i:]` by Unicode character, rewrapping each frame. Advance
 over approximately one second at 30 fps using set_interval; refresh only the
 animating verse widget (the containing flowing paragraph in paragraph mode). The
-last six revealed characters grade from secondary to accent, brightest at the
-edge; unrevealed Amharic is dimmed. English rests in secondary colour with a dim
-◇ marker and the original verse number. No separate translation line.
+last twelve revealed characters grade from secondary to a strong accent tint,
+brightest at the edge. Theme effects derive in themes.py: accent blended 60%
+toward white on dark themes or foreground ink on light themes. The leading three
+characters are bold with an accent background tint (35% over panel, feathered).
+Unrevealed Amharic is dimmed. At forward completion, the whole English verse
+pulses once from accent tint to rest over 300 ms; reverse ends quietly. English
+rests in secondary colour with a dim ◇ marker and the original verse number. No separate translation line.
 Enter/tap reverses the morph back to Amharic; mid-animation toggles reverse from
 the current position. Re-showing cached text morphs forward without fetching.
-Reduce motion defaults off; when enabled, swaps are instant and fetching uses a
-static dim “Translating…” hint with no shimmer. Errors stop motion, restore Amharic
+Reduce motion defaults off; when enabled, swaps are instant without a completion
+pulse, and fetching uses a static dim “Translating…” hint with no shimmer. Errors stop motion, restore Amharic
 and show an actionable inline message (configure backend/key, check network, retry).
 Results exist only in process memory and disappear on restart. Never write them to disk.
 Existing user databases migrate forward by dropping `live_translation` and erasing its
@@ -180,55 +185,52 @@ Highlight colours are theme-aware (readable on every theme).
 
 ## Status
 
-- 2026-10-23: **Batch 7 complete** on `rebuild/v2`, package `ebible` 2.0.0.dev0.
-  Phone key saves now trim leading/trailing Unicode whitespace and pasted newlines
-  before validating; internal whitespace remains invalid. Masking, private atomic
-  storage, environment precedence and safe errors remain unchanged.
-- English replaces Amharic **in place** using `english[:i] + amharic[i:]`, with
-  natural rewrapping, a six-character theme-derived glowing edge, dim remaining
-  Amharic, and a repeating soft fetch shimmer. Full morphs take one second at
-  30 fps. Enter/tap reverses from the current position; cached re-show morphs
-  without fetching. English rests in secondary colour with a dim ◇ marker.
-- Only animating verse widgets update. Paragraph flow caches unchanged verse
-  fragments and updates its containing paragraph once per tick. Idle/hidden-screen
-  timers pause; returning reconciles elapsed time. Reduce motion defaults off,
-  persists immediately, uses instant swaps and a static fetch hint. Errors stop
-  shimmer and restore Amharic with the existing actionable inline message.
+- 2026-10-23: **Batch 8 complete** on `rebuild/v2`, package `ebible` 2.0.0.dev0.
+  Effect intensity only: twelve-character glow with a bold leading three and
+  feathered accent background; eight-character fetch shimmer every 0.9 seconds;
+  one 300 ms whole-English colour fade after forward completion. Reverse ends
+  quietly. One-second reveal, reversal, cache behaviour and Reduce motion remain.
+- Effect colours derive from each Theme in themes.py: accent blended 60% toward
+  white on dark themes or foreground ink on light themes; peak background tint is
+  accent at 35% over panel. The waiting source dims 18% toward background.
+  Edge-centre versus resting-English **CIELAB ΔE76 ≥18** on all six custom themes
+  (measured range **18.56–24.62**), with separate bold/background/gradient tests.
 - Required gates passed in `.venv` (Python 3.14.7, Textual 8.2.8):
   `ruff check src tests tools` — **all checks passed**;
-  `ruff format --check src tests` — **62 files already formatted**;
+  `ruff format --check src tests` — **63 files already formatted**;
   `mypy src` — **no issues in 41 source files**;
-  `pytest -q` — **406 passed in 290.45s**, including **163 UI cases**;
-  `python tools/smoke.py --out /tmp/ebible-smoke` — **216 SVGs passed**,
-  36 states × 50×30 and 120×40 × meskel, parchment, lalibela.
-  Gate output: `/tmp/b7-gates.log`.
-- New coverage includes 11 morph unit cases, 14 Pilot cases at both sizes,
-  one recording-tool test, and four key-trim cases (one formerly invalid padding
-  case is now valid). Four isolated mutation checks fail on broken trimming,
-  frame slicing, interruption continuity and glow. No network calls in tests.
-- Smoke includes mid-shimmer, half-forward, half-reverse, English rest and paragraph
-  morph states. Every SVG is checked for full fake keys before saving; an independent
-  raw/XML-text scan of all 216 SVGs also passed. Output has 216 SVGs + manifest.txt;
-  complete listing: `/tmp/ebible-smoke-listing.txt`.
-- `tools/record_morph.py --out /tmp/ebible-morph` produced **65 SVG frames** at
-  50 ms animation-time steps (20 fps), plus manifest.json with order/timestamps,
-  stages and reveal indices. Real Genesis 1:1 Amharic and explicitly labelled
-  fake English; isolated temporary XDG directories, no live service. Listing:
-  `/tmp/ebible-morph-listing.txt`.
-- Inspected shimmer/forward/reverse/rest/paragraph phone SVGs in all three smoke
-  themes, wide reader/settings views, and nine representative recording frames.
-  See [Batch 7 review](docs/BATCH7_REVIEW.md) for every implementation decision,
-  test coverage, inspection and limits. README, help and current architecture
-  notes match the new presentation and key-paste contracts.
+  `pytest -q` — **427 passed in 305.63s**, including **169 UI cases**;
+  `python tools/smoke.py --out /tmp/ebible-smoke` — **222 SVGs passed**,
+  37 states × 50×30 and 120×40 × meskel, parchment, lalibela.
+  Gate output: `/tmp/b8-gates.log`.
+- Added 14 unit cases for palette visibility, shimmer and flourish timing, six
+  Pilot cases for the pulse, update isolation, quiet reverse and Reduce motion,
+  plus a CLI text/theme recording test. Updated existing animation and recorder
+  checks for the new effects. Four isolated mutation checks fail on old width,
+  missing peak tint, old shimmer period and missing flourish (`/tmp/b8-mutations.log`).
+- Smoke now captures the completion pulse separately from settled English.
+  Every SVG is checked for fake-key disclosure before saving; an independent
+  raw/XML-text scan of all 222 SVGs also passed. Output: 222 SVGs + manifest.txt;
+  complete listing `/tmp/ebible-smoke-listing.txt`.
+- `tools/record_morph.py` accepts **--text** (default labelled fixture) and **--theme**.
+  Recorded meskel, parchment and midnight at 50×30 into
+  `/tmp/ebible-morph-b8/{meskel,parchment,midnight}/`: **71 SVG frames each**, at
+  50 ms animation-time steps (20 fps), plus manifests with timing, reveal indices
+  and flourish strength. Total: **213 SVGs + three manifests**. Complete listing:
+  `/tmp/ebible-morph-b8-listing.txt`. These recordings use the default fixture.
+- Inspected rendered shimmer, mid-morph, peak/fading flourish and rest at 50×30
+  in all six themes, plus 120×40 flourish views in all three smoke themes. No
+  clipping or layout corrections were needed. See [Batch 8 review](docs/BATCH8_REVIEW.md)
+  for every colour/timing decision, per-theme measurements, test and artifact details.
+  README and current architecture/spec notes match the brighter effects.
 - Packaged database unchanged: **12,521,472 bytes**, SHA-256
   `46da43911496d300784fd303a69cbf5a108486a06a8e45ea2c82efa1c11e9997`.
-  Original-data checksums still match all **39,169 Amharic verse tuples and 81 book
+  Original-data checksum tests match all **39,169 Amharic verse tuples and 81 book
   rows**; integrity tests pass. Schema, canon, raw source, source-issues documentation
-  and both translation-guide copies are unchanged. No translation persistence.
-- Batch 6 was independently verified and pushed by Claude before this work.
-  Batch 7 used fake backends only; no physical Termux animation/performance run or
-  real translation request was made. Headless real-timer Pilot cases pass a
-  0.95–1.4 second completion bound at both terminal sizes.
-- Implementation commits: `c3c7169` (key paste), `6e2f32e` (morph), `72b9e88`
-  (smoke/recorder), followed by the documentation/status commit.
-  **No Batch 7 push or publication was performed.**
+  and both translation-guide copies remain unchanged. No translation persistence.
+- Batch 7 was independently verified and pushed by Claude before this work; Claude
+  also recorded a real Google Genesis 1:1 translation for Joel. Batch 8 used fake
+  backends only; no physical Termux performance run or live service request was
+  made. `--text` can record an existing real translation without a network call.
+- Implementation commits: `fa973b9` (effects/tests), `2d3b9f4` (recorder/smoke),
+  followed by the documentation/status commit. **No Batch 8 push or publication.**
