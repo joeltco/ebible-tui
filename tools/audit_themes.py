@@ -308,41 +308,55 @@ def summarize(out, report, png=False):
                     {**pair, **{key: capture[key] for key in ('theme', 'state', 'frame', 'svg')}}
                 )
     if png:
-        for theme in THEMES:
-            images = []
-            for state in (
+        groups = {
+            'contact': (
                 'controls',
                 'books',
                 'cover-entrance-012',
                 'switch-modal-after',
                 'switch-terms-after',
                 'forward-030',
-            ):
-                svg = out / f'{theme.name}-{state}.svg'
-                if not svg.exists():
-                    continue
-                target = svg.with_suffix('.png')
-                subprocess.run(
-                    ['rsvg-convert', '-o', str(target), str(svg)], check=True, capture_output=True
-                )
-                images.append(str(target))
-            if images:
-                subprocess.run(
-                    [
-                        'magick',
-                        'montage',
-                        *images,
-                        '-thumbnail',
-                        '420x',
-                        '-tile',
-                        '3x2',
-                        '-geometry',
-                        '+6+6',
-                        str(out / f'{theme.name}-contact.png'),
-                    ],
-                    check=True,
-                    capture_output=True,
-                )
+            ),
+            'motion': (
+                'shimmer-014',
+                'forward-015',
+                'forward-034',
+                'reverse-015',
+                'query-shimmer-014',
+                'cover-opening-009',
+            ),
+        }
+        for theme in THEMES:
+            for group, states in groups.items():
+                images = []
+                for state in states:
+                    svg = out / f'{theme.name}-{state}.svg'
+                    if not svg.exists():
+                        continue
+                    target = svg.with_suffix('.png')
+                    subprocess.run(
+                        ['rsvg-convert', '-o', str(target), str(svg)],
+                        check=True,
+                        capture_output=True,
+                    )
+                    images.append(str(target))
+                if images:
+                    subprocess.run(
+                        [
+                            'magick',
+                            'montage',
+                            *images,
+                            '-thumbnail',
+                            '420x',
+                            '-tile',
+                            '3x2',
+                            '-geometry',
+                            '+6+6',
+                            str(out / f'{theme.name}-{group}.png'),
+                        ],
+                        check=True,
+                        capture_output=True,
+                    )
 
 
 def smoke_pairs(directory):
@@ -369,7 +383,7 @@ def main():
     parser.add_argument(
         '--png',
         action='store_true',
-        help='Render six contact sheets with system librsvg/ImageMagick',
+        help='Render control and motion contact sheets with system librsvg/ImageMagick',
     )
     parser.add_argument(
         '--smoke', type=Path, help='Also measure every SVG in this smoke output directory'

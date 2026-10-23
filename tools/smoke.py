@@ -122,6 +122,7 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
                 await capture('notification-' + severity)
                 app.clear_notifications()
                 await pilot.pause()
+            app._disable_notifications = True  # Dedicated severity captures above.
             await pilot.press('a')
             await capture('verse-actions')
             await app.update_setting('theme', 'parchment' if app.current_theme.dark else 'meskel')
@@ -356,7 +357,7 @@ async def smoke(out: Path) -> None:
                     names.extend(await cover_walk(out, theme.name, size))
     (out / 'manifest.txt').write_text('\n'.join(names) + '\n', encoding='utf-8')
     print(
-        f'{len(names)} SVGs · reader suite: 3 themes × 2 sizes; cover: 6 themes × 4 sizes · all passed',
+        f'{len(names)} SVGs · reader suite: {len(SMOKE_THEMES)} themes × 2 sizes; cover: 6 themes × 4 sizes · all passed',
         flush=True,
     )
     print(f'Output: {out.resolve()}', flush=True)

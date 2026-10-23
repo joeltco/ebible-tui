@@ -51,7 +51,7 @@ async def test_settings_write_failure_preserves_current_values(running_app, monk
     assert 'Could not save' in app.last_message
 
 
-async def test_smoke_isolates_and_restores_xdg_environment(tmp_path, monkeypatch):
+async def test_smoke_isolates_and_restores_xdg_environment(tmp_path, monkeypatch, capsys):
     import os
     import runpy
     from pathlib import Path
@@ -74,6 +74,7 @@ async def test_smoke_isolates_and_restores_xdg_environment(tmp_path, monkeypatch
     monkeypatch.setitem(namespace['smoke'].__globals__, 'walk', fake_walk)
     monkeypatch.setitem(namespace['smoke'].__globals__, 'cover_walk', fake_walk)
     await namespace['smoke'](tmp_path / 'screenshots')
+    assert 'reader suite: 6 themes' in capsys.readouterr().out
     assert len(seen) == 36
     assert len({path for path, _, _ in seen}) == 36
     assert {size for _, _, size in seen} == {(40, 20), (50, 30), (74, 30), (120, 40)}

@@ -7,6 +7,8 @@ import runpy
 import sys
 import xml.etree.ElementTree as ET
 
+import pytest
+
 from ebible.core.models import VerseRef
 
 
@@ -33,7 +35,7 @@ async def test_recording_frames_timeline_privacy_and_xdg_restore(tmp_path, scrip
         assert indices == sorted(indices, reverse=descending)
     pulse = [f['flourish'] for f in frames]
     assert max(pulse) == 1
-    assert len([v for v in pulse if v > 0]) == 6
+    assert [v for v in pulse if v > 0] == pytest.approx([0.25, 0.75, 1, 0.75, 0.25])
     assert all(
         f['flourish'] == 0 for f in frames if f['stage'] in ('reverse', 'english', 'amharic')
     )
