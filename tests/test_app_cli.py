@@ -1,4 +1,3 @@
-import hashlib
 import subprocess
 import sys
 from pathlib import Path
@@ -9,7 +8,6 @@ from ebible import __version__
 from ebible.__main__ import main
 from ebible.app import EBibleApp
 from ebible.core.models import VerseRef
-from ebible.core.scripture import DB_PATH
 
 
 def test_version_help_and_invalid_arguments(capsys):
@@ -71,39 +69,5 @@ except SystemExit as exc:
     assert exc.code == 0
 assert 'textual' not in sys.modules
 assert 'anthropic' not in sys.modules
-"""
-    subprocess.run([sys.executable, '-c', code], capture_output=True, encoding='utf-8', check=True)
-
-
-def test_relocated_translation_read_commands():
-    before = hashlib.sha256(DB_PATH.read_bytes()).digest()
-    script = Path('tools/translation/translate.py').resolve()
-    for command, expected in (
-        (['status'], '20,443 / 39,169'),
-        (['pull', 'john', '3'], '1. '),
-        (['next', '--count', '1'], '2-samuel'),
-    ):
-        result = subprocess.run(
-            [sys.executable, str(script), *command],
-            cwd='/tmp',
-            capture_output=True,
-            encoding='utf-8',
-            check=True,
-        )
-        assert expected in result.stdout
-    assert hashlib.sha256(DB_PATH.read_bytes()).digest() == before
-
-
-def test_relocated_tool_imports_and_source_path():
-    code = """
-import importlib
-from pathlib import Path
-import sys
-sys.path.insert(0, str(Path('tools/translation').resolve()))
-for name in ('audit_source', 'build_db', 'check_consistency', 'fix_term', 'lookup', 'plan_batches', 'repair_artifacts', 'seal_db', 'translate'):
-    importlib.import_module(name)
-from build_db import DEFAULT_ASSETS, SCHEMA
-assert DEFAULT_ASSETS == Path('source/Bible81').resolve()
-assert DEFAULT_ASSETS.is_dir() and SCHEMA.is_file()
 """
     subprocess.run([sys.executable, '-c', code], capture_output=True, encoding='utf-8', check=True)

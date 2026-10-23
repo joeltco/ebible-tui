@@ -11,7 +11,6 @@ from ebible.ui.screens.base import Confirm
 from ebible.ui.screens.plans import PlansScreen
 from ebible.ui.screens.search import SearchScreen
 from ebible.ui.widgets.controls import TextInput
-from ebible.ui.widgets.verse_view import VerseView
 
 
 async def finish_search(app, pilot):
@@ -30,14 +29,15 @@ async def test_search_plain_raw_error_scope_language_and_jump(running_app):
         await finish_search(app, pilot)
         message = str(screen.query_one('#search-message', Static).content)
         assert ('not valid' in message) == query.startswith('=')
-    screen.query_one(TextInput).value = 'LORD'
+    screen.query_one(TextInput).value = 'እግዚአብሔር'
     screen.query_one('#search-scope', Select).value = 'nt'
-    screen.query_one('#search-language', Select).value = 'en'
     await finish_search(app, pilot)
-    assert screen.results and all(
-        r.ref.book_id >= 55 and r.language == 'en' for r in screen.results
+    assert screen.results and all(r.ref.book_id >= 55 for r in screen.results)
+    assert (
+        screen.query_one('#search-results', OptionList)
+        .get_option_at_index(0)
+        .prompt.renderable.spans
     )
-    assert screen.query_one('#search-results', OptionList).get_option_at_index(0).prompt.spans
     assert screen.query_one('#search-results', OptionList).option_count == len(screen.results)
     target = screen.results[0].ref
     screen.query_one(TextInput).focus()
@@ -54,7 +54,7 @@ async def test_search_stale_results_and_current_book(running_app, monkeypatch):
     screen.query_one(TextInput).value = 'እግዚአብሔር'
     await finish_search(app, pilot)
     assert screen.results and all(r.ref.book_id == 58 for r in screen.results)
-    screen.query_one(TextInput).value = 'LORD'
+    screen.query_one(TextInput).value = 'እግዚአብሔር'
     screen.query_one(TextInput).value = 'zzzzzzzzzzzzzzzzzzzzzzzz'
     await finish_search(app, pilot)
     assert not screen.results
@@ -70,7 +70,7 @@ async def test_search_jump_still_validates_result(running_app):
     await pilot.press('/')
     await finish_search(app, pilot)
     app.screen.results = (
-        SearchResult(VerseRef(28, 151), 'Explicit invalid temporary result fixture', 'en'),
+        SearchResult(VerseRef(28, 151), 'Explicit invalid temporary result fixture'),
     )
     from textual.widgets.option_list import Option
 
@@ -92,7 +92,6 @@ async def test_settings_live_persistence_all_controls_and_restart(terminal_size)
         screen = app.screen
         choices = {
             'theme': 'parchment',
-            'layout': 'parallel',
             'verse_flow': 'paragraph',
             'verse_spacing': 'compact',
             'book_name_language': 'en',
@@ -105,7 +104,6 @@ async def test_settings_live_persistence_all_controls_and_restart(terminal_size)
         assert app.theme == 'parchment'
         for field, value in {
             'verse_numbers': False,
-            'show_untranslated_placeholder': False,
             'haptic_feedback': True,
         }.items():
             screen.query_one(f'#setting-{field}', Switch).value = value
@@ -120,9 +118,7 @@ async def test_settings_live_persistence_all_controls_and_restart(terminal_size)
         await pilot.pause()
         assert load_settings().text_max_width == 60
         await pilot.press('escape')
-        assert app.reader.query_one(VerseView).effective_layout == (
-            'parallel' if terminal_size[0] >= 90 else 'interleaved'
-        )
+        assert app.reader.query_one('#paragraph')
     restored = EBibleApp()
     async with restored.run_test(size=terminal_size):
         await asyncio.wait_for(restored.ready.wait(), 5)
@@ -224,7 +220,7 @@ async def tap(pilot, selector):
 async def test_search_results_are_visible_and_tappable(running_app):
     app, pilot = running_app
     await pilot.press('/')
-    app.screen.query_one(TextInput).value = 'LORD'
+    app.screen.query_one(TextInput).value = 'እግዚአብሔር'
     await finish_search(app, pilot)
     screen = app.screen
     listing = screen.query_one('#search-results', OptionList)

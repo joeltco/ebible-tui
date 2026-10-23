@@ -13,19 +13,16 @@ from ebible.paths import settings_path
 @dataclass(frozen=True, slots=True)
 class Settings:
     theme: str = 'meskel'
-    layout: Literal['amharic', 'english', 'interleaved', 'parallel'] = 'interleaved'
     verse_flow: Literal['lines', 'paragraph'] = 'lines'
     verse_numbers: bool = True
     verse_spacing: Literal['compact', 'comfortable'] = 'comfortable'
     book_name_language: Literal['am', 'en', 'both'] = 'both'
     text_max_width: int = 100
     translation_backend: Literal['auto', 'claude', 'google', 'off'] = 'auto'
-    show_untranslated_placeholder: bool = True
     haptic_feedback: bool = False
 
 
 _CHOICES: dict[str, set[str]] = {
-    'layout': {'amharic', 'english', 'interleaved', 'parallel'},
     'verse_flow': {'lines', 'paragraph'},
     'verse_spacing': {'compact', 'comfortable'},
     'book_name_language': {'am', 'en', 'both'},

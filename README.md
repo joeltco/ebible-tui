@@ -1,115 +1,122 @@
 # eBible · መጽሐፍ ቅዱስ
 
-A Termux-first terminal reader for the **81-book Ethiopian Orthodox Tewahedo
-canon**, in Amharic and English. Built for a 50×30 phone terminal, with a centred
-reading column and parallel languages on wider terminals.
+A Termux-first **Amharic reader** for the 81-book Ethiopian Orthodox Tewahedo
+canon. Built for a 50×30 phone terminal, with a centred reading column on desktop.
+
+**Press Enter or tap a verse to translate it.** English appears beneath that verse;
+press Enter or tap it again to hide it. Re-showing is instant within the same session.
+Translations are never saved to disk and disappear when the app closes.
 
 ## Run locally
 
-Requires Python 3.11 or newer. Everything installs inside the repository's venv:
+Requires Python 3.11 or newer. Install inside the repository's venv:
 
 ```sh
 python -m venv .venv
 . .venv/bin/activate
 pip install -e '.[dev]'
 ebible
-# Open a passage or choose a theme for this session:
 ebible 'john 3:16' --theme parchment
 ebible 'ዘፍ 1'
 ebible --version
 ```
 
-The reader resumes your last position. An explicit CLI reference overrides resume;
-`--theme` overrides the saved theme for the session. Settings changes save immediately.
+The reader resumes your last position. A CLI reference overrides resume; `--theme`
+overrides the saved theme for the session. Settings changes save immediately.
 
-## Read, keep, return
+## Read, translate, keep
 
-- Amharic, English, interleaved, or parallel languages. Parallel falls back to
-  interleaved below 90 terminal columns. Choose verse lines or continuous paragraphs.
-- Below 80 columns, a one-row book/chapter header leaves 26 of 30 rows for reading.
-  Wider terminals retain the full header. Long compact titles ellipsize the book name.
-- Six custom themes: `meskel`, `tewahedo`, `parchment` (light), `lalibela`, `midnight`,
-  and `high-contrast`, plus Textual's built-ins.
-- Tap a verse or press Enter for bookmarks, colour highlights, Markdown notes,
-  copying, or live chapter translation. `◆` marks a bookmark; `✎` marks a note.
-- Browse the canon by section, filter English/Amharic book names, or use the chapter grid.
-- Search, saved collections, history, and generated reading plans each have dedicated
-  screens. Delete and restart actions ask for confirmation; unsaved notes are protected.
+Choose Amharic verse lines or flowing paragraphs. Book names may be Amharic,
+English, or both. Opening a translation in paragraph flow places it beneath its
+source verse; hiding it restores the continuous paragraph.
 
-All primary actions are tappable. From the reader:
+Below 80 columns, one-row headers leave room for reading. Six custom themes
+(`meskel`, `tewahedo`, `parchment`, `lalibela`, `midnight`, `high-contrast`) appear
+first in the theme picker, followed by Textual's built-ins.
+
+Press **`a`** or tap the footer **Verse** button for bookmarks, colour highlights,
+Markdown notes, and copying. `◆` marks a bookmark; `✎` marks a note. Copy Amharic
+with its reference, or include a verse's translation if it was requested during
+this session. There is no English-only copy action.
+
+Browse books by section, filter English/Amharic names, and choose a chapter.
+Search, saved collections, history, and generated reading plans have dedicated
+screens. Deletion/restart requires confirmation; unsaved notes are protected.
 
 | Keys | Action |
 |---|---|
 | `↑` / `k`, `↓` / `j` | Previous / next verse |
 | `←` / `h`, `→` / `l` | Previous / next chapter |
-| Enter | Selected verse's actions |
+| Enter / tap a verse | Translate / hide that verse's translation |
+| `a` / footer Verse | Verse actions |
 | `b`, `/`, `g` | Books, search, go to reference |
 | `m`, `v`, `n`, `t` | Bookmarks, highlights, notes, history |
-| `p`, `s`, `?` | Plans, settings, help / more destinations |
+| `p`, `s`, `?` | Plans, settings, help |
 | Tab, Enter / Space | Focus and activate controls |
-| Escape | Back; at the reader, return focus to reading |
+| Escape | Back; in the reader, return focus to reading |
 | `q` | Quit from the reader |
 
-Typing in a search, reference, or note field never activates reader shortcuts.
-The Help screen includes touch routes to every destination and a Quit button.
+Typing in search, reference, and note fields never activates reader shortcuts.
+Every primary action is tappable; no Ctrl/Alt combinations are required.
 
-## Search and source numbering
-
-Search treats ordinary words and punctuation as plain text, including `john's`
-and `God AND`. The last word is a prefix for search-as-you-type. Start a query
-with `=` for raw FTS5, for example `="LORD God"`. Invalid advanced syntax shows
-an explanation without closing the search screen. Search covers bundled English
-and Amharic; it does not index live translations.
-
-Every jump validates the actual stored chapter and verse numbers. **Psalm 151
-is filed as Psalms 150:7-14** in this source: use `ps 150:7-14`. A request for
-`ps 151` explains this placement. No text is invented, renumbered, or rebuilt.
-
-## Data and live translation
-
-The protected `src/ebible/data/bible.db` contains 39,169 Amharic verses and reviewed
-English for 20,443. It is opened read-only. Never rebuild or modify it. The raw
-Amharic source, canon rows, schema, and binding translation documentation are preserved.
-
-Settings use `$XDG_CONFIG_HOME/ebible` (default `~/.config/ebible`). Personal data
-uses `$XDG_DATA_HOME/ebible` (default `~/.local/share/ebible`). Relative or empty
-XDG variables use the defaults. The app never changes `~/.termux`.
-
-Live English is stored separately in `user.db`, with backend and timestamp
-provenance, and displayed with **◇ Machine**. Bundled English always wins.
-Wholly untranslated chapters show one notice and Amharic-only verses. Partial chapters
-use short dim placeholders; Settings can shorten these further. ◇ is reserved for
-live machine English.
+## On-demand translation
 
 ```sh
-# Optional Claude backend, installed inside the activated venv:
+# Optional Claude backend, inside the activated venv:
 pip install -e '.[claude]'
 ```
 
-With `ANTHROPIC_API_KEY` set, automatic mode selects Claude; otherwise it uses
-translate-shell's `trans` if available, otherwise off. Explicit backend choices
-are also available. Translation runs only when you tap **Translate this chapter**.
-Claude uses `claude-sonnet-5-5`, the byte-identical packaged translation guide, and
-an in-app addendum requiring numbered lines without summaries. A single code fence
-is tolerated; missing, extra, duplicate, blank, or incomplete verses are rejected
-before any translations are saved. Google fallback translates per verse.
+Automatic mode chooses Claude when `ANTHROPIC_API_KEY` is set; otherwise it uses
+translate-shell's `trans` when available, otherwise off. Settings also offers
+explicit Claude, Google, and Off choices. With no backend, Enter explains how to
+configure one inline. Network errors, timeouts, and mismatched verse numbers also
+show an inline message with a retry/configuration action.
 
-Copy uses `termux-clipboard-set` when available, otherwise OSC 52. Optional bookmark
-vibration uses `termux-vibrate -d 20` and is off by default. Termux commands run in
-workers with timeouts; tests simulate them without invoking device services.
+Claude uses `claude-sonnet-5-5` and the unchanged translation guide. It receives the
+whole chapter's Amharic as context, but must return **only the requested verse** as
+one `N. text` line. A single surrounding code fence is tolerated; wrong, missing,
+extra, duplicate, empty, incomplete, or commentary-bearing responses are rejected.
+Google receives only the target verse. Requests run in workers while reading and
+navigation remain responsive. `◇ Translation` identifies the secondary-coloured
+English. Repeated taps during a request do not create duplicate requests.
 
-The relocated offline pipeline's read commands work:
+## Search and source numbering
+
+Search indexes **Amharic only**. Plain words and punctuation are safe as you type;
+the last token is a prefix. Start with `=` for raw FTS5, for example
+`="እግዚአብሔር"`. Invalid syntax gets an explanation. All/OT/NT/current-book scopes
+are available, and every result has the same one-row gap after its snippet.
+
+Every jump validates actual source chapter and verse numbers. **Psalm 151 is filed
+as Psalms 150:7-14**: use `ps 150:7-14`. No verses are invented or renumbered.
+
+## Storage
+
+The packaged `src/ebible/data/bible.db` contains 39,169 Amharic verses and no English
+scripture, English FTS column, or translation-coverage metadata. Runtime access is
+read-only. Batch 5 removed English with `tools/strip_english.py`; every original
+Amharic verse tuple and book row is protected by the recorded pre-removal checksums
+in `tests/fixtures/amharic_checksums.json`. The old database is recoverable from git
+at `e1564db`; no old-English database copy is kept in the tree.
+
+To reproduce the stripped database from a source database:
 
 ```sh
-python tools/translation/translate.py status
-python tools/translation/translate.py pull john 3
-python tools/translation/translate.py next --count 5
+python tools/strip_english.py /path/to/source.db --out /tmp/amharic.db
 ```
 
-Only import/path repairs were made to the inherited pipeline. Its `translate.py`
-legacy writable-helper name aliases the read-only helper, so `push` cannot modify
-the protected database. Other inherited maintenance scripts retain their write
-logic and must not be run against it.
+The tool preserves the source values, builds Amharic-only FTS, verifies the result,
+VACUUMs it, and atomically replaces its destination. The offline translation pipeline
+has been removed. The translation guide and source-issues document remain intact.
+
+Preferences use `$XDG_CONFIG_HOME/ebible` (default `~/.config/ebible`); annotations,
+history, resume, and plans use `$XDG_DATA_HOME/ebible/user.db` (default
+`~/.local/share/ebible/user.db`). Relative/empty XDG values use these defaults.
+Existing user databases migrate forward to drop and erase the old translation cache
+while preserving personal data. Removed settings keys are ignored safely.
+
+Copy uses `termux-clipboard-set` when available, otherwise OSC 52. Optional bookmark
+vibration uses `termux-vibrate -d 20`, off by default. The app never changes `~/.termux`.
 
 ## Development checks
 
@@ -121,12 +128,10 @@ pytest -q
 python tools/smoke.py --out /tmp/ebible-smoke
 ```
 
-Smoke uses temporary XDG directories and visits every screen and modal at 50×30
-and 120×40 under meskel, parchment, and lalibela. It writes 144 SVGs plus a
-`manifest.txt`, including reference/search errors, confirmation sheets, the theme
-picker, paragraph/parallel layouts, and untranslated passages. It never touches
-real preferences or personal data.
+Smoke uses temporary XDG directories at 50×30 and 120×40 under meskel, parchment,
+and lalibela. It visits every screen/modal, including translating, translated,
+translation-error, actions, and Amharic search states. All translation responses in
+smoke and tests are explicitly labelled fixtures; no real backend or network is used.
 
-See [AGENTS.md](AGENTS.md) for the binding spec and current gate results,
-[foundation decisions](docs/FOUNDATION.md) for core conventions, and
-[UI decisions](docs/UI_DECISIONS.md) for interaction and visual choices.
+See [AGENTS.md](AGENTS.md) for the binding spec and current gate results and
+[UI decisions](docs/UI_DECISIONS.md) for interaction choices.

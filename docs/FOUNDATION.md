@@ -1,4 +1,4 @@
-# Batch 1 foundation decisions
+# Foundation decisions (updated for Batch 5)
 
 These choices resolve details not fixed by AGENTS.md. Batch 2 now supplies the
 reader, themes, device integration, and persisted UI wiring; see UI_DECISIONS.md.
@@ -20,18 +20,22 @@ The reference, search, and translation contracts below include the review fixes.
   Interior source gaps are not filled or renumbered.
 - Search quotes plain word tokens, with a prefix on the final token. Raw FTS5 is
   opt-in with a leading `=`. It ranks results and supports offset pagination
-  (default 100 results, maximum 1,000). It searches bundled text only; live user
-  translations are not part of the protected FTS index. Snippets carry control
+  (default 100 results, maximum 1,000). It searches Amharic only. Session
+  translations are never indexed. Snippets carry control
   characters U+0001/U+0002 around matches, not Rich markup. UI code must render
   literal Text spans safely; the UI invokes search in a Textual worker.
-- Verse values retain raw `text_en` separately from display `english` and
-  `english_source`. NULL means untranslated; an existing empty bundled string is
-  not silently replaced. The UI styles placeholders and labels live English ◇ Machine.
+- Verse values contain only their reference and Amharic text. The packaged database
+  has no English column, English FTS terms, or translation coverage metadata.
+  `tools/strip_english.py` creates a fresh deterministic database from the source,
+  verifies every source row, then VACUUMs and atomically replaces the destination.
+  Golden digests cover every original verse tuple and every book row; these were
+  recorded before stripping English. The old database remains in git, not the tree.
 
 ## Personal data and settings
 
 - Migration v1 creates annotations, history/resume, and plans; v2 adds live
-  translation. Migrations run in one transaction with a write lock. Newer schema
+  translation historically; v3 drops that cache with secure deletion, VACUUM, and
+  WAL truncation. Migrations run in one transaction with a write lock. Newer schema
   versions are rejected unchanged; failures roll back schema and version.
 - Annotations attach to individual verses; range annotations are rejected. There
   is one bookmark, highlight, and Markdown note per verse. Highlight names are
@@ -67,30 +71,24 @@ The reference, search, and translation contracts below include the review fixes.
 
 ## Translation
 
-- The async service offloads scripture reads, backend selection, translation, and
-  writes with `asyncio.to_thread`. The UI awaits it inside a Textual worker.
-- Whole-chapter source text is sent even when only some verses lack English.
-  Exact verse-number alignment is required for every backend. Persist only verses
-  missing both bundled and live English; existing reviewed/live text is preserved.
-  There is no automatic refresh or overwrite mode in this batch.
-- Claude is lazy-imported and selected first when an API key exists. A missing
-  optional SDK or a backend error is reported, not silently retried through Google.
-  Claude gets one request per chapter, a 120-second timeout, no automatic retries,
-  and 16,384 output tokens. Non-final/truncated responses are rejected even if
-  their verse numbers happen to match. Missing/extra/duplicate numbers, wrapped
-  lines, commentary, and blank output reject the batch before writes. A single
-  surrounding code fence is accepted. The guide remains unchanged; an appended
-  in-app system-prompt addendum explicitly forbids summaries and commentary.
-- translate-shell receives Amharic over stdin (no shell interpolation), uses
-  Google explicitly, translates per verse, and has a 20-second per-verse timeout.
-  Its output is machine translation; it cannot enforce the Claude translation
-  guide. All live text carries provenance and is visibly marked in the reader and copies.
-- The packaged guide is a byte-for-byte copy of the binding documentation. A test
-  catches drift. No network translations or invented scripture were used in tests.
-- Offline pipeline changes are import/path fixes only. `translate.py`'s historical
-  writable helper name points to `open_readonly`; this lets status/pull/next work
-  without reintroducing any bundled-DB writer in the application core. Historical
-  push cannot write. Other inherited maintenance scripts remain archival tooling.
+- The async service offloads scripture reads, backend selection, and translation
+  through `asyncio.to_thread`. The UI awaits it in a Textual worker. Results are
+  returned to memory only; neither the service nor backend writes personal data.
+- The translation unit is exactly one verse. Claude receives its whole chapter's
+  Amharic as context and returns only the requested numbered verse. Missing, extra,
+  duplicate, wrong numbers, blank output, or commentary reject the result. A single
+  surrounding code fence is accepted. Truncated/non-final responses are rejected.
+- Claude is lazy-imported and preferred when an API key exists. A missing optional
+  SDK or backend error is reported, not silently retried through Google. Requests
+  use a 30-second SDK timeout, no retries, and a 4,096-token output budget. The guide
+  is byte-identical, with an appended single-verse/no-commentary output contract.
+- Google receives only the selected verse over stdin without shell interpolation,
+  using translate-shell's Google engine and a 20-second subprocess timeout.
+- The service has a 45-second outer deadline. Errors are actionable and results
+  that fail alignment never enter session memory. A timed-out thread may finish
+  cleanup later; its result is discarded and cannot write a cache.
+- There is no offline translation pipeline. Tests use fake clients/backends only.
+  The packaged guide is a byte-for-byte copy of the binding documentation.
 
 ## API references consulted
 

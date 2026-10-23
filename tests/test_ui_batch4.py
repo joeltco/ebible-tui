@@ -1,44 +1,9 @@
 """Focused regressions for the eight Batch 4 review items."""
 
-from xml.etree import ElementTree as ET
-
 import pytest
 from textual.widgets import OptionList, Static
 
 from ebible.core.models import VerseRef
-
-
-def test_real_amos_snippet_preserves_every_character(scripture):
-    from ebible.ui.screens.search import snippet_text
-
-    ref = VerseRef(44, 7, 6)
-    result = next(r for r in scripture.search('LORD') if r.ref == ref)
-    plain = result.snippet.replace('\x01', '').replace('\x02', '')
-    rendered = snippet_text(result.snippet)
-    assert rendered.plain == plain == scripture.verse(ref).english
-    assert 'LORD repented' in rendered.plain
-    # Explicit whitespace fixture: only control markers may disappear.
-    assert snippet_text(' \t\x01LORD\x02  \n repented ').plain == ' \tLORD  \n repented '
-
-
-async def test_real_amos_search_export_keeps_gap_after_highlight(running_app):
-    app, pilot = running_app
-    await pilot.press('/')
-    app.screen.query_one('#search-input').value = 'LORD'
-    await pilot.pause()
-    await app.workers.wait_for_complete()
-    listing = app.screen.query_one('#search-results', OptionList)
-    index = next(i for i, r in enumerate(app.screen.results) if r.ref == VerseRef(44, 7, 6))
-    prompt = listing.get_option_at_index(index).prompt
-    assert 'LORD repented' in prompt.plain
-    listing.highlighted = index
-    listing.scroll_to_highlight()
-    await pilot.pause()
-    nodes = list(ET.fromstring(app.export_screenshot()).iter('{http://www.w3.org/2000/svg}text'))
-    following = next(n for n in nodes if (n.text or '').startswith('repented'))
-    preceding = next(n for n in nodes if n.text == 'LORD' and n.get('y') == following.get('y'))
-    cell = float(preceding.get('textLength')) / 4
-    assert float(following.get('x')) >= float(preceding.get('x')) + 5 * cell - 0.01
 
 
 @pytest.mark.parametrize(
@@ -65,7 +30,7 @@ async def test_collection_singular_plural_and_single_chapter_book(running_app):
     ref = VerseRef(1)
     app.userdata.add_bookmark(ref)
     app.userdata.set_highlight(ref, 'gold')
-    app.userdata.save_note(ref, app.scripture.verse(ref).english)  # Temporary real-text fixture.
+    app.userdata.save_note(ref, app.scripture.verse(ref).text_am)  # Temporary real-text fixture.
     for kind, singular in [
         ('bookmarks', 'bookmark'),
         ('highlights', 'highlight'),
@@ -98,62 +63,6 @@ async def test_plan_fractional_percent_is_never_zero_once_started(running_app):
         progress.update(progress=completed)
         await pilot.pause()
         assert label.render() == expected
-
-
-async def test_bilingual_paragraphs_are_separate_and_both_resolve_taps(running_app):
-    from rich.style import Style
-    from rich.table import Table
-
-    from ebible.ui.widgets.verse_view import Paragraph, VerseView
-
-    app, pilot = running_app
-    await app.update_setting('verse_flow', 'paragraph')
-    await pilot.pause()
-    view = app.reader.query_one(VerseView)
-    am = view.query_one('#paragraph', Paragraph)
-    en = view.query_one('#paragraph-english', Paragraph)
-    chapter = app.reader.chapter_data
-    assert am.region.bottom < en.region.y
-    for verse in chapter:
-        assert verse.text_am in am.content.plain
-        assert verse.english in en.content.plain
-        assert verse.english not in am.content.plain
-        assert verse.text_am not in en.content.plain
-    assert ' / ' not in am.content.plain + en.content.plain
-    assert am.content.plain.startswith('¹ ') and en.content.plain.startswith('¹ ')
-    assert any(isinstance(s.style, Style) and s.style.dim for s in am.content.spans)
-    for paragraph in (am, en):
-        paragraph.scroll_visible(animate=False, top=True)
-        await pilot.pause()
-        assert await pilot.click(paragraph, offset=(4, 0))
-        assert app.reference == VerseRef(1)
-        assert app.screen.__class__.__name__ == 'VerseActions'
-        await pilot.press('escape')
-    await pilot.press('j')
-    assert app.reference.verse == 2
-    assert view.active_paragraph == 'paragraph-english'
-    assert any(
-        isinstance(s.style, Style)
-        and s.style.underline
-        and chapter.verses[1].english in en.content.plain[s.start : s.end]
-        for s in en.content.spans
-    )
-    await pilot.resize_terminal(120, 40)
-    await app.update_setting('layout', 'parallel')
-    await pilot.pause()
-    content = view.query_one(Paragraph).content
-    assert isinstance(content, Table)
-    left, right = (col._cells[0] for col in content.columns)
-    assert chapter.verses[0].text_am in left.plain and chapter.verses[0].english not in left.plain
-    assert chapter.verses[0].english in right.plain and chapter.verses[0].text_am not in right.plain
-    for layout, first in [
-        ('amharic', chapter.verses[0].text_am),
-        ('english', chapter.verses[0].english),
-    ]:
-        await app.update_setting('layout', layout)
-        await pilot.pause()
-        assert len(view.query(Paragraph)) == 1
-        assert view.query_one(Paragraph).content.plain.startswith(' 1 ' + first)
 
 
 async def test_custom_themes_first_with_disabled_group_headings(running_app):
@@ -190,11 +99,8 @@ async def test_paragraph_resize_and_refresh_cannot_remove_each_others_blocks(run
     view = app.reader.query_one(VerseView)
     await asyncio.gather(view.rebuild(), view.rebuild())
     await pilot.pause()
-    assert len(view.query(Paragraph)) == 2
-    assert (
-        app.reader.chapter_data.verses[0].english
-        in view.query_one('#paragraph-english').content.plain
-    )
+    assert len(view.query(Paragraph)) == 1
+    assert app.reader.chapter_data.verses[0].text_am in view.query_one('#paragraph').content.plain
 
 
 async def test_secondary_page_headers_one_row_and_resize(running_app):
@@ -268,7 +174,7 @@ async def test_help_key_chips_have_fixed_accent_column_and_all_groups(running_ap
         'THE ETHIOPIAN PSALTER',
     ]
     rows = list(help_card.query('.key-row'))
-    assert len(rows) == 22
+    assert len(rows) == 23
     for row in rows:
         chip = row.query_one('.key-chip')
         description = row.query_one('.key-description')

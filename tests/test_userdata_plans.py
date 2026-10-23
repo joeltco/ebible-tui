@@ -23,8 +23,8 @@ def test_migrations_empty_and_reopen(userdata):
         'reading_position',
         'plan',
         'plan_progress',
-        'live_translation',
     } <= tables
+    assert 'live_translation' not in tables
     userdata.add_bookmark(VerseRef(1))
     assert UserDataStore(userdata.path).bookmarks() == userdata.bookmarks()
 
@@ -38,7 +38,7 @@ def test_forward_migration_preserves_data(tmp_path):
         db.execute("INSERT INTO bookmark VALUES(1,1,1,'2026-01-01T00:00:00+00:00')")
     store = UserDataStore(path)
     assert store.bookmarks()[0].ref == VerseRef(1)
-    assert store.live_chapter(1, 1) == {}
+    assert not hasattr(store, 'live_chapter')
 
 
 def test_future_version_rejected_unchanged(tmp_path):
@@ -50,6 +50,53 @@ def test_future_version_rejected_unchanged(tmp_path):
     with closing(sqlite3.connect(path)) as db, db:
         assert db.execute('PRAGMA user_version').fetchone()[0] == 999
         assert db.execute('SELECT count(*) FROM sqlite_master').fetchone()[0] == 0
+
+
+def test_v2_cache_dropped_and_personal_data_survives(userdata, scripture):
+    ref = VerseRef(1)
+    userdata.add_bookmark(ref)
+    userdata.set_highlight(ref, 'gold')
+    userdata.save_note(ref, 'Explicit temporary note fixture')
+    userdata.record_position(ref)
+    plan = generate_plans(scripture.chapter_counts())[0]
+    userdata.start_plan(plan, date.today())
+    userdata.complete_day(plan.id, 1)
+    before = (
+        userdata.bookmarks(),
+        userdata.highlights(),
+        userdata.notes(),
+        userdata.history(),
+        userdata.reading_position(),
+        userdata.plan_progress(plan.id),
+    )
+    sentinel = 'Explicit legacy translation fixture to erase'
+    with sqlite3.connect(userdata.path) as db:
+        db.execute('PRAGMA journal_mode=WAL')
+        db.execute('DROP TABLE IF EXISTS live_translation')
+        db.execute(_MIGRATIONS[2][0])
+        db.execute(
+            'INSERT INTO live_translation VALUES(1,1,1,?,?,?)',
+            (sentinel, 'fixture', '2026-01-01T00:00:00+00:00'),
+        )
+        db.execute('PRAGMA user_version=2')
+    migrated = UserDataStore(userdata.path)
+    assert before == (
+        migrated.bookmarks(),
+        migrated.highlights(),
+        migrated.notes(),
+        migrated.history(),
+        migrated.reading_position(),
+        migrated.plan_progress(plan.id),
+    )
+    with sqlite3.connect(userdata.path) as db:
+        assert db.execute('PRAGMA user_version').fetchone()[0] == 3
+        assert not db.execute(
+            "SELECT name FROM sqlite_master WHERE name='live_translation'"
+        ).fetchall()
+    for file in userdata.path.parent.iterdir():
+        assert sentinel.encode() not in file.read_bytes()
+    for method in ('save_translations', 'live_chapter', 'live_translation', 'delete_translation'):
+        assert not hasattr(migrated, method)
 
 
 def test_migration_failure_rolls_back(tmp_path, monkeypatch):
@@ -104,27 +151,6 @@ def test_resume_history_pruned_and_deduplicated(tmp_path):
     assert store.reading_position() == VerseRef(1, 1, 3)
     with pytest.raises(ValueError):
         UserDataStore(tmp_path / 'invalid.db', history_limit=0)
-
-
-def test_live_translations_atomic_provenance(userdata, scripture):
-    chapter = scripture.chapter(1, 1)
-    texts = {v.verse: v.english for v in chapter}
-    userdata.save_translations(1, 1, texts, 'fixture')
-    assert userdata.live_chapter(1, 1) == texts
-    translation = userdata.live_translation(VerseRef(1))
-    assert translation.backend == 'fixture' and translation.text == texts[1]
-    assert translation.translated_at.tzinfo is not None
-    userdata.save_translations(1, 1, {1: texts[1]}, 'fixture-updated')
-    assert userdata.live_translation(VerseRef(1)).backend == 'fixture-updated'
-    for payload in ({1: texts[1], 2: ''}, {1: texts[1], 0: texts[1]}):
-        with pytest.raises(ValueError):
-            userdata.save_translations(1, 1, payload, 'bad')
-    with pytest.raises(ValueError):
-        userdata.save_translations(1, 1, texts, '')
-    assert userdata.live_chapter(1, 1) == texts
-    assert userdata.live_translation(VerseRef(1)).backend == 'fixture-updated'
-    userdata.delete_translation(VerseRef(1))
-    assert userdata.live_translation(VerseRef(1)) is None
 
 
 def test_userdata_worker_connections(userdata):

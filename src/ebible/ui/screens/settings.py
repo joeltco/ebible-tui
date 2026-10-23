@@ -23,18 +23,6 @@ class SettingsScreen(Page):
                 value=self.app.theme,
                 id='setting-theme',
             )
-            yield Static('Languages', markup=False)
-            yield Choice(
-                [
-                    ('አማርኛ · Amharic', 'amharic'),
-                    ('English', 'english'),
-                    ('Amharic, then English', 'interleaved'),
-                    ('Side by side · wide terminals', 'parallel'),
-                ],
-                value=settings.layout,
-                allow_blank=False,
-                id='setting-layout',
-            )
             yield Static('Reading flow', markup=False)
             yield Choice(
                 [('One verse at a time', 'lines'), ('Continuous paragraphs', 'paragraph')],
@@ -76,14 +64,10 @@ class SettingsScreen(Page):
                 allow_blank=False,
                 id='setting-translation_backend',
             )
-            yield Static('Detailed untranslated messages', markup=False)
-            yield Switch(
-                settings.show_untranslated_placeholder, id='setting-show_untranslated_placeholder'
-            )
             yield Static('Vibrate when bookmarking · Termux', markup=False)
             yield Switch(settings.haptic_feedback, id='setting-haptic_feedback')
             yield Static(
-                'Parallel columns become interleaved below 90 columns. Untranslated English always keeps a visible marker.',
+                'Enter or tap a verse to translate. Translations last only for this session.',
                 classes='page-footnote',
                 markup=False,
             )

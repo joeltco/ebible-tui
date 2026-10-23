@@ -8,6 +8,10 @@ from ebible.core.userdata import UserDataStore
 
 @pytest.fixture(autouse=True)
 def isolated_paths(tmp_path, monkeypatch):
+    import shutil
+
+    which = shutil.which
+    monkeypatch.setattr(shutil, 'which', lambda name: None if name == 'trans' else which(name))
     monkeypatch.setenv('XDG_CONFIG_HOME', str(tmp_path / 'config'))
     monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path / 'data'))
     monkeypatch.delenv('ANTHROPIC_API_KEY', raising=False)

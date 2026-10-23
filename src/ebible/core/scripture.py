@@ -2,19 +2,17 @@
 
 import re
 import sqlite3
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Literal
 
 from ebible.canon import BOOKS, BY_ID, BY_SLUG, Book
 from ebible.core.labels import count_label
-from ebible.core.models import Chapter, EnglishSource, ScriptureStats, SearchResult, Verse, VerseRef
+from ebible.core.models import Chapter, ScriptureStats, SearchResult, Verse, VerseRef
 from ebible.core.refs import ReferenceError
 
 DB_PATH = Path(__file__).resolve().parents[1] / 'data' / 'bible.db'
-WRITE_TIMEOUT = 30  # Legacy offline scripts import this timeout; the app never writes here.
-LiveLookup = Callable[[int, int], dict[int, str]]
 
 
 @contextmanager
@@ -32,9 +30,8 @@ class SearchError(ValueError):
 
 
 class ScriptureStore:
-    def __init__(self, path: Path = DB_PATH, live_lookup: LiveLookup | None = None) -> None:
+    def __init__(self, path: Path = DB_PATH) -> None:
         self.path = path
-        self.live_lookup = live_lookup
 
     def close(self) -> None:
         """No persistent connections; retained for offline callers."""
@@ -54,37 +51,20 @@ class ScriptureStore:
 
     def stats(self) -> ScriptureStats:
         with open_readonly(self.path) as db:
-            row = db.execute('SELECT count(*) AS n, count(text_en) AS en FROM verse').fetchone()
-            return ScriptureStats(row['n'], row['en'])
+            row = db.execute('SELECT count(*) AS n FROM verse').fetchone()
+            return ScriptureStats(row['n'])
 
     def chapter(self, book: int, chapter: int) -> Chapter:
         if book not in BY_ID or chapter < 1:
             raise ReferenceError('Unknown book or chapter')
         with open_readonly(self.path) as db:
             rows = db.execute(
-                'SELECT verse, text_am, text_en FROM verse WHERE book_id=? AND chapter=? ORDER BY verse',
+                'SELECT verse, text_am FROM verse WHERE book_id=? AND chapter=? ORDER BY verse',
                 (book, chapter),
             ).fetchall()
         if not rows:
             raise ReferenceError(f'No such chapter: {BY_ID[book].name_en} {chapter}')
-        live = self.live_lookup(book, chapter) if self.live_lookup else {}
-        verses: list[Verse] = []
-        for row in rows:
-            source: EnglishSource
-            bundled = row['text_en']
-            if bundled is not None:
-                english, source = bundled, 'bundled'
-            elif live.get(row['verse'], '').strip():
-                english, source = live[row['verse']], 'live'
-            else:
-                english, source = 'Not yet translated', 'placeholder'
-                if BY_ID[book].deuterocanonical:
-                    english += ' — no bundled English for this deuterocanonical passage'
-            verses.append(
-                Verse(
-                    VerseRef(book, chapter, row['verse']), row['text_am'], bundled, english, source
-                )
-            )
+        verses = [Verse(VerseRef(book, chapter, r['verse']), r['text_am']) for r in rows]
         return Chapter(BY_ID[book], chapter, tuple(verses))
 
     def verse(self, ref: VerseRef) -> Verse:
@@ -120,7 +100,6 @@ class ScriptureStore:
         self,
         query: str,
         scope: Literal['all', 'ot', 'nt', 'book'] = 'all',
-        lang: Literal['am', 'en', 'both'] = 'both',
         *,
         book_id: int | None = None,
         limit: int = 100,
@@ -131,8 +110,8 @@ class ScriptureStore:
         Run this synchronous method in a UI worker. Snippet markers are control
         characters, not Rich markup, so literal square brackets stay literal.
         """
-        if scope not in ('all', 'ot', 'nt', 'book') or lang not in ('am', 'en', 'both'):
-            raise SearchError('Unknown scope or language')
+        if scope not in ('all', 'ot', 'nt', 'book'):
+            raise SearchError('Unknown scope')
         if limit < 1 or limit > 1000 or offset < 0:
             raise SearchError('Limit must be 1–1000; offset must be nonnegative')
         if scope == 'book' and book_id not in BY_ID:
@@ -149,15 +128,13 @@ class ScriptureStore:
                 query += '*'
         if not query:
             return ()
-        expression = f'text_{lang} : ({query})' if lang != 'both' else query
         filters = {
             'all': '',
             'ot': ' AND v.book_id < 55',
             'nt': ' AND v.book_id >= 55',
             'book': ' AND v.book_id = ?',
         }
-        column = {'am': 0, 'en': 1, 'both': -1}[lang]
-        params: list[str | int] = [column, expression]
+        params: list[str | int] = [query]
         if scope == 'book':
             assert book_id is not None
             params.append(book_id)
@@ -165,7 +142,7 @@ class ScriptureStore:
         try:
             with open_readonly(self.path) as db:
                 rows = db.execute(
-                    "SELECT v.book_id, v.chapter, v.verse, snippet(verse_fts, ?, char(1), char(2), '…', 24) AS snippet "
+                    "SELECT v.book_id, v.chapter, v.verse, snippet(verse_fts, 0, char(1), char(2), '…', 24) AS snippet "
                     'FROM verse_fts JOIN verse v ON v.id=verse_fts.rowid WHERE verse_fts MATCH ?'
                     + filters[scope]
                     + ' ORDER BY rank, v.id LIMIT ? OFFSET ?',
@@ -179,10 +156,6 @@ class ScriptureStore:
             SearchResult(
                 VerseRef(r['book_id'], r['chapter'], r['verse']),
                 r['snippet'],
-                'en'
-                if lang == 'en'
-                or (lang == 'both' and not any('\u1200' <= c <= '\u137f' for c in r['snippet']))
-                else 'am',
             )
             for r in rows
         )

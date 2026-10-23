@@ -36,10 +36,8 @@ class VerseActions(Sheet):
             yield Static('COPY WITH REFERENCE', classes='eyebrow', markup=False)
             with Horizontal(classes='button-row'):
                 yield Button('አማርኛ', id='copy-am')
-                yield Button('English', id='copy-en')
-                yield Button('Both', id='copy-both')
-            yield Button('Translate this chapter', id='translate-verse')
-            yield Static('Live English is marked ◇ Machine.', classes='muted', markup=False)
+                if self.ref in self.eb.translations:
+                    yield Button('With translation', id='copy-both')
             yield Button('Back to reading', id='close-actions')
 
     async def on_mount(self) -> None:
@@ -73,10 +71,7 @@ class VerseActions(Sheet):
             await self.app.push_screen(NoteEditor(self.ref))
         elif name.startswith('copy-'):
             await self.eb.copy_verse(
-                self.ref, cast(Literal['am', 'en', 'both'], name.removeprefix('copy-'))
+                self.ref, cast(Literal['am', 'both'], name.removeprefix('copy-'))
             )
-        elif name == 'translate-verse':
-            self.dismiss()
-            self.eb.translate_current()
         else:
             self.dismiss()

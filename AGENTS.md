@@ -5,7 +5,7 @@ Read this whole file before touching anything. It is the spec and the rules.
 ## What this is
 
 A sophisticated terminal Bible reader for the **81-book Ethiopian Orthodox Tewahedo
-canon**, Amharic with English, built with **Textual**, designed **first for Termux on an
+canon**, an Amharic reader with on-demand verse translation, built with **Textual**, designed **first for Termux on an
 Android phone** (Galaxy S25, portrait, touch + Termux extra-keys row), and working
 equally on a desktop terminal.
 
@@ -14,12 +14,16 @@ the previous attempts are DATA, not code:
 
 | Path | What | Rule |
 |---|---|---|
-| `src/ebible/data/bible.db` | compiled scripture: 39,169 verses, `text_am` all, `text_en` for 20,443 (52%), FTS5 index `verse_fts` | ⛔ **never modify, rebuild or reformat it.** Open it read-only (`file:...?mode=ro`, `uri=True`). |
-| `src/ebible/data/schema.sql` | that db's schema | reference only |
-| `src/ebible/canon.py` | the 81 books, Ethiopian order, sections, deuterocanonical flag | keep the data rows exactly; you may tidy the module API |
-| `source/Bible81/` | raw Amharic source text the db was built from | never edit |
-| `docs/translation/*.md` | the binding translation guide, source defects, pipeline notes | `TRANSLATION_GUIDE.md` is the live translator's instructions |
-| `tools/translation/*.py` | the offline translation pipeline | fix import/paths only (they moved: `assets/Bible81` → `source/Bible81`, `tools/` → `tools/translation/`) |
+| `src/ebible/data/bible.db` | 39,169 Amharic verses; Amharic-only FTS5 | Runtime read-only. Authorized Batch 5 rebuild strips ALL English using `tools/strip_english.py`; thereafter preserve the new database. Never alter Amharic text, book rows, or numbering. Verify the recorded old-data checksums in `tests/fixtures/amharic_checksums.json`. |
+| `src/ebible/data/schema.sql` | Amharic-only schema | Keep synchronized with the packaged database. |
+| `src/ebible/canon.py` | 81 books in Ethiopian order | Preserve all data rows. |
+| `source/Bible81/` | raw Amharic source | Never edit. |
+| `docs/translation/TRANSLATION_GUIDE.md` | binding live translator prompt | Keep byte-identical, including the packaged copy; append an in-app single-verse output contract. |
+| `docs/translation/SOURCE_ISSUES.md` | source defects | Preserve. |
+
+The old English database is recoverable from git at `e1564db`. Do not keep a copy
+in the tree. The offline pipeline and its RESUME/AGENT_BRIEF documents are removed.
+
 
 All app code is new. Do not resurrect code from git history of `master` or
 `rebuild/offline-reader`; design it properly here.
@@ -38,23 +42,21 @@ src/ebible/
     refs.py          parse/format references: English names + common abbreviations + Amharic names/prefixes,
                      "book", "book ch", "book ch:v", "book ch:v-v"; ambiguity → error, not a guess
     scripture.py     read-only store over bible.db: books, chapter(book, ch) -> Chapter, verse lookup,
-                     search(query, scope, lang) via FTS5 with snippet highlighting; English overlay (below)
+                     search(query, scope) via Amharic-only FTS5 with snippet highlighting
     userdata.py      user.db (sqlite, in data dir): bookmarks, highlights (named colour), notes (markdown text,
-                     created/updated), history (last N positions), reading_position (resume), plan progress,
-                     live translations. Schema versioned with PRAGMA user_version + forward migrations.
+                     created/updated), history (last N positions), reading_position (resume), plan progress. No translation storage. Schema versioned with PRAGMA user_version + forward migrations.
     settings.py      typed Settings dataclass ↔ JSON at config dir; atomic write (tmp + os.replace);
                      unknown/invalid keys fall back to defaults with no crash
     plans.py         reading plans GENERATED from canon chapter counts (no hand-typed schedules):
                      whole canon in a year, New Testament in 90 days, Psalms+Proverbs monthly, Gospels in 30 days.
                      day N -> list of (book, chapter); progress = days completed; "today" from plan start date
-    translate/       live fill for verses whose text_en is NULL:
-      base.py        Backend protocol: translate_chapter(book, chapter, verses_am) -> {verse: text}
-      claude.py      Anthropic SDK (optional extra `ebible[claude]`, imported lazily); model claude-sonnet-5-5;
-                     system prompt = packaged TRANSLATION_GUIDE.md; whole chapter per request; verse-number
-                     alignment VERIFIED (missing/extra numbers = reject, never shift)
-      google.py      `trans` (translate-shell) subprocess fallback, per verse, timeout
-      service.py     picks backend (setting: auto|claude|google|off; auto = claude if ANTHROPIC_API_KEY else
-                     google if `trans` on PATH else off), runs in a worker, writes to userdata live table
+    translate/       on-demand, one verse per request; NEVER persist translations
+      base.py        Backend protocol: translate_verse(book, chapter, chapter_am, target) -> {target: text}
+      claude.py      lazy optional Anthropic SDK, claude-sonnet-5-5; whole chapter's Amharic as context,
+                     ONLY target verse as one N. text line; exact alignment verified
+      google.py      translate-shell subprocess for target verse ONLY, bounded timeout
+      service.py     auto = Claude if ANTHROPIC_API_KEY, else Google if trans on PATH, else off;
+                     async thread worker with timeout; no database writes
   ui/
     themes.py        custom textual.theme.Theme objects (see Themes); registered at startup
     styles/app.tcss  ONE stylesheet; use theme variables ($primary, $accent, $surface, $panel...), never hex
@@ -66,33 +68,44 @@ tools/smoke.py       boots the app headless at 50x30 and 120x40, walks every scr
                      to a given out dir, exits non-zero on any exception
 ```
 
-### English overlay
-Display English = bundled `text_en`, else live translation from user.db, else an honest
-"not yet translated" placeholder (styled, never blank). Live text is visibly marked (e.g.
-a dim `◇` or "machine" tag) so it is never mistaken for the reviewed bundled text.
-Deuterocanonical books have no bundled English in some cases; the placeholder says so.
+### Translation contract
 
-## Features (all v1)
+No bundled English, persisted English cache, coverage metadata, or placeholder text.
+Enter or a verse tap translates that one verse in a worker. Show a calm inline
+“Translating…” state, then dim/secondary English beneath the Amharic. Errors are inline
+and actionable (configure a backend/key, install translate-shell, check network, retry).
+Enter/tap hides a visible translation; re-showing is instant within the session.
+Results exist only in process memory and disappear on restart. Never write them to disk.
+Existing user databases migrate forward by dropping `live_translation` and erasing its
+freed contents; bookmarks, highlights, notes, history, resume, and plans survive.
 
-- **Reader**: verse-per-line or paragraph flow; layouts `amharic`, `english`, `interleaved`
-  (Amharic then English per verse), `parallel` (side by side; auto-falls back to interleaved
-  when width < 90). Verse cursor (up/down/j/k), chapter prev/next (left/right/h/l and
-  clickable ‹ › buttons), smooth scroll, selected-verse highlight, highlights rendered in their colour,
-  bookmark/note glyphs in the gutter. Header shows book (Amharic · English per setting) and chapter.
-- **Book picker**: grouped by section with Ethiopian order, filter-as-you-type, then a tappable
-  chapter grid. `g` = go-to-reference prompt using refs.py.
-- **Verse actions** (Enter or tap a verse): bookmark, highlight (colour swatches), add/edit note,
-  copy (Amharic / English / both, with reference), translate now (live fill this chapter).
-  Copy: `termux-clipboard-set` if on PATH, else Textual's OSC 52 `copy_to_clipboard`.
-- **Search** (`/`): FTS over Amharic and English, scope (all / OT / NT / current book), results list
-  with highlighted snippet; Enter jumps and selects the verse.
-- **Bookmarks / highlights / notes** screens: list, jump, delete (with confirm), notes editable in a TextArea.
-- **History + resume**: app reopens at last position; history screen of recent positions.
-- **Reading plans**: choose a plan, see today's chapters, mark read, streak/progress bar.
-- **Settings** screen (persisted immediately): theme (live preview), layout, verse numbers, verse
-  spacing (compact/comfortable), book-name language (am/en/both), text max-width, translation backend,
-  show-untranslated-placeholder, haptic feedback (`termux-vibrate -d 20` on bookmark, off by default).
-- **Help** (`?`): every binding.
+## Features
+
+- **Reader:** Amharic verse lines or flowing paragraphs. No English-only, interleaved,
+  parallel, or language layout setting. Inline translations interrupt paragraph flow
+  beneath their source verse and hiding them restores the flow. Verse cursor up/down/j/k;
+  chapter left/right/h/l and tappable ‹ ›; dim numbers, selection, annotation glyphs,
+  theme-aware highlights. Book names may be Amharic, English, or both.
+- **Translate:** Enter or tap a verse toggles its session translation. Repeated taps
+  during a request do not issue duplicates. Navigation stays responsive.
+- **Verse actions:** `a` or the footer Verse button opens bookmark/highlight/note/copy.
+  No chapter translation action. Copy Amharic always; copy both languages only after
+  that verse was translated this session. Never offer English-only copy. Use
+  termux-clipboard-set when available, otherwise OSC 52.
+- **Books:** section headings in canon order, filter names, chapter grid; `g` reference
+  prompt. Validate every jump against source counts, including Psalm 151 guidance.
+- **Search:** `/`, Amharic only, no language selector; all/OT/NT/current-book scopes.
+  Safe plain typing, explicit `=` raw FTS with friendly syntax errors, styled snippets,
+  consistent spacing between all results, Enter/tap jumps.
+- **Collections:** bookmarks, highlights, Markdown notes with confirmation before
+  deleting/discarding; recent history and resume; generated plans with mark-read,
+  progress and streak. Positive progress below one percent displays `<1%`.
+- **Settings:** theme, flow, numbers, spacing, book-name language, maximum reading
+  width, translation backend, optional haptics. Persist immediately; removed/unknown
+  legacy JSON keys are ignored. Six custom themes grouped first, built-ins after.
+- **Help:** every binding including Enter = translate, a = actions; accent key chips.
+- Below 80 columns, reader and secondary page headers occupy one row. Keep roomy
+  wide headers, visible one-cell themed scrollbars, and a centred reading column.
 
 ## Themes
 
@@ -139,58 +152,7 @@ Highlight colours are theme-aware (readable on every theme).
 
 ## Status
 
-- 2026-10-21: **Batches 1–4 complete** on `rebuild/v2`, package `ebible`
-  2.0.0.dev0. The complete UI includes all reader layouts/flows, book/chapter and
-  reference navigation, verse actions, search, bookmarks/highlights/notes/history,
-  generated plans, live settings, resume, help, and all six custom themes.
-- Batch 4 fixes B1–B3 and P1–P5: exact snippet whitespace and visible SVG gaps;
-  singular/plural counts; `<1%` for positive progress below one percent; separate bilingual
-  paragraph blocks with inline dim markers and preserved tap/selection behavior;
-  grouped eBible-first themes; one-row secondary headers below 80 columns; the
-  requested note-editor wording; and grouped help key chips. Concurrent paragraph
-  rebuilds and immediate restart/shutdown are covered. No new features or data edits.
-- Batch 3 fixes P1–P4: one-row headers below 80 columns with **26 reading rows
-  at 50×30**, preserved wide headers and graceful title ellipsis; one notice plus
-  Amharic-only verses for wholly untranslated chapters; short partial placeholders
-  without ◇; plan progress spacing; and one-cell themed scrollbars throughout.
-  Also fixed dropdowns clipped to one row and shifted sideways by passage-list CSS.
-  The unmarked Bookmark button no longer uses the machine-translation diamond.
-- Review fixes F1–F3 have regression tests: safe plain search with explicit `=`
-  advanced mode and friendly errors; source-valid chapter/verse jumps with Psalm
-  151 guidance; unchanged translation guide plus a numbered-output addendum and
-  strict parsing that tolerates one surrounding code fence.
-- Required gates passed in `.venv` (Python 3.14.7, Textual 8.2.8):
-  `ruff check src tests tools` — all checks passed;
-  `ruff format --check src tests` — **53 files already formatted**;
-  `mypy src` — **no issues in 39 source files**;
-  `pytest -q` — **363 passed in 217.15s**, including **136 phone/desktop Pilot cases**
-  (**26 new cases: 8 unit and 18 Pilot**);
-  `python tools/smoke.py --out /tmp/ebible-smoke` — **144 SVGs passed**:
-  24 screen/modal/layout states × 50×30 and 120×40 × meskel, parchment, lalibela.
-  Smoke uses temporary XDG directories, checks horizontal layout, phone reading
-  height, secondary-header row budget, scrollbar width, dropdown height, and binding
-  tables. Every fresh SVG filename is recorded in `/tmp/ebible-smoke/manifest.txt`.
-  The full directory listing is `/tmp/ebible-smoke-listing.txt` (144 SVGs plus manifest).
-- Pilot coverage includes navigation, selection, annotation persistence across
-  restart, settings/theme switching, search/plan jumps, mark-read, resume, every
-  screen's Escape route, and removal of Ctrl/Alt bindings throughout the mounted UI.
-  Batch 3 inspected all 72 phone views. Batch 4 inspected 12 affected phone states
-  in all three themes, the paragraph language boundary in all three themes, and
-  wide search/theme/paragraph views. See the Batch 4 review for the exact list.
-- Regression verification against an isolated copy of the pushed Batch 3 source:
-  **eight phone checks failed on the expected old behavior**, one per requested item.
-  The concurrent paragraph-rebuild regression also failed before its lifecycle fix.
-  `ebible --version` still reports `ebible 2.0.0.dev0`.
-- Protected database unchanged: SHA-256
-  `167e4b3d97977e74ea77eebeb9609e8b0ef2fdd68798a6aa2a05cc1cf7d7e6cb`.
-  Read-only `PRAGMA integrity_check` returned `ok`.
-  Canon rows, raw source, schema, and binding translation documentation unchanged.
-  Translation and device-service tests use fakes; no translation network calls.
-- No physical Termux session or real translation service was exercised in Batch 4.
-  The maintainer reported successful Batch 2 tmux testing at 50×30 and visual approval.
-  See [Batch 4 review](docs/BATCH4_REVIEW.md), [Batch 3 review](docs/POLISH_REVIEW.md),
-  [UI decisions](docs/UI_DECISIONS.md), and [foundation decisions](docs/FOUNDATION.md)
-  for the inspection records, judgements, and API conventions. Batch 4 implementation
-  commits: `8853547`, `b9238fd`, and `b2fd1be`, followed by the documentation/status
-  commit. Batch 3 was pushed by Claude before this work; **Batch 4 remains local.
-  No push or publication was performed.**
+- Batch 5 in progress (2026-10-23): product direction changed to Amharic-only scripture
+  with ephemeral, on-demand single-verse translation. Batches 1–4 are historical;
+  their English overlays/layouts and persistence requirements are superseded above.
+- Batch 4 was verified and pushed by Claude before this work. Never push from this session.

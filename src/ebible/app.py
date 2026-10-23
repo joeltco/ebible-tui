@@ -12,12 +12,11 @@ from textual.binding import BindingType
 from textual.screen import Screen
 from textual.theme import Theme
 
-from ebible.core.labels import count_label
 from ebible.core.models import HighlightColour, VerseRef
 from ebible.core.refs import ReferenceError, format_reference, parse_reference
 from ebible.core.scripture import ScriptureStore
 from ebible.core.settings import Settings, load_settings, save_settings
-from ebible.core.translate.base import TranslationError
+from ebible.core.translate.base import AlignmentError, TranslationError
 from ebible.core.translate.service import TranslationService
 from ebible.core.userdata import UserDataStore
 from ebible.ui.themes import THEMES, ordered_theme_names
@@ -58,7 +57,10 @@ class EBibleApp(App[None], inherit_bindings=False):
         self.ready = asyncio.Event()
         self._navigation_lock = asyncio.Lock()
         self._settings_lock = asyncio.Lock()
-        self.translation_running = False
+        self.translations: dict[VerseRef, str] = {}
+        self.visible_translations: set[VerseRef] = set()
+        self.translating: set[VerseRef] = set()
+        self.translation_errors: dict[VerseRef, str] = {}
         self.last_message = ''
         if theme_name is not None:
             self.theme = theme_name
@@ -70,7 +72,6 @@ class EBibleApp(App[None], inherit_bindings=False):
         from ebible.ui.screens.reader import ReaderScreen
 
         self.settings, self.userdata, self.chapter_counts = await asyncio.to_thread(self._load)
-        self.scripture.live_lookup = self.userdata.live_chapter
         chosen = self.theme_override or self.settings.theme
         self.theme = chosen if chosen in self.available_themes else 'meskel'
         # A CLI theme is a session override, becoming persistent only if edited in Settings.
@@ -181,16 +182,16 @@ class EBibleApp(App[None], inherit_bindings=False):
             await asyncio.to_thread(self.userdata.set_highlight, ref, colour)
         await self.reader.refresh_reading()
 
-    async def copy_verse(self, ref: VerseRef, language: Literal['am', 'en', 'both']) -> None:
+    async def copy_verse(self, ref: VerseRef, language: Literal['am', 'both']) -> None:
         verse = await asyncio.to_thread(self.scripture.verse, ref)
-        english = (
-            '◇ Machine translation · ' if verse.english_source == 'live' else ''
-        ) + verse.english
-        parts = [format_reference(ref)]
-        if language in ('am', 'both'):
-            parts.append(verse.text_am)
-        if language in ('en', 'both'):
-            parts.append(english)
+        if language not in ('am', 'both') or (language == 'both' and ref not in self.translations):
+            self.message(
+                'Translate this verse first; Amharic copy is always available.', error=True
+            )
+            return
+        parts = [format_reference(ref), verse.text_am]
+        if language == 'both':
+            parts.append('◇ Translation · ' + self.translations[ref])
         text = '\n'.join(parts)
         executable = shutil.which('termux-clipboard-set')
         try:
@@ -211,28 +212,49 @@ class EBibleApp(App[None], inherit_bindings=False):
             return
         self.message('Verse copied with its reference')
 
-    @work(group='translation', exit_on_error=False)
-    async def translate_current(self) -> None:
-        if self.translation_running:
-            self.message('A chapter is already being translated')
+    async def toggle_translation(self, ref: VerseRef) -> None:
+        if ref in self.translating:
             return
-        self.translation_running = True
-        ref = self.reference
-        self.reader.update_status('Translating chapter…')
+        if ref in self.visible_translations:
+            self.visible_translations.remove(ref)
+        else:
+            self.visible_translations.add(ref)
+            self.translation_errors.pop(ref, None)
+            if ref not in self.translations:
+                self.translating.add(ref)
+                self.translate_verse(ref)
+        await self.refresh_translation(ref)
+
+    async def refresh_translation(self, ref: VerseRef) -> None:
+        from ebible.ui.widgets.verse_view import VerseView
+
+        if self.is_running and (ref.book_id, ref.chapter) == (
+            self.reference.book_id,
+            self.reference.chapter,
+        ):
+            await self.reader.query_one(VerseView).rebuild()
+
+    @work(group='translation', exit_on_error=False)
+    async def translate_verse(self, ref: VerseRef) -> None:
         try:
-            service = TranslationService(
-                self.scripture, self.userdata, self.settings.translation_backend
+            service = TranslationService(self.scripture, self.settings.translation_backend)
+            self.translations[ref] = await service.translate_verse(ref)
+        except AlignmentError:
+            self.translation_errors[ref] = (
+                'Translation did not match this verse. Press Enter to retry or change backend in Settings.'
             )
-            filled = await service.translate_chapter(ref.book_id, ref.chapter)
-            self.message(
-                f'{count_label(len(filled), "verse")} translated · machine text'
-                if filled
-                else 'No new translation: already available or backend is off'
+        except TranslationError as exc:
+            self.translation_errors[ref] = str(exc) + (
+                ' Press Enter to retry.'
+                if 'retry' not in str(exc) and 'Settings' not in str(exc)
+                else ''
             )
-            if (ref.book_id, ref.chapter) == (self.reference.book_id, self.reference.chapter):
-                await self.reader.refresh_reading()
-        except (TranslationError, OSError, ValueError) as exc:
-            self.message(str(exc), error=True)
+        except Exception:
+            self.translation_errors[ref] = (
+                'Translation failed. Check your connection and backend in Settings, then press Enter to retry.'
+            )
         finally:
-            self.translation_running = False
-            self.reader.update_status()
+            self.translating.discard(ref)
+        if ref in self.translation_errors:
+            self.visible_translations.discard(ref)
+        await self.refresh_translation(ref)

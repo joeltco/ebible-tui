@@ -15,9 +15,10 @@ KEY_GROUPS = (
             ('↓ / j', 'Next verse'),
             ('← / h', 'Previous chapter'),
             ('→ / l', 'Next chapter'),
-            ('Enter', 'Actions for selected verse'),
+            ('Enter', 'Translate / hide translation'),
+            ('a', 'Verse actions'),
         ),
-        'Tap a verse for its actions. Scroll with a swipe or mouse wheel.',
+        'Tap a verse to translate or hide its translation. The Verse button opens actions. Scroll with a swipe or mouse wheel.',
     ),
     (
         'FIND YOUR PLACE',
@@ -53,11 +54,11 @@ KEY_GROUPS = (
 REFERENCE_GROUPS = (
     (
         'YOUR TEXT',
-        '◆ Bookmark   ✎ Note\n◇ Machine translation\nDim English without ◇ is bundled text. Untranslated passages have a notice or placeholder.',
+        '◆ Bookmark   ✎ Note\n◇ Translation\nEnglish appears only when requested and lasts only for this session. Nothing is cached on disk.',
     ),
     (
         'SEARCH',
-        'Ordinary words are safe as you type. Prefix with = for advanced FTS5 expressions.\nExample: ="LORD God"',
+        'Search Amharic words safely as you type. Prefix with = for advanced FTS5 expressions.\nExample: ="እግዚአብሔር"',
     ),
     (
         'THE ETHIOPIAN PSALTER',

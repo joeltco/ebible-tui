@@ -3,6 +3,7 @@
 import asyncio
 from typing import Literal, cast
 
+from rich.padding import Padding
 from rich.text import Text
 from textual import work
 from textual.app import ComposeResult
@@ -45,7 +46,7 @@ class SearchScreen(Page):
         yield from self.heading(
             'Search scripture', 'Ordinary words · start with = for advanced FTS'
         )
-        yield TextInput(placeholder='Search English or አማርኛ', id='search-input')
+        yield TextInput(placeholder='Search አማርኛ', id='search-input')
         with Horizontal(classes='filter-row'):
             yield Choice(
                 [
@@ -57,12 +58,6 @@ class SearchScreen(Page):
                 value='all',
                 allow_blank=False,
                 id='search-scope',
-            )
-            yield Choice(
-                [('Both languages', 'both'), ('Amharic', 'am'), ('English', 'en')],
-                value='both',
-                allow_blank=False,
-                id='search-language',
             )
         yield Static('Type to search', id='search-message', classes='page-subtitle', markup=False)
         yield PassageList(id='search-results')
@@ -93,15 +88,11 @@ class SearchScreen(Page):
         scope = cast(
             Literal['all', 'ot', 'nt', 'book'], self.query_one('#search-scope', Select).value
         )
-        language = cast(
-            Literal['am', 'en', 'both'], self.query_one('#search-language', Select).value
-        )
         try:
             results = await asyncio.to_thread(
                 self.eb.scripture.search,
                 query,
                 scope,
-                language,
                 book_id=self.eb.reference.book_id,
                 limit=self.limit,
             )
@@ -121,8 +112,7 @@ class SearchScreen(Page):
             text.append(format_reference(result.ref) + '\n', style='bold')
             # Plain Text spans keep scripture brackets literal; only FTS markers style a match.
             text.append_text(snippet_text(result.snippet))
-            text.append('\n')
-            options.append(Option(text, id=f'result-{i}'))
+            options.append(Option(Padding(text, (0, 0, 1, 0)), id=f'result-{i}'))
         self.query_one('#search-results', OptionList).clear_options().add_options(options)
         self.query_one('#search-results', OptionList).highlighted = 0 if options else None
         self.query_one('#search-message', Static).update(

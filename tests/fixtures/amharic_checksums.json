@@ -1,0 +1,9 @@
+{
+  "source_commit": "e1564db",
+  "source_db_sha256": "167e4b3d97977e74ea77eebeb9609e8b0ef2fdd68798a6aa2a05cc1cf7d7e6cb",
+  "encoding": "UTF-8 JSON arrays, ensure_ascii=False, separators=(',', ':'), one LF after each row; verses sorted by book_id,chapter,verse; books by id",
+  "verse_count": 39169,
+  "verses_sha256": "baf8fb427a14db0cf61677c1c1dbf11b03a28402aca264cba0958fb69a4c7d3b",
+  "book_count": 81,
+  "books_sha256": "aee558fe17f3bbe04320dcb086d126768168043fd5055ce3613890d08934d127"
+}

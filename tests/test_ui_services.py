@@ -1,28 +1,6 @@
-import asyncio
 import subprocess
 
 from ebible.core.models import VerseRef
-from ebible.core.translate.base import TranslationError
-from ebible.ui.widgets.verse_view import VerseView
-
-
-async def test_copy_osc52_all_languages_and_machine_provenance(running_app, monkeypatch):
-    app, _ = running_app
-    monkeypatch.setattr('ebible.app.shutil.which', lambda name: None)
-    copied = []
-    monkeypatch.setattr(app, 'copy_to_clipboard', copied.append)
-    verse = app.scripture.verse(VerseRef(1))
-    for language in ('am', 'en', 'both'):
-        await app.copy_verse(VerseRef(1), language)
-        assert 'Genesis 1:1' in copied[-1]
-        assert (verse.text_am in copied[-1]) == (language != 'en')
-        assert (verse.english in copied[-1]) == (language != 'am')
-    # Explicit temporary translation fixture; text comes from the real bundled DB.
-    app.userdata.save_translations(15, 1, {1: verse.english}, 'fixture')
-    await app.copy_verse(VerseRef(15), 'en')
-    assert '◇ Machine translation' in copied[-1]
-    await app.copy_verse(VerseRef(15, 1, 2), 'en')
-    assert 'Not yet translated' in copied[-1]
 
 
 async def test_termux_clipboard_and_haptic_workers(running_app, monkeypatch):
@@ -55,55 +33,8 @@ async def test_termux_clipboard_and_haptic_workers(running_app, monkeypatch):
     monkeypatch.setattr('ebible.app.subprocess.run', fail)
     await app.toggle_bookmark(VerseRef(1))
     assert app.userdata.bookmarks()
-    await app.copy_verse(VerseRef(1), 'both')
+    await app.copy_verse(VerseRef(1), 'am')
     assert 'Could not copy' in app.last_message
-
-
-async def test_translation_worker_refreshes_marked_live_english(running_app, monkeypatch):
-    app, pilot = running_app
-    await app.navigate(VerseRef(15))
-    english = app.scripture.verse(VerseRef(1)).english
-
-    async def translate(service, book, chapter):
-        await asyncio.to_thread(
-            service.userdata.save_translations, book, chapter, {1: english}, 'fixture'
-        )
-        return {1: english}
-
-    monkeypatch.setattr('ebible.app.TranslationService.translate_chapter', translate)
-    await pilot.press('enter')
-    button = app.screen.query_one('#translate-verse')
-    button.scroll_visible(animate=False)
-    await pilot.pause()
-    await pilot.click('#translate-verse')
-    await app.workers.wait_for_complete()
-    assert '1 verse translated' in app.last_message
-    assert not app.translation_running
-    view = app.reader.query_one(VerseView)
-    assert '◇ Machine' in view.verse_text(app.reader.chapter_data.verses[0], 'en').plain
-
-
-async def test_translation_error_and_concurrent_navigation(running_app, monkeypatch):
-    app, _ = running_app
-    started, finish = asyncio.Event(), asyncio.Event()
-
-    async def waiting(service, book, chapter):
-        started.set()
-        await finish.wait()
-        raise TranslationError('Temporary test fixture: translation unavailable')
-
-    monkeypatch.setattr('ebible.app.TranslationService.translate_chapter', waiting)
-    worker = app.translate_current()
-    await started.wait()
-    assert app.translation_running
-    await app.navigate(VerseRef(58, 3, 16))
-    await app.translate_current().wait()
-    assert 'already being translated' in app.last_message
-    finish.set()
-    await worker.wait()
-    assert app.reference == VerseRef(58, 3, 16)
-    assert not app.translation_running
-    assert 'translation unavailable' in app.last_message
 
 
 async def test_settings_write_failure_preserves_current_values(running_app, monkeypatch):

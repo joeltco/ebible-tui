@@ -23,7 +23,8 @@ class ReaderScreen(Page):
         Binding('up,k', 'move(-1)', 'Previous verse', show=False),
         Binding('right,l', 'chapter(1)', 'Next chapter', show=False),
         Binding('left,h', 'chapter(-1)', 'Previous chapter', show=False),
-        Binding('enter', 'verse_actions', 'Verse'),
+        Binding('enter', 'translate', 'Translate'),
+        Binding('a', 'verse_actions', 'Verse'),
         Binding('b', "page('books')", 'Books'),
         Binding('/', "page('search')", 'Search'),
         Binding('g', 'goto', 'Go to'),
@@ -146,6 +147,9 @@ class ReaderScreen(Page):
 
         await self.app.push_screen(GoTo())
 
+    async def action_translate(self) -> None:
+        await self.eb.toggle_translation(self.eb.reference)
+
     async def action_verse_actions(self) -> None:
         from ebible.ui.screens.verse_actions import VerseActions
 
@@ -153,10 +157,8 @@ class ReaderScreen(Page):
 
     async def on_verse_picked(self, event: VersePicked) -> None:
         event.stop()
-        if event.paragraph_id:
-            self.query_one(VerseView).active_paragraph = event.paragraph_id
         await self.select_verse(event.number)
-        await self.action_verse_actions()
+        await self.action_translate()
 
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         event.stop()

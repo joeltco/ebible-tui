@@ -17,7 +17,7 @@ async def test_annotation_roundtrip_restart_and_confirmed_deletion(terminal_size
     fixture_note = '**Temporary test fixture**\nA note with [literal brackets] and አማርኛ.'
     async with app.run_test(size=terminal_size) as pilot:
         await asyncio.wait_for(app.ready.wait(), 5)
-        await pilot.press('enter')
+        await pilot.press('a')
         await pilot.click('#bookmark-verse')
         assert app.userdata.bookmarks()[0].ref == VerseRef(58, 3, 16)
         assert 'Bookmarked' in str(app.screen.query_one('#bookmark-verse', Button).label)
@@ -34,7 +34,7 @@ async def test_annotation_roundtrip_restart_and_confirmed_deletion(terminal_size
         assert 16 in view.bookmarks and 16 in view.notes
         assert view.highlights[16] == 'gold'
         verse = app.scripture.verse(VerseRef(58, 3, 16))
-        assert '◆✎' in view.verse_text(verse, 'am').plain
+        assert '◆✎' in view.verse_text(verse).plain
     restarted = EBibleApp()
     async with restarted.run_test(size=terminal_size) as pilot:
         await asyncio.wait_for(restarted.ready.wait(), 5)
@@ -73,7 +73,7 @@ async def test_annotation_roundtrip_restart_and_confirmed_deletion(terminal_size
 
 async def test_note_escape_discard_and_literal_typing(running_app):
     app, pilot = running_app
-    await pilot.press('enter')
+    await pilot.press('a')
     await pilot.click('#note-verse')
     await pilot.press('q', 'j', 's', 'n')
     assert app.screen.query_one(NoteArea).text == 'qjsn'
@@ -95,7 +95,7 @@ async def test_note_escape_discard_and_literal_typing(running_app):
 async def test_toggle_bookmark_clear_highlight_and_collection_jump(running_app):
     app, pilot = running_app
     await app.navigate(VerseRef(58, 3, 16))
-    await pilot.press('enter')
+    await pilot.press('a')
     await pilot.click('#bookmark-verse')
     await pilot.click('#bookmark-verse')
     assert not app.userdata.bookmarks()
@@ -141,7 +141,7 @@ async def test_history_jump_delete_and_invalid_saved_reference(running_app):
 
 async def test_note_undo_redo_and_tab_out_of_editor(running_app):
     app, pilot = running_app
-    await pilot.press('enter')
+    await pilot.press('a')
     await pilot.click('#note-verse')
     await pilot.press('a', 'b', 'c')  # Explicit temporary note fixture.
     editor = app.screen.query_one(NoteArea)

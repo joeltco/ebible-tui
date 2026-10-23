@@ -1,13 +1,11 @@
 """Batch 3 regressions: actual mounted geometry and visible reading content."""
 
-import pytest
 from rich.text import Text
 from textual.widgets import Button, Static
 
 from ebible.canon import BOOKS, BY_ID
 from ebible.core.models import VerseRef
 from ebible.ui.widgets.header import HeaderBar
-from ebible.ui.widgets.verse_view import Paragraph, VerseLine, VerseView
 
 
 async def test_compact_header_row_budget_names_touch_and_resize(running_app):
@@ -55,68 +53,6 @@ async def test_compact_header_row_budget_names_touch_and_resize(running_app):
     assert header.region.height == 1
 
 
-@pytest.mark.parametrize('flow', ['lines', 'paragraph'])
-async def test_untranslated_chapter_has_one_notice_and_amharic_only(running_app, flow):
-    app, pilot = running_app
-    await app.navigate(VerseRef(15))  # Real Jubilees chapter with no bundled English.
-    await app.update_setting('verse_flow', flow)
-    for layout in ('amharic', 'english', 'interleaved', 'parallel'):
-        await app.update_setting('layout', layout)
-        await pilot.pause()
-        view = app.reader.query_one(VerseView)
-        notice = view.query_one('#chapter-notice', Static)
-        assert len(view.query('#chapter-notice')) == 1
-        text = str(notice.content)
-        assert 'deuterocanonical' in text and 'not yet translated' in text
-        assert 'Translate this chapter' in text and 'verse menu' in text and 'backend' in text
-        assert '◇' not in text
-        assert view.effective_layout == 'amharic'
-        assert notice.region.y >= app.reader.query_one('#reading-scroll').content_region.y
-        assert app.reader.query_one('#reading-scroll').scroll_y == 0
-        if flow == 'lines':
-            rendered = '\n'.join(line.content.plain for line in view.query(VerseLine))
-        else:
-            rendered = '\n'.join(p.content.plain for p in view.query(Paragraph))
-        assert 'translated' not in rendered and '◇' not in rendered
-        assert app.reader.chapter_data.verses[0].text_am in rendered
-        assert app.reader.chapter_data.verses[-1].text_am in rendered
-    await app.navigate(VerseRef(1))
-    assert not view.query('#chapter-notice')
-    await pilot.press('enter')
-    assert '◇' not in str(app.screen.query_one('#bookmark-verse', Button).label)
-
-
-@pytest.mark.parametrize('flow', ['lines', 'paragraph'])
-async def test_partial_translation_uses_short_placeholder_and_exclusive_machine_marker(
-    running_app, flow
-):
-    app, pilot = running_app
-    # Explicit temporary overlay fixture; content is real bundled English, not a translation.
-    real = app.scripture.verse(VerseRef(1)).english
-    app.userdata.save_translations(15, 1, {1: real}, 'fixture')
-    await app.navigate(VerseRef(15))
-    await app.update_setting('verse_flow', flow)
-    await pilot.pause()
-    view = app.reader.query_one(VerseView)
-    assert not view.query('#chapter-notice')
-    if flow == 'lines':
-        rendered = '\n'.join(line.content.plain for line in view.query(VerseLine))
-    else:
-        rendered = '\n'.join(p.content.plain for p in view.query(Paragraph))
-    assert rendered.count('◇') == 1
-    assert '◇ Machine' in rendered and real in rendered
-    assert 'Not yet translated' in rendered
-    assert 'no bundled English' not in rendered and 'deuterocanonical' not in rendered
-    missing = view.verse_text(app.reader.chapter_data.verses[1], 'en', gutter=False)
-    assert len(missing.plain) <= 20
-    assert missing.spans and any(span.style.italic for span in missing.spans)
-    await app.update_setting('show_untranslated_placeholder', False)
-    assert (
-        view.verse_text(app.reader.chapter_data.verses[1], 'en', gutter=False).plain
-        == 'Untranslated'
-    )
-
-
 async def test_plan_percentage_and_bar_stay_inside_column_with_gap(running_app):
     app, pilot = running_app
     await pilot.press('p')
@@ -140,7 +76,7 @@ async def test_plan_percentage_and_bar_stay_inside_column_with_gap(running_app):
 async def test_scrollbars_one_cell_visible_and_themed_throughout(running_app):
     app, pilot = running_app
 
-    for key in (None, 'b', '/', 'm', 'v', 'n', 't', 'p', 's', '?', 'g', 'enter'):
+    for key in (None, 'b', '/', 'm', 'v', 'n', 't', 'p', 's', '?', 'g', 'a'):
         if key:
             await pilot.press(key)
         await pilot.pause()
@@ -177,13 +113,3 @@ async def test_theme_dropdown_shows_multiple_choices_and_accepts_taps(running_ap
     await pilot.pause()
     assert app.theme == list(app.available_themes)[1]
     assert not choice.expanded
-
-
-async def test_untranslated_canonical_chapter_notice_has_no_deuterocanonical_label(running_app):
-    app, pilot = running_app
-    await app.navigate(VerseRef(10))  # Real 2 Samuel 1 has no bundled English.
-    await pilot.pause()
-    notice = app.reader.query_one('#chapter-notice', Static)
-    assert 'This chapter is not yet translated' in str(notice.content)
-    assert 'deuterocanonical' not in str(notice.content)
-    assert '◇' not in str(notice.content)

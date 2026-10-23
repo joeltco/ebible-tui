@@ -27,14 +27,12 @@ def test_missing_and_roundtrip():
     assert load_settings() == Settings()
     value = Settings(
         theme='parchment',
-        layout='parallel',
         verse_flow='paragraph',
         verse_numbers=False,
         verse_spacing='compact',
         book_name_language='am',
         text_max_width=80,
         translation_backend='off',
-        show_untranslated_placeholder=False,
         haptic_feedback=True,
     )
     save_settings(value)
@@ -82,8 +80,11 @@ def test_invalid_fields_default_independently(tmp_path, key, value):
 
 def test_valid_keys_survive_invalid_keys(tmp_path):
     path = tmp_path / 'fixture.json'
-    path.write_text('{"layout":"english","text_max_width":0,"unknown":true}', encoding='utf-8')
-    assert load_settings(path) == replace(Settings(), layout='english')
+    path.write_text(
+        '{"layout":"english","theme":"parchment","text_max_width":0,"unknown":true,"show_untranslated_placeholder":true}',
+        encoding='utf-8',
+    )
+    assert load_settings(path) == replace(Settings(), theme='parchment')
 
 
 def test_atomic_failure_preserves_old_file(tmp_path, monkeypatch):
@@ -96,7 +97,7 @@ def test_atomic_failure_preserves_old_file(tmp_path, monkeypatch):
 
     monkeypatch.setattr('ebible.core.settings.os.replace', fail)
     with pytest.raises(OSError):
-        save_settings(Settings(layout='amharic'), path)
+        save_settings(Settings(theme='parchment'), path)
     assert load_settings(path) == Settings()
     assert list(tmp_path.iterdir()) == [path]
 

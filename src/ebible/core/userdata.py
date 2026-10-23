@@ -5,7 +5,7 @@ be used by UI and translation workers without sharing SQLite connections.
 """
 
 import sqlite3
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -17,7 +17,6 @@ from ebible.core.models import (
     Highlight,
     HighlightColour,
     HistoryEntry,
-    LiveTranslation,
     Note,
     PlanProgress,
     VerseRef,
@@ -25,7 +24,7 @@ from ebible.core.models import (
 from ebible.core.plans import ReadingPlan
 from ebible.paths import user_db_path
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 _REF_COLUMNS = 'book_id INTEGER NOT NULL CHECK(book_id BETWEEN 1 AND 81), chapter INTEGER NOT NULL CHECK(chapter > 0), verse INTEGER NOT NULL CHECK(verse > 0)'
 _KEY = 'PRIMARY KEY(book_id, chapter, verse)'
 _MIGRATIONS: dict[int, tuple[str, ...]] = {
@@ -41,6 +40,7 @@ _MIGRATIONS: dict[int, tuple[str, ...]] = {
     2: (
         f'CREATE TABLE live_translation ({_REF_COLUMNS}, text TEXT NOT NULL CHECK(length(trim(text))>0), backend TEXT NOT NULL, translated_at TEXT NOT NULL, {_KEY})',
     ),
+    3: ('DROP TABLE IF EXISTS live_translation',),
 }
 
 
@@ -72,6 +72,7 @@ class UserDataStore:
         db = sqlite3.connect(self.path, timeout=5)
         db.row_factory = sqlite3.Row
         db.execute('PRAGMA foreign_keys=ON')
+        db.execute('PRAGMA secure_delete=ON')
         try:
             with db:
                 yield db
@@ -90,6 +91,11 @@ class UserDataStore:
                 for statement in _MIGRATIONS[target]:
                     db.execute(statement)
                 db.execute(f'PRAGMA user_version={target}')
+            if version < 3:
+                db.commit()
+                # Remove old cache contents, including previously freed pages.
+                db.execute('VACUUM')
+                db.execute('PRAGMA wal_checkpoint(TRUNCATE)')
 
     def add_bookmark(self, ref: VerseRef) -> None:
         with self._connect() as db:
@@ -231,48 +237,3 @@ class UserDataStore:
                 frozenset(r['day'] for r in rows),
                 frozenset(date.fromisoformat(r['completed_on']) for r in rows),
             )
-
-    def save_translations(
-        self, book_id: int, chapter: int, translations: Mapping[int, str], backend: str
-    ) -> None:
-        """Commit a validated batch atomically. Service verifies source alignment."""
-        if not backend.strip():
-            raise ValueError('Translation provenance is required')
-        rows = []
-        for verse, text in translations.items():
-            ref = VerseRef(book_id, chapter, verse)
-            if not isinstance(text, str) or not text.strip():
-                raise ValueError('Translation text cannot be empty')
-            rows.append((*_key(ref), text, backend, _now()))
-        with self._connect() as db:
-            db.executemany(
-                'INSERT INTO live_translation VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(book_id,chapter,verse) DO UPDATE SET text=excluded.text, backend=excluded.backend, translated_at=excluded.translated_at',
-                rows,
-            )
-
-    def live_chapter(self, book_id: int, chapter: int) -> dict[int, str]:
-        with self._connect() as db:
-            return {
-                r['verse']: r['text']
-                for r in db.execute(
-                    'SELECT verse,text FROM live_translation WHERE book_id=? AND chapter=?',
-                    (book_id, chapter),
-                )
-            }
-
-    def live_translation(self, ref: VerseRef) -> LiveTranslation | None:
-        with self._connect() as db:
-            row = db.execute(
-                'SELECT * FROM live_translation WHERE book_id=? AND chapter=? AND verse=?',
-                _key(ref),
-            ).fetchone()
-            return (
-                LiveTranslation(
-                    ref, row['text'], row['backend'], datetime.fromisoformat(row['translated_at'])
-                )
-                if row
-                else None
-            )
-
-    def delete_translation(self, ref: VerseRef) -> None:
-        self._delete('live_translation', ref)

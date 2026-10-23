@@ -13,7 +13,7 @@ from ebible.ui.screens.reader import ReaderScreen
 from ebible.ui.screens.verse_actions import VerseActions
 from ebible.ui.themes import THEMES, highlight_colour
 from ebible.ui.widgets.controls import TextInput
-from ebible.ui.widgets.verse_view import Paragraph, VerseLine, VerseView
+from ebible.ui.widgets.verse_view import VerseLine, VerseView
 
 
 def assert_phone_bindings(app):
@@ -44,12 +44,14 @@ async def test_reader_navigation_selection_touch_and_boundaries(running_app):
     await pilot.press('j', 'down', 'k')
     assert app.reference == VerseRef(1, 1, 2)
     assert app.reader.query_one('#verse-2', VerseLine).has_class('selected')
-    await pilot.press('enter')
+    await pilot.press('a')
     assert isinstance(app.screen, VerseActions)
     await pilot.press('escape')
     assert app.screen is app.reader
     await pilot.click('#verse-2')
-    assert isinstance(app.screen, VerseActions)
+    assert app.screen is app.reader
+    await app.workers.wait_for_complete()
+    assert app.reference in app.translation_errors
     await pilot.press('escape', 'right')
     assert app.reference == VerseRef(1, 2)
     await pilot.click('#previous-chapter')
@@ -84,7 +86,7 @@ async def test_reader_navigation_selection_touch_and_boundaries(running_app):
         ('s', 'SettingsScreen'),
         ('?', 'HelpScreen'),
         ('g', 'GoTo'),
-        ('enter', 'VerseActions'),
+        ('a', 'VerseActions'),
     ],
 )
 async def test_every_route_escape_and_no_modifiers(running_app, key, screen_name):
@@ -99,7 +101,7 @@ async def test_every_route_escape_and_no_modifiers(running_app, key, screen_name
         assert not app._exit
     await pilot.press('escape')
     assert app.screen is app.reader
-    await pilot.press('enter')
+    await pilot.press('a')
     assert isinstance(app.screen, VerseActions)
 
 
@@ -158,60 +160,6 @@ async def test_goto_validation_and_psalm_151_guidance(running_app):
     assert app.reference == VerseRef(1, 2, 3)
 
 
-@pytest.mark.parametrize('layout', ['amharic', 'english', 'interleaved', 'parallel'])
-async def test_layouts_and_real_paragraph_flow(running_app, layout):
-    app, pilot = running_app
-    await app.update_setting('layout', layout)
-    await pilot.pause()
-    view = app.reader.query_one(VerseView)
-    expected = 'interleaved' if layout == 'parallel' and app.size.width < 90 else layout
-    assert view.effective_layout == expected
-    assert_no_horizontal_overflow(app)
-    await app.update_setting('verse_flow', 'paragraph')
-    await pilot.pause()
-    assert view.query(Paragraph)
-    assert not view.query(VerseLine)
-    assert (
-        app.reader.chapter_data.verses[0].text_am in view.paragraph_text.plain
-        if layout != 'english'
-        else app.reader.chapter_data.verses[0].english in view.paragraph_text.plain
-    )
-    await pilot.press('j')
-    assert app.reference.verse == 2
-    assert any(getattr(span.style, 'underline', False) for span in view.paragraph_text.spans)
-    assert_no_horizontal_overflow(app)
-    await app.update_setting('verse_flow', 'lines')
-    assert len(view.query(VerseLine)) == 31
-
-
-async def test_parallel_reflows_when_resized(running_app):
-    app, pilot = running_app
-    await app.update_setting('layout', 'parallel')
-    await pilot.resize_terminal(120, 40)
-    await pilot.pause()
-    assert app.reader.query_one(VerseView).effective_layout == 'parallel'
-    await pilot.resize_terminal(50, 30)
-    await pilot.pause()
-    assert app.reader.query_one(VerseView).effective_layout == 'interleaved'
-    assert_no_horizontal_overflow(app)
-
-
-async def test_empty_english_placeholder_and_live_marking(running_app):
-    app, pilot = running_app
-    await app.navigate(VerseRef(15))
-    view = app.reader.query_one(VerseView)
-    verse = app.reader.chapter_data.verses[0]
-    assert verse.english_source == 'placeholder'
-    assert 'deuterocanonical' in str(view.query_one('#chapter-notice', Static).content)
-    await app.update_setting('show_untranslated_placeholder', False)
-    assert 'Untranslated' in view.verse_text(verse, 'en').plain
-    # Explicit temporary live-text fixture using actual bundled English.
-    real = app.scripture.verse(VerseRef(1)).english
-    app.userdata.save_translations(15, 1, {1: real}, 'fixture')
-    await app.reader.refresh_reading()
-    assert '◇ Machine' in view.verse_text(app.reader.chapter_data.verses[0], 'en').plain
-
-
 async def test_theme_registration_and_centered_column(running_app):
     app, pilot = running_app
     assert {theme.name for theme in THEMES} <= set(app.available_themes)
@@ -238,7 +186,7 @@ async def test_theme_registration_and_centered_column(running_app):
     assert view.size.width <= 40
     assert abs(view.region.x - (app.size.width - view.size.width) / 2) <= 1
     await app.update_setting('verse_numbers', False)
-    assert not view.verse_text(app.reader.chapter_data.verses[0], 'am').plain.startswith(' 1 ')
+    assert not view.verse_text(app.reader.chapter_data.verses[0]).plain.startswith(' 1 ')
     await app.update_setting('verse_spacing', 'compact')
     assert view.has_class('compact')
     await app.update_setting('book_name_language', 'en')
@@ -282,13 +230,16 @@ async def test_paragraph_tap_and_cursor_scroll(running_app):
     await app.update_setting('verse_flow', 'paragraph')
     await pilot.pause()
     await pilot.click('#paragraph', offset=(4, 0))
-    assert isinstance(app.screen, VerseActions)
+    assert app.screen is app.reader
+    await app.workers.wait_for_complete()
+    assert app.reference in app.translation_errors
     await pilot.press('escape')
-    await app.reader.select_verse(25)
+    await app.navigate(VerseRef(28, 118))  # Long Amharic chapter scrolls at both sizes.
+    await app.reader.select_verse(150)
     await pilot.pause()
     await pilot.wait_for_scheduled_animations()
     assert app.reader.query_one('#reading-scroll').scroll_y > 0
-    assert app.reference.verse == 25
+    assert app.reference.verse == 150
 
 
 async def test_tab_navigation_and_button_activation(running_app):
@@ -300,7 +251,7 @@ async def test_tab_navigation_and_button_activation(running_app):
     before = app.focused
     await pilot.press('tab')
     assert app.focused is not before
-    await pilot.press('escape', 'enter')
+    await pilot.press('escape', 'a')
     assert isinstance(app.screen, VerseActions)
     initial = app.focused
     await pilot.press('tab')

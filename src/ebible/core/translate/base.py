@@ -19,8 +19,8 @@ class Backend(Protocol):
     @property
     def name(self) -> str: ...
 
-    def translate_chapter(
-        self, book: Book, chapter: int, verses_am: Mapping[int, str]
+    def translate_verse(
+        self, book: Book, chapter: int, verses_am: Mapping[int, str], target: int
     ) -> dict[int, str]: ...
 
 

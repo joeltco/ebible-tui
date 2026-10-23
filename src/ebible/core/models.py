@@ -7,7 +7,6 @@ from typing import Literal
 
 from ebible.canon import BY_ID, Book
 
-EnglishSource = Literal['bundled', 'live', 'placeholder']
 HighlightColour = Literal['gold', 'green', 'red', 'blue', 'purple']
 HIGHLIGHT_COLOURS: tuple[HighlightColour, ...] = ('gold', 'green', 'red', 'blue', 'purple')
 
@@ -32,9 +31,6 @@ class VerseRef:
 class Verse:
     ref: VerseRef
     text_am: str
-    text_en: str | None
-    english: str
-    english_source: EnglishSource
 
     @property
     def verse(self) -> int:
@@ -83,18 +79,9 @@ class HistoryEntry:
 
 
 @dataclass(frozen=True, slots=True)
-class LiveTranslation:
-    ref: VerseRef
-    text: str
-    backend: str
-    translated_at: datetime
-
-
-@dataclass(frozen=True, slots=True)
 class SearchResult:
     ref: VerseRef
     snippet: str
-    language: Literal['am', 'en']
     # Snippets use plain control delimiters, never Rich markup. The UI can split
     # these markers and create styled Text spans without interpreting scripture.
     match_start: str = '\x01'
@@ -104,11 +91,6 @@ class SearchResult:
 @dataclass(frozen=True, slots=True)
 class ScriptureStats:
     verses: int
-    translated: int
-
-    @property
-    def translated_pct(self) -> float:
-        return 100 * self.translated / self.verses if self.verses else 0.0
 
 
 @dataclass(frozen=True, slots=True)

@@ -79,14 +79,12 @@ HeaderBar Button { width: 5; height: 3; background: $background; color: $accent;
 .verse-line.selected { border-left: tall $primary; background: $primary 9%; }
 .compact .verse-line { margin-bottom: 0; }
 Paragraph { width: 1fr; height: auto; padding: 0 1; }
-#paragraph-english { margin-top: 2; }
 #reading-status { height: 1; text-align: center; color: $text-muted; margin: 0 1; }
 .compact-chrome #brand { display: none; }
 .compact-chrome HeaderBar { height: 1; }
 .compact-chrome HeaderBar Button { height: 1; width: 3; }
 .compact-chrome #book-title { height: 1; }
 .compact-chrome #reading-scroll { padding: 0 2; }
-#chapter-notice { height: auto; color: $text-muted; margin: 0 1 1 1; }
 #chapter-grid { grid-size: 5; grid-columns: 1fr; grid-rows: 3; grid-gutter: 1; height: auto; }
 #chapter-grid Button { width: 1fr; }
 #search-more { width: 1fr; margin: 1 2; }
@@ -119,7 +117,6 @@ Toast { max-width: 90%; }
 
 #verse-menu .eyebrow { margin: 0; }
 #verse-menu #close-actions { height: 1; margin-bottom: 0; }
-#verse-menu #translate-verse { margin-bottom: 0; }
 #verse-menu .muted { margin-bottom: 1; }
 /* Percentage width prevents sibling margins shrinking the full-width viewport. */
 #reading-scroll, #brand, .page-scroll { width: 100%; }
@@ -127,3 +124,5 @@ Toast { max-width: 90%; }
 .key-chip { width: 16; height: 1; text-align: center; color: $accent; background: $primary 12%; text-style: bold; margin-right: 1; }
 .key-description { width: 1fr; height: auto; }
 .help-note { height: auto; color: $text-muted; margin: 0 0 1 0; }
+/* Reserve the search scrollbar before measuring wrapped result heights. */
+#search-results { scrollbar-gutter: stable; }

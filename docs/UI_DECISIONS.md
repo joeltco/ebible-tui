@@ -20,16 +20,12 @@ translation contracts updated there.
 - Selected verses have a narrow theme-coloured rule and a 9% tint. English uses the
   secondary colour, numbers are dim, and bookmarks/notes retain their gutter glyphs.
   Highlights use distinct light/dark foreground palettes. No CSS colour literals.
-- Paragraph flow joins verses continuously, retaining per-verse hit targets, numbers
-  (if enabled), and annotation glyphs. Selection is bold/underlined in paragraph flow.
-  Interleaved paragraphs show the entire Amharic block, a two-row gap, then the entire
-  English block. Each language has inline dim superscript verse numbers; single-language
-  flow retains its original numbering. Tapping either block selects that verse, and
-  cursor scrolling follows the last tapped block. Parallel paragraphs have separate
-  language columns; the cursor scroll follows the first.
-- Parallel becomes interleaved whenever terminal width is below 90, including live
-  resizing. Verse cursor movement scrolls smoothly; initial/resumed positions and
-  re-layout jump directly to the selected verse.
+- Paragraph flow joins Amharic verses continuously, retaining per-verse hit targets,
+  dim numbers (if enabled), and annotation glyphs. Selection is bold/underlined.
+  A visible translation interrupts the flow immediately beneath its source verse;
+  hiding it restores the continuous paragraph. There are no language layouts.
+- Verse cursor movement scrolls smoothly; initial/resumed positions and reading
+  preference changes jump directly to the selected verse.
 - A range opens at its first verse after both endpoints are validated. Previous/next
   chapter crosses book boundaries in Ethiopian order; the canon's endpoints disable
   the corresponding buttons. Moving beyond a chapter's verse endpoints stays put.
@@ -39,7 +35,7 @@ translation contracts updated there.
   for Acts after the Gospels. Filtering matches English names, Amharic names, or slugs.
 - Reader shortcuts live on the reader, not globally. `q` cannot quit another screen
   or interrupt typing. Tab cycles controls; Enter/Space activates the focused control.
-  With no control focused, Enter opens verse actions. Returning to the reader clears
+  With no control focused, Enter translates or hides that verse; `a` opens actions. Returning to the reader clears
   control focus. Escape at the reader returns focus to reading without quitting.
 - Desktop modifier bindings are removed from screens, inputs, text areas, scroll
   containers, passage lists, and Select overlays. Note Undo/Redo are tappable buttons.
@@ -59,10 +55,11 @@ translation contracts updated there.
   request-generation check. Enter in the search input opens the first result;
   results are also directly tappable or selectable with arrows and Enter.
 - The result page starts at 40 passages; Show more adds 40, up to the core's 1,000 cap.
-  Language and scope selectors apply immediately. Snippets use literal Rich Text
+  Scope changes apply immediately; search is Amharic only. Snippets use literal Rich Text
   spans with bold/underlined matches, so source brackets cannot become markup.
   Whitespace after a match has a separate non-underlined span to preserve its visible
-  SVG advance as well as the exact underlying characters.
+  SVG advance as well as the exact underlying characters. Every result uses one
+  explicit bottom padding row; wrapping no longer changes the inter-result gap.
 - Collection screens share tabs for bookmarks, highlights, notes, and history.
   References and note previews are literal text. Deletion requires confirmation.
 - Notes use a soft-wrapped TextArea and explicit Save. Escape/Back asks before
@@ -80,17 +77,17 @@ translation contracts updated there.
   The screen shows completed-day count, progress bar, and actual-calendar-day streak.
   Positive progress below one percent displays “<1%”; zero and larger percentages
   keep their normal labels. Count labels use singular at one, including “history entry”.
-- Live translation is explicit, via the verse menu. Only one request runs at a time.
-  Navigation remains available; completion refreshes the reader only if that chapter
-  is still open. Failure is a notification and never replaces reviewed text.
-- Live text and copied live English both include a machine marker. Only live English
-  uses ◇; an unmarked Bookmark button has no diamond. A wholly untranslated chapter
-  has one calm notice and Amharic-only verses, in every layout/flow. The notice names
-  deuterocanonical status when applicable and explains the verse menu's translation
-  action and backend requirement. This is a display fallback; the layout preference
-  stays unchanged. Partial chapters use short dim per-verse placeholders without ◇.
-  Disabling detailed placeholders shortens those to “Untranslated”; the chapter
-  notice is always shown. No source or overlay data changes.
+- Enter or a verse tap translates exactly that verse. A repeated tap during a
+  pending request is ignored; different verses may translate concurrently. Navigation
+  remains available and completion refreshes only the currently open chapter.
+  Pending and actionable error messages appear inline; Enter retries after errors.
+- Translation results and visibility are separate in-memory session state. Enter/tap
+  hides or instantly re-shows a result, even after chapter navigation. Restart loses
+  every result. English appears in the secondary colour, labelled “◇ Translation”.
+  There are no untranslated notices or placeholders.
+- `a` and the footer Verse button open actions. Amharic copy is always available;
+  “With translation” appears only for a verse translated this session, including
+  when its result is currently hidden. No English-only copy or chapter translation.
 - Copy includes the English reference followed by the requested language(s). It uses
   termux-clipboard-set if present, otherwise OSC 52. Termux copy has a five-second
   timeout; optional vibration has a two-second timeout and does not undo a successful
@@ -103,13 +100,14 @@ translation contracts updated there.
 
 - Pilot tests exercise both sizes, every screen's Escape route, real list rendering,
   settings and annotations across restart, source-invalid jumps, keyboard focus,
-  paragraph hit targets, resize fallback, and the complete mounted binding tables.
+  paragraph hit targets, responsive headers, and the complete mounted binding tables.
 - Smoke creates fresh temporary XDG config/data for each size/theme combination,
   restores the invoking environment, and removes its temporary personal data. Its
   note is explicitly labelled a temporary fixture and quotes real bundled text.
-- Smoke writes 24 views for each of 3 themes × 2 sizes: 144 SVGs and manifest.txt.
+- Smoke writes 27 views for each of 3 themes × 2 sizes: 162 SVGs and manifest.txt.
   Extra states include error messages, deletion/discard/restart confirmations,
-  Select's theme overlay, parallel/paragraph readers, and an untranslated chapter.
+  Select's theme overlay, paragraph and Jubilees readers, and pending/result/error
+  translation states. Translation responses are explicit in-memory fake fixtures.
   Colour is enabled explicitly for screenshots even if the invoking CI shell has
   NO_COLOR set; the real app otherwise respects the user's NO_COLOR setting.
 - Visuals were inspected from the actual SVGs, not only widget geometry. The app is

@@ -1,4 +1,4 @@
-"""translate-shell fallback, sequential per-verse requests with bounded timeout."""
+"""translate-shell fallback, single-verse requests with bounded timeout."""
 
 import shutil
 import subprocess
@@ -17,29 +17,27 @@ class GoogleBackend:
             raise ValueError('Timeout must be positive')
         self.timeout = timeout
 
-    def translate_chapter(
-        self, book: Book, chapter: int, verses_am: Mapping[int, str]
+    def translate_verse(
+        self, book: Book, chapter: int, verses_am: Mapping[int, str], target: int
     ) -> dict[int, str]:
-        if not verses_am:
-            return {}
+        if target not in verses_am:
+            raise TranslationError('Target verse is missing from chapter context')
         executable = self.executable or shutil.which('trans')
         if not executable:
-            raise TranslationError('translate-shell (trans) is not on PATH')
-        translated: dict[int, str] = {}
-        for number, text in sorted(verses_am.items()):
-            try:
-                result = subprocess.run(
-                    [executable, '-brief', '-engine', 'google', 'am:en'],
-                    input=text,
-                    capture_output=True,
-                    encoding='utf-8',
-                    check=True,
-                    timeout=self.timeout,
-                )
-            except (OSError, subprocess.SubprocessError) as exc:
-                raise TranslationError(
-                    f'Google translation failed at {book.name_en} {chapter}:{number}: {exc}'
-                ) from exc
-            translated[number] = result.stdout.strip()
-        validate_alignment(verses_am, translated)
+            raise TranslationError('Install translate-shell (trans), then press Enter to retry.')
+        try:
+            result = subprocess.run(
+                [executable, '-brief', '-engine', 'google', 'am:en'],
+                input=verses_am[target],
+                capture_output=True,
+                encoding='utf-8',
+                check=True,
+                timeout=self.timeout,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise TranslationError(
+                'Translation failed or timed out. Check your connection and translate-shell, then press Enter to retry.'
+            ) from exc
+        translated = {target: result.stdout.strip()}
+        validate_alignment({target: verses_am[target]}, translated)
         return translated

@@ -78,12 +78,10 @@ def test_database_bounds_and_source_gap(scripture, tmp_path):
     # Explicit temporary gap fixture, populated only with real source verses.
     path = tmp_path / 'gap-fixture.db'
     with closing(sqlite3.connect(path)) as db, db:
-        db.execute('CREATE TABLE verse(book_id,chapter,verse,text_am,text_en)')
+        db.execute('CREATE TABLE verse(book_id,chapter,verse,text_am)')
         for number in (1, 3):
             verse = scripture.verse(VerseRef(1, 1, number))
-            db.execute(
-                'INSERT INTO verse VALUES(1,1,?,?,?)', (number, verse.text_am, verse.text_en)
-            )
+            db.execute('INSERT INTO verse VALUES(1,1,?,?)', (number, verse.text_am))
     with pytest.raises(ReferenceError):
         ScriptureStore(path).validate_reference(VerseRef(1, 1, 2))
 

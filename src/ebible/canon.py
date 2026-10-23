@@ -6,8 +6,8 @@ the catholic epistles come after 3 John rather than before Hebrews. The `id` is
 that canonical position and is what the asset directories are numbered by.
 
 English names are the established scholarly renderings. Books outside the 66-book
-protestant canon are flagged `deuterocanonical` because they have no widely
-available English translation to bundle -- see `Book.deuterocanonical`.
+Protestant canon retain their imported `deuterocanonical` classification.
+The flag describes the canon; it is not translation-coverage metadata.
 """
 
 from __future__ import annotations
