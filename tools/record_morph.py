@@ -42,7 +42,7 @@ async def record(out: Path, theme: str = 'meskel', text: str = FIXTURE) -> None:
         ):
             os.environ.pop('NO_COLOR', None)
             os.environ.pop('ANTHROPIC_API_KEY', None)
-            app = EBibleApp(theme_name=theme)
+            app = EBibleApp(reference=VerseRef(1), theme_name=theme)
             async with app.run_test(size=(50, 30)) as pilot:
                 await app.ready.wait()
                 view = app.reader.query_one(VerseView)

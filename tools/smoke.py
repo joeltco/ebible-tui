@@ -16,6 +16,8 @@ from ebible.core.translate.base import TranslationError
 from ebible.core.translate.service import TranslationService
 from ebible.ui.screens.books import ChaptersScreen
 from ebible.ui.screens.search import QuerySummary, SearchScreen
+from ebible.ui.screens.title import TitleScreen
+from ebible.ui.themes import THEMES
 from ebible.ui.widgets.controls import NoteArea, SecretInput, TextInput
 from ebible.ui.widgets.verse_view import VerseView
 
@@ -56,7 +58,7 @@ async def click(pilot: Pilot[None], selector: str) -> None:
 
 
 async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
-    app = EBibleApp(theme_name=theme)
+    app = EBibleApp(reference=VerseRef(1), theme_name=theme)
     names: list[str] = []
     release = asyncio.Event()
     query_release = asyncio.Event()
@@ -265,6 +267,52 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
     return names
 
 
+async def cover_walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
+    """All six palettes and all four cover sizes, with deterministic motion frames."""
+    app = EBibleApp(theme_name=theme)
+    names = []
+    async with app.run_test(size=size) as pilot:
+        await app.ready.wait()
+        title = app.screen
+        assert isinstance(title, TitleScreen)
+        clock = [100.0]
+        title.clock = lambda: clock[0]
+        title.started = 100.0
+        title.phase = 'entrance'
+        assert title.motion_timer is not None
+        title.motion_timer.pause()
+
+        async def capture(name: str) -> None:
+            title.tick()
+            await pilot.pause()
+            check_layout(app)
+            filename = f'{theme}-{size[0]}x{size[1]}-{name}.svg'
+            svg = app.export_screenshot()
+            assert all(key not in svg for key in SMOKE_KEYS)
+            (out / filename).write_text(svg, encoding='utf-8')
+            names.append(filename)
+            print(f'OK {filename}', flush=True)
+
+        clock[0] = 100.3
+        await capture('title-entrance')
+        clock[0] = 100.8
+        await capture('title')
+        await title.activate()
+        title.motion_timer.pause()
+        clock[0] += 0.3
+        await capture('title-opening')
+        title.finish_opening()
+        await pilot.pause()
+        assert app.screen is app.reader
+        await app.update_setting('reduce_motion', True)
+        await app.show_title()
+        title = app.screen
+        assert isinstance(title, TitleScreen)
+        assert title.progress == 1.0
+        await capture('title-reduced')
+    return names
+
+
 async def smoke(out: Path) -> None:
     out.mkdir(parents=True, exist_ok=True)
     names: list[str] = []
@@ -280,9 +328,18 @@ async def smoke(out: Path) -> None:
                     os.environ.pop('NO_COLOR', None)
                     os.environ.pop('ANTHROPIC_API_KEY', None)
                     names.extend(await walk(out, theme, (width, height)))
+        for theme in THEMES:
+            for size in ((40, 20), (50, 30), (74, 30), (120, 40)):
+                root = Path(temporary) / f'cover-{theme.name}-{size[0]}'
+                with patch.dict(
+                    os.environ,
+                    {'XDG_CONFIG_HOME': str(root / 'config'), 'XDG_DATA_HOME': str(root / 'data')},
+                ):
+                    os.environ.pop('NO_COLOR', None)
+                    names.extend(await cover_walk(out, theme.name, size))
     (out / 'manifest.txt').write_text('\n'.join(names) + '\n', encoding='utf-8')
     print(
-        f'{len(names)} SVGs · {len(SMOKE_THEMES)} themes · {len(SMOKE_SIZES)} sizes · all screens and modals passed',
+        f'{len(names)} SVGs · reader suite: 3 themes × 2 sizes; cover: 6 themes × 4 sizes · all passed',
         flush=True,
     )
     print(f'Output: {out.resolve()}', flush=True)
