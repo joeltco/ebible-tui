@@ -18,7 +18,7 @@ the previous attempts are DATA, not code:
 | `src/ebible/data/schema.sql` | Amharic-only schema | Keep synchronized with the packaged database. |
 | `src/ebible/canon.py` | 81 books in Ethiopian order | Preserve all data rows. |
 | `source/Bible81/` | raw Amharic source | Never edit. |
-| `docs/translation/TRANSLATION_GUIDE.md` | binding live translator prompt | Keep byte-identical, including the packaged copy; append an in-app single-verse output contract. |
+| `docs/translation/TRANSLATION_GUIDE.md` | binding live verse translator prompt | Keep byte-identical, including the packaged copy; append an in-app single-verse output contract. |
 | `docs/translation/SOURCE_ISSUES.md` | source defects | Preserve. |
 
 The old English database is recoverable from git at `e1564db`. Do not keep a copy
@@ -42,7 +42,8 @@ src/ebible/
     refs.py          parse/format references: English names + common abbreviations + Amharic names/prefixes,
                      "book", "book ch", "book ch:v", "book ch:v-v"; ambiguity → error, not a guess
     scripture.py     read-only store over bible.db: books, chapter(book, ch) -> Chapter, verse lookup,
-                     search(query, scope) via Amharic-only FTS5 with snippet highlighting
+                     search(query, scope) via Amharic-only FTS5; translated-query substrings
+                     with scopes, canonical ordering, pagination and snippet highlighting
     userdata.py      user.db (sqlite, in data dir): bookmarks, highlights (named colour), notes (markdown text,
                      created/updated), history (last N positions), reading_position (resume), plan progress. No translation storage. Schema versioned with PRAGMA user_version + forward migrations.
     settings.py      typed Settings dataclass ↔ JSON at config dir; atomic write (tmp + os.replace);
@@ -51,11 +52,14 @@ src/ebible/
     plans.py         reading plans GENERATED from canon chapter counts (no hand-typed schedules):
                      whole canon in a year, New Testament in 90 days, Psalms+Proverbs monthly, Gospels in 30 days.
                      day N -> list of (book, chapter); progress = days completed; "today" from plan start date
-    translate/       on-demand, one verse per request; NEVER persist translations
-      base.py        Backend protocol: translate_verse(book, chapter, chapter_am, target) -> {target: text}
+    translate/       on-demand verse and search-query translation; NEVER persist translations
+      query.py       Latin/Ethiopic detection and up-to-three Ethiopic-only query variants
+      base.py        Backend protocol: translate_verse(...) -> {target: text};
+                     translate_query(query) -> tuple of Amharic variants
       claude.py      lazy optional Anthropic SDK, claude-sonnet-5-5; whole chapter's Amharic as context,
-                     ONLY target verse as one N. text line; exact alignment verified
-      google.py      translate-shell subprocess for target verse ONLY, bounded timeout
+                     ONLY target verse as one N. text line; exact alignment verified;
+                     separate short English→Amharic query prompt
+      google.py      translate-shell subprocess: target verse am:en or query en:am, bounded timeout
       service.py     auto = Claude if environment or saved Anthropic key, else Google if trans on PATH, else off;
                      async thread worker with timeout; no database writes
   ui/
@@ -96,6 +100,30 @@ Results exist only in process memory and disappear on restart. Never write them 
 Existing user databases migrate forward by dropping `live_translation` and erasing its
 freed contents; bookmarks, highlights, notes, history, resume, and plans survive.
 
+### English search contract
+
+Typed Amharic retains debounced FTS token/prefix search. A submitted query containing
+Latin letters and no Ethiopic is translated English→Amharic using the active backend,
+only on Enter or Search (never on keystrokes). Mixed queries and leading `=` pass
+through untranslated. Google uses `trans -b en:am` and one result; Claude uses a
+short scripture-word-form prompt for up to three variants. Strip outer whitespace,
+accept only Ethiopic letters/combining marks, reject internal spaces/punctuation/
+numerals/commentary, ignore junk lines and duplicates; no usable terms is an error.
+
+Search translated variants as literal substrings of text_am (OR), with the same
+scopes, canonical book/chapter/verse order, 40-result pages and highlighted snippets.
+Measured page queries including connection setup and snippets must stay below 150 ms
+on this machine. Do not modify typed Amharic's FTS matching or ranking. English
+submission stays on the results page, showing all tappable terms in
+“Searched ብርሃን · from “light””. Refining a term switches to normal typed Amharic search.
+
+Translation runs in a worker; show a shimmer-style Translating… label beside the
+editable query, or a static dim hint with Reduce motion. Edits invalidate pending
+work; no stale results may overwrite a later query. Errors are short, inline and
+explain how to configure a key/backend or retry. Successful query translations are
+cached in process memory for the session only, keyed by backend setting and the
+trimmed, case-folded query. No query translations are written to disk.
+
 ### Anthropic key contract
 
 Settings provides a password-masked API key field with explicit Save/Enter, Replace,
@@ -125,9 +153,10 @@ mutate the process environment. Show the active source or Google/no-backend fall
   termux-clipboard-set when available, otherwise OSC 52.
 - **Books:** section headings in canon order, filter names, chapter grid; `g` reference
   prompt. Validate every jump against source counts, including Psalm 151 guidance.
-- **Search:** `/`, Amharic only, no language selector; all/OT/NT/current-book scopes.
-  Safe plain typing, explicit `=` raw FTS with friendly syntax errors, styled snippets,
-  consistent spacing between all results, Enter/tap jumps.
+- **Search:** `/`, “Type Amharic or English”, no language selector; all/OT/NT/current-book
+  scopes. Typed Amharic keeps safe FTS; submitted English translates to Amharic
+  substring variants. Explicit `=` raw FTS has friendly syntax errors. Styled
+  snippets, consistent result spacing, tappable refinement terms and result jumps.
 - **Collections:** bookmarks, highlights, Markdown notes with confirmation before
   deleting/discarding; recent history and resume; generated plans with mark-read,
   progress and streak. Positive progress below one percent displays `<1%`.
@@ -185,52 +214,57 @@ Highlight colours are theme-aware (readable on every theme).
 
 ## Status
 
-- 2026-10-23: **Batch 8 complete** on `rebuild/v2`, package `ebible` 2.0.0.dev0.
-  Effect intensity only: twelve-character glow with a bold leading three and
-  feathered accent background; eight-character fetch shimmer every 0.9 seconds;
-  one 300 ms whole-English colour fade after forward completion. Reverse ends
-  quietly. One-second reveal, reversal, cache behaviour and Reduce motion remain.
-- Effect colours derive from each Theme in themes.py: accent blended 60% toward
-  white on dark themes or foreground ink on light themes; peak background tint is
-  accent at 35% over panel. The waiting source dims 18% toward background.
-  Edge-centre versus resting-English **CIELAB ΔE76 ≥18** on all six custom themes
-  (measured range **18.56–24.62**), with separate bold/background/gradient tests.
+- 2026-10-23: **Batch 9 complete** on `rebuild/v2`, package `ebible` 2.0.0.dev0.
+  Search accepts Amharic or English. Latin-only queries translate to Amharic on
+  Enter/Search only, with a worker and shimmer hint beside the editable query.
+  Reduce motion shows a static hint. Typed Amharic, mixed queries and explicit
+  raw FTS retain their existing search path; no keystroke translation calls.
+- Google uses `trans -b en:am` and one result; Claude uses a short dedicated
+  scripture-word-form prompt for up to three variants. Only unique Ethiopic
+  letter/mark lines are accepted; junk is ignored. Empty/failed responses show
+  inline configuration/retry messages. Backend selection and key precedence are
+  unchanged; keys remain explicit and SDK errors sanitized.
+- Translated terms use scoped literal substring matching in canonical order,
+  40-row pages and highlighted snippets. The caption shows every Amharic variant
+  and original query; tap a term or use Tab/arrows/Enter to refine it. English
+  submission remains on results for inspection; typed Amharic Enter still jumps.
+  Successful query translations are cached only on the app instance, keyed by
+  backend setting and trimmed/case-folded query. No schema or disk-cache changes.
+- Measured **240 page queries**, including fresh read-only connections, SQL and
+  snippets (40 rows, 20 runs per offset, first/middle/last/beyond-last pages).
+  Common word እግዚአብሔር: **33.51 ms maximum**; ብርሃን: **46.74 ms maximum**;
+  three variants together: **99.61 ms maximum**. Every sample is below 150 ms.
+  ብርሃን finds **282 verses**, starting at **Genesis 1:3**, including affixed forms.
+  Full timings: `/tmp/b9-search-benchmark.json`; methodology in the review.
 - Required gates passed in `.venv` (Python 3.14.7, Textual 8.2.8):
   `ruff check src tests tools` — **all checks passed**;
-  `ruff format --check src tests` — **63 files already formatted**;
-  `mypy src` — **no issues in 41 source files**;
-  `pytest -q` — **427 passed in 305.63s**, including **169 UI cases**;
-  `python tools/smoke.py --out /tmp/ebible-smoke` — **222 SVGs passed**,
-  37 states × 50×30 and 120×40 × meskel, parchment, lalibela.
-  Gate output: `/tmp/b8-gates.log`.
-- Added 14 unit cases for palette visibility, shimmer and flourish timing, six
-  Pilot cases for the pulse, update isolation, quiet reverse and Reduce motion,
-  plus a CLI text/theme recording test. Updated existing animation and recorder
-  checks for the new effects. Four isolated mutation checks fail on old width,
-  missing peak tint, old shimmer period and missing flourish (`/tmp/b8-mutations.log`).
-- Smoke now captures the completion pulse separately from settled English.
-  Every SVG is checked for fake-key disclosure before saving; an independent
-  raw/XML-text scan of all 222 SVGs also passed. Output: 222 SVGs + manifest.txt;
-  complete listing `/tmp/ebible-smoke-listing.txt`.
-- `tools/record_morph.py` accepts **--text** (default labelled fixture) and **--theme**.
-  Recorded meskel, parchment and midnight at 50×30 into
-  `/tmp/ebible-morph-b8/{meskel,parchment,midnight}/`: **71 SVG frames each**, at
-  50 ms animation-time steps (20 fps), plus manifests with timing, reveal indices
-  and flourish strength. Total: **213 SVGs + three manifests**. Complete listing:
-  `/tmp/ebible-morph-b8-listing.txt`. These recordings use the default fixture.
-- Inspected rendered shimmer, mid-morph, peak/fading flourish and rest at 50×30
-  in all six themes, plus 120×40 flourish views in all three smoke themes. No
-  clipping or layout corrections were needed. See [Batch 8 review](docs/BATCH8_REVIEW.md)
-  for every colour/timing decision, per-theme measurements, test and artifact details.
-  README and current architecture/spec notes match the brighter effects.
+  `ruff format --check src tests` — **66 files already formatted**;
+  `mypy src` — **no issues in 42 source files**;
+  `pytest -q` — **487 passed in 343.05s**, including **189 UI cases**;
+  `python tools/smoke.py --out /tmp/ebible-smoke` — **258 SVGs passed**,
+  43 states × 50×30 and 120×40 × meskel, parchment, lalibela.
+  Gate output: `/tmp/b9-gates.log`.
+- Added **40 core cases and 20 Pilot cases** for detection, variant validation,
+  both fake backends, thread/timeout/error safety, substring scopes/order/pages/
+  highlights/affixes, performance, cache/restart/no-disk behaviour, no per-keystroke
+  calls, cancellation, pending scope changes, reduced motion, refinement and jumps.
+  Existing verse translation and native Amharic search regressions pass unchanged.
+- Smoke adds English entry, query shimmer, reduced-motion pending, translated
+  variants, refined Amharic and translation-error states. Inspected all six new
+  phone states under all three themes and wide pending/result/error views. No
+  clipping or alignment fixes were required. All 258 SVGs passed an independent
+  raw/XML-text scan for full fake keys. Output has 258 SVGs + manifest.txt;
+  complete listing: `/tmp/ebible-smoke-listing.txt`.
 - Packaged database unchanged: **12,521,472 bytes**, SHA-256
   `46da43911496d300784fd303a69cbf5a108486a06a8e45ea2c82efa1c11e9997`.
   Original-data checksum tests match all **39,169 Amharic verse tuples and 81 book
   rows**; integrity tests pass. Schema, canon, raw source, source-issues documentation
-  and both translation-guide copies remain unchanged. No translation persistence.
-- Batch 7 was independently verified and pushed by Claude before this work; Claude
-  also recorded a real Google Genesis 1:1 translation for Joel. Batch 8 used fake
-  backends only; no physical Termux performance run or live service request was
-  made. `--text` can record an existing real translation without a network call.
-- Implementation commits: `fa973b9` (effects/tests), `2d3b9f4` (recorder/smoke),
-  followed by the documentation/status commit. **No Batch 8 push or publication.**
+  and both translation-guide copies remain unchanged. No English scripture index.
+- Help, README and current architecture/spec notes describe English query submission
+  and refinement. See [Batch 9 review](docs/BATCH9_REVIEW.md) for every judgement,
+  timing detail, test and artifact location. No live query translation or physical
+  Termux session was run; all tests and smoke used fake backends. Page timings are
+  host database-query measurements, excluding network and terminal rendering.
+- Batch 8 was independently verified and pushed by Claude before this work.
+  Implementation commits: `30ccfcb` (core/backend search), `5fe4078` (UI/cache/smoke),
+  followed by the documentation/status commit. **No Batch 9 push or publication.**

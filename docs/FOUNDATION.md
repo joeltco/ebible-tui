@@ -115,3 +115,20 @@ The reader and smoke runner use Textual's documented
 [screenshot API](https://textual.textualize.io/api/app/). Claude request construction
 follows the [Messages API](https://platform.claude.com/docs/en/api/messages/create),
 with the model name fixed by AGENTS.md. Remote service availability is not tested.
+
+
+## English search (Batch 9)
+
+- Query translation is separate from verse translation: no chapter context or
+  translator guide is sent for keywords. Claude receives a short scripture-word-form
+  prompt; Google receives English on stdin with `trans -b en:am`. Both use the
+  existing key/backend selection, lazy clients, bounded workers and safe errors.
+- Validation keeps up to three unique lines of Ethiopic letters/combining marks;
+  whitespace at the ends is stripped. Internal spaces, punctuation, digits and
+  Latin commentary are rejected, not extracted. Google retains one result.
+- `search_substrings` uses parameterized `instr(text_am, ?) > 0`, ORs variants and
+  orders by canonical book/chapter/verse. It has the same scopes and page bounds as
+  FTS; substring snippets use the same control markers and literal Rich rendering.
+- The UI owns session query-cache entries keyed by backend setting and trimmed,
+  case-folded query. Core services remain stateless and no schema migration is needed.
+  Typed Amharic, mixed-script and explicit raw queries retain the original FTS path.

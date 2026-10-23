@@ -51,11 +51,17 @@ translation contracts updated there.
 - Plain search tokenizes Unicode word runs, quotes them individually, ANDs them, and
   prefixes the last token. Punctuation-only input returns no results. Leading `=`
   enables advanced syntax; invalid advanced input gets an inline explanation.
-- Search waits 120 ms after input and runs in an exclusive Textual worker with a
-  request-generation check. Enter in the search input opens the first result;
-  results are also directly tappable or selectable with arrows and Enter.
+- Amharic search waits 120 ms after input and runs in an exclusive Textual worker
+  with a request-generation check. Enter opens the first result; results are also
+  directly tappable or selectable with arrows and Enter. English waits for explicit
+  Enter/Search, translates in a worker and remains on results for inspection.
+  The query stays editable with a shimmer hint beside it; Reduce motion uses a dim
+  static hint. Mixed-script and `=` queries never translate. See
+  [Batch 9 review](BATCH9_REVIEW.md) for query validation, cancellation and caching.
 - The result page starts at 40 passages; Show more adds 40, up to the core's 1,000 cap.
-  Scope changes apply immediately; search is Amharic only. Snippets use literal Rich Text
+  Scope changes apply immediately. English queries use canonical-order substring
+  pages of 40 Amharic verses, with up to three ORed variants; translated terms are
+  tappable and keyboard-refinable. Typed Amharic keeps FTS ranking. Snippets use literal Rich Text
   spans with bold/underlined matches, so source brackets cannot become markup.
   Whitespace after a match has a separate non-underlined span to preserve its visible
   SVG advance as well as the exact underlying characters. Every result uses one
@@ -121,12 +127,13 @@ translation contracts updated there.
 - Smoke creates fresh temporary XDG config/data for each size/theme combination,
   restores the invoking environment, and removes its temporary personal data. Its
   note is explicitly labelled a temporary fixture and quotes real bundled text.
-- Smoke writes 37 views for each of 3 themes × 2 sizes: 222 SVGs and manifest.txt.
+- Smoke writes 43 views for each of 3 themes × 2 sizes: 258 SVGs and manifest.txt.
   Extra states include error messages, deletion/discard/restart confirmations,
   Select's theme overlay, paragraph and Jubilees readers, and pending/result/error
   translation states (including shimmer, forward/reverse, completion pulse and
   paragraph morphs), plus six masked-key entry/saved/replacement/error/environment/
-  removal states. Translation responses and credentials are explicit fake fixtures.
+  removal states, plus six English-search entry/shimmer/reduced/result/refinement/
+  error states. Translation responses and credentials are explicit fake fixtures.
   Every screenshot is checked for full fake-key disclosure before it is saved.
   Colour is enabled explicitly for screenshots even if the invoking CI shell has
   NO_COLOR set; the real app otherwise respects the user's NO_COLOR setting.

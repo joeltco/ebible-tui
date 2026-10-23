@@ -101,10 +101,26 @@ secondary-coloured machine English. Repeated taps during a request do not create
 
 ## Search and source numbering
 
-Search indexes **Amharic only**. Plain words and punctuation are safe as you type;
-the last token is a prefix. Start with `=` for raw FTS5, for example
-`="እግዚአብሔር"`. Invalid syntax gets an explanation. All/OT/NT/current-book scopes
-are available, and every result has the same one-row gap after its snippet.
+**Type Amharic or English.** Amharic searches safely as you type, using token/prefix
+matching. Submit an English word with **Enter** or **Search** to translate it into
+Amharic with the active backend. Nothing is sent while you type. The query line
+shimmers while waiting; Reduce motion gives a static hint.
+
+English results show the Amharic terms and original query. Tap a term to put it in
+the box and refine it (keyboard: Tab to the terms, arrows to choose, Enter to use).
+Select a result to open it. English submissions stay on the result page; Enter on a
+typed Amharic query still opens its first result.
+
+Translated queries match substrings, finding affixed forms such as በብርሃን and
+ብርሃንም, and list results in canonical order. Google returns one Amharic form;
+Claude can return up to three. All/OT/NT/current-book scopes and Show more work for
+both search paths. Query translations are reused only within this session and are
+never saved to disk. Errors explain how to enable a backend or retry.
+
+Mixed Latin/Ethiopic queries are searched as typed. Start with `=` for raw FTS5,
+for example `="እግዚአብሔር"`; these queries are never translated. Invalid syntax gets
+an explanation. Only Amharic scripture is indexed—there is no English scripture
+cache. Every result has the same one-row gap after its snippet.
 
 Every jump validates actual source chapter and verse numbers. **Psalm 151 is filed
 as Psalms 150:7-14**: use `ps 150:7-14`. No verses are invented or renumbered.
@@ -148,8 +164,9 @@ python tools/smoke.py --out /tmp/ebible-smoke
 ```
 
 Smoke uses temporary XDG directories at 50×30 and 120×40 under meskel, parchment,
-and lalibela. Its 222 SVGs visit every screen/modal, including shimmer, mid-morph,
-reverse, completion pulse, translated, error, actions, and Amharic search states. All translation responses in
+and lalibela. Its 258 SVGs visit every screen/modal, including shimmer, mid-morph,
+reverse, completion pulse, translated, error, actions, and Amharic/English search
+states (including query shimmer, reduced motion, terms and errors). All translation responses in
 smoke and tests are explicitly labelled fixtures; no real backend or network is used.
 
 Record a deterministic 50×30 morph sequence for a GIF:
