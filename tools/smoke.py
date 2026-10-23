@@ -16,12 +16,14 @@ from ebible.core.translate.base import TranslationError
 from ebible.core.translate.service import TranslationService
 from ebible.ui.screens.books import ChaptersScreen
 from ebible.ui.widgets.controls import NoteArea, SecretInput, TextInput
+from ebible.ui.widgets.verse_view import VerseView
 
 # Deliberately fake credentials: never accepted by or sent to a real service.
 SMOKE_KEYS = (
     'sk-ant-FAKE-SMOKE-NOT-REAL-1234',
     'sk-ant-FAKE-SMOKE-REPLACE-5678',
     'sk-ant-FAKE-SMOKE-ENV-9012',
+    'sk-ant-INVALID FIXTURE',
 )
 
 SMOKE_THEMES = ('meskel', 'parchment', 'lalibela')
@@ -69,6 +71,9 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
     with patch.object(TranslationService, 'translate_verse', fixture_translate):
         async with app.run_test(size=size) as pilot:
             await asyncio.wait_for(app.ready.wait(), 10)
+            view = app.reader.query_one(VerseView)
+            timeline = [100.0]
+            view.clock = lambda: timeline[0]
 
             async def capture(name: str) -> None:
                 await pilot.pause()
@@ -95,15 +100,28 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
             assert not app.screen.query('#copy-both')
             await pilot.press('escape')
             await pilot.press('enter')
-            await capture('reader-translating')
+            timeline[0] += 0.7
+            view.tick()
+            await capture('reader-shimmer')
             assert VerseRef(1) in app.translating
             release.set()
             await app.workers.wait_for_complete()
+            timeline[0] += 0.5
+            view.tick()
+            await capture('reader-morph')
+            timeline[0] += 0.5
+            view.tick()
             await capture('reader-translated')
             assert VerseRef(1) in app.translations
             await pilot.press('a')
             await capture('actions-translated')
-            await pilot.press('escape', 'enter', 'j', 'enter')
+            await pilot.press('escape', 'enter')
+            timeline[0] += 0.5
+            view.tick()
+            await capture('reader-morph-reverse')
+            timeline[0] += 0.5
+            view.tick()
+            await pilot.press('j', 'enter')
             await app.workers.wait_for_complete()
             await capture('reader-translation-error')
             assert VerseRef(1, 1, 2) in app.translation_errors
@@ -166,7 +184,7 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
             await click(pilot, '#key-replace')
             entry.value = SMOKE_KEYS[1]
             await capture('settings-key-replace')
-            entry.value += ' internal'
+            entry.value = SMOKE_KEYS[3]
             await click(pilot, '#key-save')
             await capture('settings-key-invalid')
             entry.value = SMOKE_KEYS[1]
@@ -189,6 +207,12 @@ async def walk(out: Path, theme: str, size: tuple[int, int]) -> list[str]:
             await pilot.press('escape')
             await app.update_setting('verse_flow', 'paragraph')
             await capture('reader-paragraph')
+            await pilot.press('enter')
+            timeline[0] += 0.5
+            view.tick()
+            await capture('reader-paragraph-morph')
+            timeline[0] += 0.5
+            view.tick()
             await app.update_setting('verse_flow', 'lines')
             await app.navigate(VerseRef(15))
             await capture('reader-jubilees')
