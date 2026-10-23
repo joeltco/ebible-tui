@@ -6,6 +6,7 @@ from importlib.resources import files
 from typing import Protocol, cast
 
 from ebible.canon import Book
+from ebible.core.credentials import active_key
 from ebible.core.translate.base import TranslationError, parse_numbered_lines
 
 MODEL = 'claude-sonnet-5-5'
@@ -49,8 +50,9 @@ class Client(Protocol):
 class ClaudeBackend:
     name = 'claude'
 
-    def __init__(self, client: Client | None = None) -> None:
+    def __init__(self, client: Client | None = None, *, api_key: str | None = None) -> None:
         self._client = client
+        self._api_key = api_key
 
     def translate_verse(
         self, book: Book, chapter: int, verses_am: Mapping[int, str], target: int
@@ -58,39 +60,56 @@ class ClaudeBackend:
         if target not in verses_am:
             raise TranslationError('Target verse is missing from chapter context')
         client = self._client
-        if client is None:
-            try:
-                sdk = importlib.import_module('anthropic')
-            except ImportError as exc:
-                raise TranslationError('Install ebible[claude] to use the Claude backend') from exc
-            client = cast(Client, sdk.Anthropic(timeout=30.0, max_retries=0))
         try:
-            response = client.messages.create(
-                model=MODEL,
-                max_tokens=4096,
-                system=files('ebible.core.translate')
-                .joinpath('TRANSLATION_GUIDE.md')
-                .read_text(encoding='utf-8')
-                + APP_ADDENDUM,
-                messages=[
-                    {
-                        'role': 'user',
-                        'content': f'{book.name_en} {chapter} ({book.name_am})\n\n'
-                        + '\n'.join(f'{n}. {text}' for n, text in sorted(verses_am.items()))
-                        + f'\n\nThe chapter above is context only. Translate ONLY verse {target}. Return only: {target}. translation',
-                    }
-                ],
-            )
+            if client is None:
+                try:
+                    sdk = importlib.import_module('anthropic')
+                except ImportError:
+                    raise TranslationError(
+                        'Install ebible[claude] to use the Claude backend'
+                    ) from None
+                key = active_key() if self._api_key is None else None
+                api_key = self._api_key if self._api_key is not None else key.value if key else None
+                if not api_key:
+                    raise TranslationError(
+                        'Add an Anthropic API key in Settings or set ANTHROPIC_API_KEY.'
+                    )
+                try:
+                    client = cast(
+                        Client, sdk.Anthropic(api_key=api_key, timeout=30.0, max_retries=0)
+                    )
+                except Exception:
+                    raise TranslationError(
+                        'Could not start Claude. Check the API key in Settings.'
+                    ) from None
+            try:
+                response = client.messages.create(
+                    model=MODEL,
+                    max_tokens=4096,
+                    system=files('ebible.core.translate')
+                    .joinpath('TRANSLATION_GUIDE.md')
+                    .read_text(encoding='utf-8')
+                    + APP_ADDENDUM,
+                    messages=[
+                        {
+                            'role': 'user',
+                            'content': f'{book.name_en} {chapter} ({book.name_am})\n\n'
+                            + '\n'.join(f'{n}. {text}' for n, text in sorted(verses_am.items()))
+                            + f'\n\nThe chapter above is context only. Translate ONLY verse {target}. Return only: {target}. translation',
+                        }
+                    ],
+                )
+            except Exception:
+                raise TranslationError(
+                    'Claude request failed. Check your connection and API key in Settings, then press Enter to retry.'
+                ) from None
             if response.stop_reason != 'end_turn':
-                raise TranslationError(f'Incomplete Claude response: {response.stop_reason}')
+                raise TranslationError('Incomplete Claude response. Press Enter to retry.')
             text = '\n'.join(block.text for block in response.content if block.type == 'text')
             return parse_numbered_lines(text, {target: verses_am[target]})
-        except TranslationError:
-            raise
-        except Exception as exc:
-            raise TranslationError(
-                'Claude request failed. Check your connection and ANTHROPIC_API_KEY, then press Enter to retry.'
-            ) from exc
         finally:
-            if self._client is None:
-                client.close()
+            if self._client is None and client is not None:
+                try:
+                    client.close()
+                except Exception:
+                    pass  # Cleanup exceptions must not expose SDK authentication details.

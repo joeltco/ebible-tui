@@ -106,6 +106,7 @@ def test_alignment_strict_numbers(source):
 
 def test_lazy_sdk_close_timeout_and_missing_sdk(monkeypatch, source):
     client = FakeClient('1. ' + FIXTURE)
+    monkeypatch.setenv('ANTHROPIC_API_KEY', 'sk-ant-FAKE-SDK-TEST-1234')
     options = []
 
     def factory(**kwargs):
@@ -119,7 +120,10 @@ def test_lazy_sdk_close_timeout_and_missing_sdk(monkeypatch, source):
         lambda name: SimpleNamespace(Anthropic=factory) if name == 'anthropic' else original(name),
     )
     assert ClaudeBackend().translate_verse(BY_ID[1], 1, source, 1) == {1: FIXTURE}
-    assert options == [{'timeout': 30.0, 'max_retries': 0}] and client.closed
+    assert (
+        options == [{'api_key': 'sk-ant-FAKE-SDK-TEST-1234', 'timeout': 30.0, 'max_retries': 0}]
+        and client.closed
+    )
 
     def missing(name):
         raise ImportError('Explicit missing-SDK fixture')
