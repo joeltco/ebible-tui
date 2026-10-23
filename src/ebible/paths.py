@@ -24,3 +24,11 @@ def settings_path() -> Path:
 
 def user_db_path() -> Path:
     return data_dir() / 'user.db'
+
+
+def cache_dir() -> Path:
+    return _xdg('XDG_CACHE_HOME', Path.home() / '.cache')
+
+
+def translation_cache_path() -> Path:
+    return cache_dir() / 'translations.db'

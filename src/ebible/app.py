@@ -17,6 +17,7 @@ from ebible.core.refs import ReferenceError, format_reference, parse_reference
 from ebible.core.scripture import ScriptureStore
 from ebible.core.settings import Settings, load_settings, save_settings
 from ebible.core.translate.base import AlignmentError, TranslationError
+from ebible.core.translate.cache import TranslationCache
 from ebible.core.translate.service import BackendSetting, TranslationService
 from ebible.core.userdata import UserDataStore
 from ebible.ui.themes import THEMES, ordered_theme_names, role_variables
@@ -64,6 +65,7 @@ class EBibleApp(App[None], inherit_bindings=False):
         self._navigation_lock = asyncio.Lock()
         self._settings_lock = asyncio.Lock()
         self.translations: dict[VerseRef, str] = {}
+        self.translation_cache = TranslationCache()
         self.query_translations: dict[tuple[BackendSetting, str], tuple[str, ...]] = {}
         self.visible_translations: set[VerseRef] = set()
         self.translating: set[VerseRef] = set()
@@ -273,7 +275,9 @@ class EBibleApp(App[None], inherit_bindings=False):
     @work(group='translation', exit_on_error=False)
     async def translate_verse(self, ref: VerseRef) -> None:
         try:
-            service = TranslationService(self.scripture, self.settings.translation_backend)
+            service = TranslationService(
+                self.scripture, self.settings.translation_backend, cache=self.translation_cache
+            )
             self.translations[ref] = await service.translate_verse(ref)
         except AlignmentError:
             self.translation_errors[ref] = (

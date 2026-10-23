@@ -265,3 +265,35 @@ async def test_worker_responsive_and_timeout(scripture):
             await task
     finally:
         release.set()
+
+
+async def test_cache_returns_saved_verse_per_backend_and_source(scripture, tmp_path):
+    from ebible.core.translate.cache import TranslationCache
+    from ebible.paths import translation_cache_path
+
+    calls = []
+
+    def fake(label):
+        class Fake:
+            name = label
+
+            def translate_verse(self, book, chapter, context, target):
+                calls.append(label)
+                return {target: f'{label} {FIXTURE}'}
+
+        return Fake()
+
+    ref = VerseRef(1, 1, 16)
+    cache = TranslationCache()
+    first = TranslationService(scripture, backend=fake('one'), cache=cache)
+    assert await first.translate_verse(ref) == f'one {FIXTURE}'
+    assert translation_cache_path().is_file()
+    again = TranslationService(scripture, backend=fake('one'), cache=TranslationCache())
+    assert await again.translate_verse(ref) == f'one {FIXTURE}' and calls == ['one']
+    other = TranslationService(scripture, backend=fake('two'), cache=cache)
+    assert await other.translate_verse(ref) == f'two {FIXTURE}' and calls == ['one', 'two']
+    source = scripture.verse(ref).text_am
+    assert cache.get('one', ref, source + ' changed') is None
+    translation_cache_path().write_bytes(b'not a database')
+    assert cache.get('one', ref, source) is None
+    assert await first.translate_verse(ref) == f'one {FIXTURE}'

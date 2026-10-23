@@ -55,7 +55,7 @@ KEY_GROUPS = (
 REFERENCE_GROUPS = (
     (
         'YOUR TEXT',
-        '◆ Bookmark   ✎ Note\n◇ Translation\nEnglish replaces Amharic in place; tap again to return. ◇ marks machine text. Settings → Reduce motion skips the effects. Nothing is cached on disk.',
+        '◆ Bookmark   ✎ Note\n◇ Translation\nEnglish replaces Amharic in place; tap again to return. ◇ marks machine text. Settings → Reduce motion skips the effects. Finished translations are kept on this device, so they return instantly.',
     ),
     (
         'SEARCH',

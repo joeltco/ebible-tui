@@ -281,3 +281,26 @@ async def test_translation_rebuild_with_pending_scroll_and_cursor(running_app, m
         assert view.query_one('#verse-3').has_class('selected')
     else:
         assert view.query_one(Paragraph).content.plain
+
+
+async def test_restart_shows_saved_translation_without_a_backend_call(terminal_size, monkeypatch):
+    calls = []
+
+    class Fake:
+        name = 'fixture'
+
+        def translate_verse(self, book, chapter, context, target):
+            calls.append(target)
+            return {target: FIXTURE}
+
+    monkeypatch.setattr('ebible.core.translate.service.select_backend', lambda setting: Fake())
+    for _ in range(2):
+        app = EBibleApp()
+        async with app.run_test(size=terminal_size) as pilot:
+            await app.ready.wait()
+            await pilot.pause()
+            assert not app.translations  # Still translated only on request.
+            await pilot.press('enter')
+            await app.workers.wait_for_complete()
+            assert app.translations[VerseRef(1)] == FIXTURE
+    assert calls == [1]

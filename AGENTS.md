@@ -105,7 +105,7 @@ Measure first meaningful frame before/after; startup must not regress.
 
 ### Translation contract
 
-No bundled English, persisted English cache, coverage metadata, or placeholder text.
+No bundled English, coverage metadata, or placeholder text. English appears only on request.
 Enter or a verse tap translates that one verse in a worker. A visible eight-character
 theme-derived shimmer sweeps over slightly dimmed Amharic every 0.9 seconds while fetching;
 its centre is bold with a soft background tint. When ready, morph IN PLACE using
@@ -126,7 +126,10 @@ the current position. Re-showing cached text morphs forward without fetching.
 Reduce motion defaults off; when enabled, swaps are instant without a completion
 pulse, and fetching uses a static dim “Translating…” hint with no shimmer. Errors stop motion, restore Amharic
 and show an actionable inline message (configure backend/key, check network, retry).
-Results exist only in process memory and disappear on restart. Never write them to disk.
+Joel (batch 12): finished verse translations are kept in a disposable device cache
+(`$XDG_CACHE_HOME/ebible/translations.db`, keyed by backend, verse and source-text hash) so a
+repeat request shows instantly, still with the morph. Nothing is pre-fetched or shown unasked;
+cache failures degrade to a normal fetch. Query translations stay in memory only.
 Existing user databases migrate forward by dropping `live_translation` and erasing its
 freed contents; bookmarks, highlights, notes, history, resume, and plans survive.
 

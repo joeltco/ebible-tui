@@ -14,6 +14,7 @@ def isolated_paths(tmp_path, monkeypatch, request):
     monkeypatch.setattr(shutil, 'which', lambda name: None if name == 'trans' else which(name))
     monkeypatch.setenv('XDG_CONFIG_HOME', str(tmp_path / 'config'))
     monkeypatch.setenv('XDG_DATA_HOME', str(tmp_path / 'data'))
+    monkeypatch.setenv('XDG_CACHE_HOME', str(tmp_path / 'cache'))
     monkeypatch.delenv('ANTHROPIC_API_KEY', raising=False)
     monkeypatch.delenv('NO_COLOR', raising=False)
     if request.module.__name__.startswith('test_ui_'):
