@@ -304,3 +304,24 @@ async def test_restart_shows_saved_translation_without_a_backend_call(terminal_s
             await app.workers.wait_for_complete()
             assert app.translations[VerseRef(1)] == FIXTURE
     assert calls == [1]
+
+
+async def test_settings_clears_saved_translations(running_app):
+    from textual.widgets import Button
+
+    from ebible.paths import translation_cache_path
+
+    app, pilot = running_app
+    source = app.scripture.verse(VerseRef(1)).text_am
+    app.translation_cache.put('fixture', VerseRef(1), source, FIXTURE)
+    assert app.translation_cache.get('fixture', VerseRef(1), source) == FIXTURE
+    await pilot.press('s')
+    button = app.screen.query_one('#clear-translations', Button)
+    button.scroll_visible(animate=False)
+    await pilot.pause()
+    button.press()
+    await pilot.pause()
+    await app.workers.wait_for_complete()
+    await pilot.pause()
+    assert not translation_cache_path().exists()
+    assert app.last_message == 'Saved translations cleared'

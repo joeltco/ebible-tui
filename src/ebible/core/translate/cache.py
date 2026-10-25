@@ -61,3 +61,6 @@ class TranslationCache:
                 )
         except (sqlite3.Error, OSError):
             pass
+
+    def clear(self) -> None:
+        self.path.unlink(missing_ok=True)

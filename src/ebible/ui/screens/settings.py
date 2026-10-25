@@ -91,10 +91,11 @@ class SettingsScreen(Page):
                         yield Button('Save key', id='key-save')
                         yield Button('Cancel', id='key-cancel')
                 yield Static('', id='key-error', classes='error', markup=False)
+            yield Button('Clear saved translations', id='clear-translations')
             yield Static('Vibrate when bookmarking · Termux', markup=False)
             yield Switch(settings.haptic_feedback, id='setting-haptic_feedback')
             yield Static(
-                'Enter or tap a verse to translate. Translations last only for this session.',
+                'Enter or tap a verse to translate. Finished translations are saved on this device.',
                 classes='page-footnote',
                 markup=False,
             )
@@ -207,5 +208,13 @@ class SettingsScreen(Page):
                     return
                 await self.refresh_key_status(reset_editor=True)
                 self.query_one('#anthropic-key-input', SecretInput).focus()
+        elif action == 'clear-translations':
+            event.stop()
+            try:
+                await asyncio.to_thread(self.eb.translation_cache.clear)
+            except OSError as exc:
+                self.eb.message(f'Could not clear saved translations: {exc}', error=True)
+                return
+            self.eb.message('Saved translations cleared')
         else:
             await super().on_button_pressed(event)
